@@ -1,4 +1,4 @@
-RetroShare
+Unseen P2P (RetroShare)
 ==============================
 RetroShare is a decentralized, private and secure commmunication and sharing platform. RetroShare provides filesharing, chat, messages, forums and channels. 
 
