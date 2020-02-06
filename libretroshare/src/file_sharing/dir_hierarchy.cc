@@ -30,7 +30,7 @@
 #include "filelist_io.h"
 #include "file_sharing_defaults.h"
 
-//#define DEBUG_DIRECTORY_STORAGE 1
+#define DEBUG_DIRECTORY_STORAGE 1
 
 typedef FileListIO::read_error read_error;
 
@@ -183,7 +183,7 @@ bool InternalFileHierarchyStorage::updateSubDirectoryList(const DirectoryStorage
     for(std::set<std::string>::const_iterator it(should_create.begin());it!=should_create.end();++it)
     {
 #ifdef DEBUG_DIRECTORY_STORAGE
-        std::cerr << "[directory storage] adding new subdirectory " << it->first << " at index " << mNodes.size() << std::endl;
+        std::cerr << "[directory storage] adding new subdirectory at index " << mNodes.size() << std::endl;
 #endif
 
         DirEntry *de = new DirEntry(*it) ;
@@ -335,6 +335,23 @@ bool InternalFileHierarchyStorage::updateSubFilesList(const DirectoryStorage::En
 
         mTotalSize  += it->second.size;
         mTotalFiles += 1;
+    }
+
+
+    for(std::map<std::string,DirectoryStorage::FileTS>::const_iterator it(subfiles.begin());it!=subfiles.end();++it)
+    {
+#ifdef DEBUG_DIRECTORY_STORAGE
+        std::cerr << "2.[directory storage] adding new file " << it->first << " at index " << mNodes.size() << std::endl;
+#endif
+
+//        d.subfiles.push_back(mNodes.size()) ;
+//        mNodes.push_back(new FileEntry(it->first,it->second.size,it->second.modtime));
+//        mNodes.back()->row = mNodes.size()-1;
+//        mNodes.back()->parent_index = indx;
+
+//        mTotalSize  += it->second.size;
+//        mTotalFiles += 1;
+
     }
     return true;
 }

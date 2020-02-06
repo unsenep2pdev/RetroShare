@@ -1204,7 +1204,7 @@ void UnseenGxsChatLobbyDialog::insertChannelPosts(std::vector<RsGxsChatMsg> &pos
             posts[i].mMeta.mOrigMsgId.clear();
 
 #ifdef DEBUG_CHAT
-        std::cerr << "  " << i << ": msg_id=" << posts[i].mMeta.mMsgId <<" : msg timestamp= " << posts[i].mMeta.mPublishTs << " : msg = " << posts[i].mMsg << std::endl;
+        //std::cerr << "  " << i << ": msg_id=" << posts[i].mMeta.mMsgId <<" : msg timestamp= " << posts[i].mMeta.mPublishTs << " : msg = " << posts[i].mMsg << std::endl;
 #endif
 
         if(!posts[i].mMeta.mOrigMsgId.isNull())
@@ -1236,6 +1236,7 @@ void UnseenGxsChatLobbyDialog::insertChannelPosts(std::vector<RsGxsChatMsg> &pos
             fileList.push_back(fi);
         }
 
+        //uneenp2p - need to check if these are files sharing, need to show "Download" link
         ui.chatWidget->addChatMsg(incomming, nickname, gxs_id, sendTime, recvTime, mmsg, ChatWidget::MSGTYPE_NORMAL);
     }
 

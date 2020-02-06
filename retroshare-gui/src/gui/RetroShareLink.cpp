@@ -1306,7 +1306,7 @@ static void processList(const QStringList &list, const QString &textSingular, co
 	flag &= ~RSLINK_PROCESS_NOTIFY_BAD_CHARS ;	// this will be set below when needed
 
 	/* filter dublicate links */
-	QList<RetroShareLink> links;
+        QList<RetroShareLink> links;
 	for (linkIt = linksIn.begin(); linkIt != linksIn.end(); ++linkIt) {
 		if (links.contains(*linkIt)) {
 			continue;
@@ -1621,9 +1621,37 @@ static void processList(const QStringList &list, const QString &textSingular, co
 			case TYPE_FILE:
 			{
 				FileInfo fi1;
-				if(links.size()==1 && rsFiles->alreadyHaveFile(RsFileHash(link.hash().toStdString()), fi1)
-					&& !link.name().endsWith(RsCollection::ExtensionString))
+                if(links.size()==1 && rsFiles->alreadyHaveFile(RsFileHash(link.hash().toStdString()), fi1))
+                    //&& !link.name().endsWith(RsCollection::ExtensionString))
+                //if(links.size()==1 && rsFiles->checkAlreadyHaveFile(RsFileHash(link.hash().toStdString()), fi1))
 				{
+                    //FileInfo fi;
+
+                    /* make path for downloaded file */
+                    std::string path;
+                    path = fi1.path;//Shared files has path with filename included
+
+
+                    QFileInfo qinfo;
+                    qinfo.setFile(QString::fromUtf8(path.c_str()));
+                    //if (qinfo.exists() && qinfo.isFile() && !dontOpenNextFile) {
+                    if (qinfo.exists() && qinfo.isDir()) {
+                        if (!RsUrlHandler::openUrl(QUrl::fromLocalFile(qinfo.absoluteFilePath()))) {
+                            std::cerr << "dlOpenFolder(): can't open folder " << path << std::endl;
+                        }
+                    }
+//                    if (qinfo.exists() && qinfo.isFile())
+//                    {
+
+//                        ++countFileOpened;
+//                        /* open file with a suitable application */
+//                        if (!RsUrlHandler::openUrl(QUrl::fromLocalFile(qinfo.absoluteFilePath())))
+//                        {
+//                            std::cerr << "RetroShareLink::process(): can't open file " << path << std::endl;
+//                            needNotifySuccess = false;
+//                        }
+//                    }
+
 					/* fallthrough */
 				}
 				else
@@ -1679,7 +1707,8 @@ static void processList(const QStringList &list, const QString &textSingular, co
 
 				bool bFileOpened = false;
 				FileInfo fi;
-				if (rsFiles->alreadyHaveFile(RsFileHash(link.hash().toStdString()), fi)) {
+                if (rsFiles->alreadyHaveFile(RsFileHash(link.hash().toStdString()), fi))
+                {
 					/* make path for downloaded file */
 					std::string path;
 					path = fi.path;//Shared files has path with filename included
@@ -1690,26 +1719,39 @@ static void processList(const QStringList &list, const QString &textSingular, co
 
 					QFileInfo qinfo;
 					qinfo.setFile(QString::fromUtf8(path.c_str()));
-					if (qinfo.exists() && qinfo.isFile() && !dontOpenNextFile) {
-						QString question = "<html><body>";
-                        question += QObject::tr("Warning: UnseenP2P is about to ask your system to open this file. ");
-						question += QObject::tr("Before you do so, please make sure that this file does not contain malicious executable code.");
-						question += "<br><br>" + cleanname + "</body></html>";
+                    //if (qinfo.exists() && qinfo.isFile() && !dontOpenNextFile) {
+                    if (qinfo.exists() && qinfo.isFile())
+                    {
+//						QString question = "<html><body>";
+//                      question += QObject::tr("Warning: UnseenP2P is about to ask your system to open this file. ");
+//						question += QObject::tr("Before you do so, please make sure that this file does not contain malicious executable code.");
+//						question += "<br><br>" + cleanname + "</body></html>";
 
-						QMessageBox mb(QObject::tr("Confirmation"), question, QMessageBox::Warning, QMessageBox::Yes, QMessageBox::No, links.size()>1 ? QMessageBox::NoToAll : 0, 0);
-						int ret = mb.exec();
-						if(ret == QMessageBox::Yes) {
+//						QMessageBox mb(QObject::tr("Confirmation"), question, QMessageBox::Warning, QMessageBox::Yes, QMessageBox::No, links.size()>1 ? QMessageBox::NoToAll : 0, 0);
+//						int ret = mb.exec();
+//						if(ret == QMessageBox::Yes) {
 							++countFileOpened;
 							bFileOpened = true;
 							/* open file with a suitable application */
-							if (!RsUrlHandler::openUrl(QUrl::fromLocalFile(qinfo.absoluteFilePath()))) {
+                            if (!RsUrlHandler::openUrl(QUrl::fromLocalFile(qinfo.absoluteFilePath())))
+                            {
 								std::cerr << "RetroShareLink::process(): can't open file " << path << std::endl;
-							}
-						} else if (ret == QMessageBox::NoToAll) {
-							dontOpenNextFile = true;
-						}
+                            }
+//						} else if (ret == QMessageBox::NoToAll)
+//                        {
+//							dontOpenNextFile = true;
+//						}
 						needNotifySuccess = false;
 					}
+                    else
+                    {
+                        QString question = "<html><body>";
+                        question += QObject::tr("The file still not downloaded complete. Please wait... ");
+                        question += "</body></html>";
+
+                        QMessageBox mb(QMessageBox::Information, QObject::tr("Warning"), question);
+                        int ret = mb.exec();
+                    }
 				}
 
 				if (rsFiles->FileRequest(cleanname.toUtf8().constData(), RsFileHash(link.hash().toStdString()), link.size(), "", RS_FILE_REQ_ANONYMOUS_ROUTING, srcIds)) {

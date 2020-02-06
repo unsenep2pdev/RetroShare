@@ -361,7 +361,8 @@ void NotifyQt::notifyDownloadComplete(const std::string& fileHash)
 	std::cerr << "Notifyqt::notifyDownloadComplete notified that a download is completed" << std::endl;
 #endif
 
-	emit downloadComplete(QString::fromStdString(fileHash));
+    std::cerr << "Notifyqt::notifyDownloadComplete notified that a download is completed" << std::endl;
+    emit downloadComplete(QString::fromStdString(fileHash));
 }
 
 void NotifyQt::notifyDownloadCompleteCount(uint32_t count)

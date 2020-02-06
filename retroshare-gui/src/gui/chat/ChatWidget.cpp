@@ -1195,6 +1195,8 @@ void ChatWidget::addChatMsg(bool incoming, const QString &name, const RsGxsId gx
 	textCursor.setBlockFormat(QTextBlockFormat ());
 	ui->textBrowser->append(formatMsg);
 
+    //ui->textBrowser->setText("just testing!!!");
+
 	if (ui->leSearch->isVisible()) {
 		QString qsTextToFind=ui->leSearch->text();
 		findText(qsTextToFind);
@@ -1910,11 +1912,12 @@ void ChatWidget::gxsfileHashingFinishedForGUI(QList<HashedFile> hashedFiles )
 
         link = RetroShareLink::createFile(hashedFile.filename, hashedFile.size, QString::fromStdString(hashedFile.hash.toStdString()));
 
+        bool preview = false;
         if (hashedFile.flag & HashedFile::Picture) {
             message += QString("<img src=\"file:///%1\" width=\"100\" height=\"100\">").arg(hashedFile.filepath);
             message+="<br>";
         } else {
-            bool preview = false;
+
             if(hashedFiles.size()==1 && (ext == "JPG" || ext == "PNG" || ext == "JPEG" || ext == "GIF"))
             {
                 QString encodedImage;
@@ -1933,9 +1936,15 @@ void ChatWidget::gxsfileHashingFinishedForGUI(QList<HashedFile> hashedFiles )
                 }
             }
         }
-        message += "<BR>";
-        message += link.toHtmlSize();
 
+        //when only sending only one image, we need to break new line for easy look
+        if(preview && hashedFiles.size()==1) message += "<BR>";
+
+        message += link.toHtmlSize();
+        //message += "<BR>";
+        ////try to get the folder path and add to this
+        ////hashedFile.filepath = "/Users/ductai/Desktop/Screenshots/Screen Shot 2019-11-18 at 10.12.50 AM.png"
+        //message += QString("<a href=\"file:///Users/ductai/.unseen/HID06_7d41b8c093179a332d0ce529d7f608f8/Downloads\">Open Folder</a>");
         if (it != hashedFiles.end()) {
             message += "<BR>";
         }

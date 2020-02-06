@@ -67,7 +67,7 @@
  * #define CONTROL_DEBUG 1
  * #define DEBUG_DWLQUEUE 1
  *****/
-
+#define CONTROL_DEBUG 1
 static const int32_t SAVE_TRANSFERS_DELAY 			= 301 ; // save transfer progress every 301 seconds.
 static const int32_t INACTIVE_CHUNKS_CHECK_DELAY 	= 240 ; // time after which an inactive chunk is released
 static const int32_t MAX_TIME_INACTIVE_REQUEUED 	= 120 ; // time after which an inactive ftFileControl is bt-queued
@@ -261,7 +261,10 @@ void ftController::data_tick()
 
 			{
 				RsStackMutex stack2(doneMutex);
-				files_to_complete = mDone ;
+                files_to_complete.clear();
+                for (std::list<RsFileHash>::iterator it = mDone.begin(); it != mDone.end(); ++it)
+                    files_to_complete.push_back(*it);
+                //files_to_complete = mDone ;
 				mDone.clear();
 			}
 
