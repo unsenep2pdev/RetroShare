@@ -39,6 +39,8 @@ typedef Sha1CheckSum RsGxsMessageId;
 typedef GXSId        RsGxsId;
 typedef GXSCircleId  RsGxsCircleId;
 
+typedef std::pair<RsPeerId, RsGxsId> RsGxsPersonPair;
+typedef std::pair<RsGxsPersonPair, std::string> RsGxsContactPerson;
 typedef std::map<RsGxsGroupId, std::set<RsGxsMessageId> > GxsMsgIdResult;
 typedef std::pair<RsGxsGroupId, RsGxsMessageId> RsGxsGrpMsgIdPair;
 typedef std::map<RsGxsGrpMsgIdPair, std::set<RsGxsMessageId> > MsgRelatedIdResult;

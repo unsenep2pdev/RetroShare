@@ -65,26 +65,19 @@ void LocalDirectoryUpdater::setEnabled(bool b)
 void LocalDirectoryUpdater::data_tick()
 {
     rstime_t now = time(NULL) ;
+    static  bool some_files_not_ready = false ;
 
-    static  rstime_t fullscan_tick = 0;
-
-    std::cerr << "1. fullscan_tick : " << fullscan_tick << ", now : " << now << std::endl;
-    //if (mIsEnabled || mForceUpdate || fullscan_tick)
-    if (mIsEnabled || mForceUpdate)
+    if (mIsEnabled || mForceUpdate || some_files_not_ready)
     {
         if(now > mDelayBetweenDirectoryUpdates + mLastSweepTime)
         {
-            bool some_files_not_ready = false ;
-
+            some_files_not_ready = false ;
             if(sweepSharedDirectories(some_files_not_ready))
             {
                 if(some_files_not_ready)
                 {
-                    //fullscan_tick = (fullscan_tick+1) % 3;
-                    //std::cerr << "2. fullscan_tick : " << fullscan_tick << ", now : " << now << std::endl;
-                    mNeedsFullRecheck = true ;
-                    mLastSweepTime = now - mDelayBetweenDirectoryUpdates + 60 ; // retry 20 secs from now
-
+					mNeedsFullRecheck = true ;
+                    mLastSweepTime = now - mDelayBetweenDirectoryUpdates + 21 ; // retry 21 secs from now
                     std::cerr << "(II) some files being modified. Will re-scan in 60 secs." << std::endl;
                 }
 				else

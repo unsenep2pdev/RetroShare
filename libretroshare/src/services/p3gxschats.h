@@ -81,16 +81,29 @@ protected:
 
     virtual void receiveNewChatMesesage(std::vector<GxsNxsChatMsgItem*>& messages);
     virtual void receiveNewChatGroup(std::vector<GxsNxsChatGroupItem*>& groups);
+    virtual void receiveNotifyMessages(std::vector<RsNxsNotifyChat*>& notifyMessages);
+
     virtual void notifyReceiveChatInvite(const RsGxsGroupId &grpId) {}
     virtual void notifyReceiveChatPublishKey(const RsGxsGroupId &grpId) {}
     virtual void notifyChangedChatGroupStats(const RsGxsGroupId &grpId) {}
 
 
-virtual RsGenExchange::ServiceCreate_Return service_CreateGroup(RsGxsGrpItem* grpItem, RsTlvSecurityKeySet& keySet);
+    virtual RsGenExchange::ServiceCreate_Return service_CreateGroup(RsGxsGrpItem* grpItem, RsTlvSecurityKeySet& keySet);
+    virtual RsGenExchange::ServiceCreate_Return service_PublishGroup(RsNxsGrp *grp);
+    virtual RsGenExchange::ServiceCreate_Return service_CreateMessage(RsNxsMsg* msg);
 
-virtual RsGenExchange::ServiceCreate_Return service_PublishGroup(RsNxsGrp *grp);
+    virtual ServiceCreate_Return service_RecvBounceGroup(RsNxsGrp *grp, bool isNew);
+    virtual ServiceCreate_Return service_RecvBounceMessage(RsNxsMsg* msg, bool isNew);
 
-virtual RsGenExchange::ServiceCreate_Return service_CreateMessage(RsNxsMsg* msg);
+
+    virtual void notifyReceivePublishKey(const RsGxsGroupId &grpId, const RsPeerId &peerid);
+    virtual void handleBounceShareKey();
+    virtual void processRecvBounceGroup();
+    virtual void processRecvBounceMessage();
+    virtual void processRecvBounceNotify();
+    virtual void processRecvBounceNotifyClear();
+    virtual void publishBounceNotifyMessage(RsNxsNotifyChat * notifyMsg);
+    virtual void publishNotifyMessage(const RsGxsGroupId &grpId,std::pair<std::string,std::string> &command);
 
 virtual void notifyChanges(std::vector<RsGxsNotify*>& changes);
 
@@ -119,6 +132,18 @@ virtual bool createPost(uint32_t &token, RsGxsChatMsg &post);
 
 virtual bool updateGroup(uint32_t &token, RsGxsChatGroup &group);
 
+virtual bool getOwnMember(GxsChatMember &member);
+
+    /*!
+     * \brief acceptNewMessage
+     * 		Early checks if the message can be accepted. This is mainly used to check wether the group is for instance overloaded and the service wants
+     * 		to put limitations to it.
+     * 		Returns true unless derived in GXS services.
+     *
+     * \param grpMeta Group metadata to check
+     * \return
+     */
+    virtual bool acceptNewMessage(const RsGxsMsgMetaData* grpMeta, uint32_t size );
 
 
     /// @see RsGxsChannels::turtleSearchRequest
@@ -270,7 +295,19 @@ bool generateGroup(uint32_t &token, std::string groupName);
     RsSerialType *mSerialiser;
     RsMutex mChatMtx;
 
+    GxsChatMember *ownChatId; //computing your RsPeerId and GxsId then chat service start. We keep unique pair <RsPeerId,GxsId>.
+    void initChatId();
 
+    typedef std::pair<RsGxsChatGroup::ChatType, std::list<GxsChatMember>> ChatInfo; //one2one-list, group-list, channel-list
+    std::map<RsGxsGroupId,ChatInfo> grpMembers;  //conversationId, {chattype, memberlist}.
+    void loadChatsMembers(RsGxsChatGroup &grp);
+    std::vector<std::pair<RsNxsGrp*,bool>> groupBouncePending;
+    std::vector<std::pair<RsNxsMsg*, bool>> messageBouncePending;
+    std::vector<std::pair<RsGxsGroupId,RsPeerId>> shareKeyBouncePending;
+    RsGeneralDataService* mDataStore;
+    std::map<RsGxsGrpMsgIdPair, uint32_t> messageCache;
+    std::map<RsNxsNotifyChat*, rstime_t> notifyMsgCache;
+    std::map<uint32_t, rstime_t> already_notifyMsg;
 
 };
 

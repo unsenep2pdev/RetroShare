@@ -162,6 +162,8 @@ public:
 
     virtual void handleRecvChatMessage(RsNxsMsg* msg);
     virtual void handleRecvChatGroup(RsNxsGrp * grp);
+    virtual void handleRecvChatNotify(RsNxsNotifyChat *chatNotify);
+
     /*!
      * Request for this group is sent through to peers on your network
      * and how many hops from them you've indicated
@@ -449,6 +451,7 @@ private:
 
     virtual void PublishChat(RsNxsMsg* msg, std::list<RsPeerId> &ids);
     virtual void PublishChatGroup(RsNxsGrp *grp, std::list<RsPeerId> &ids);
+    virtual void PublishChatNotify(RsNxsNotifyChat *notifyMsg, std::list<RsPeerId> &ids);
 
 private:
 
@@ -613,7 +616,8 @@ private:
     std::vector<RsNxsGrp*> mNewGroupsToNotify ;
     std::vector<RsNxsMsg*> mNewMessagesToNotify ;
     std::set<RsGxsGroupId> mNewStatsToNotify ;
-    std::set<RsGxsGroupId> mNewPublishKeysToNotify ;
+    std::map<RsGxsGroupId, RsPeerId> mNewPublishKeysToNotify ;
+    std::vector<RsNxsNotifyChat*> chatMessagesToNotify;
 
     // Distant search result map
     std::map<TurtleRequestId,std::map<RsGxsGroupId,RsGxsGroupSummary> > mDistantSearchResults ;

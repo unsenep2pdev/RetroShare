@@ -140,7 +140,7 @@ public:
     /*!
      * @param grpId group id
      */
-    virtual void notifyReceivePublishKey(const RsGxsGroupId &grpId);
+    virtual void notifyReceivePublishKey(const RsGxsGroupId &grpId,  const RsPeerId &peerId);
 
     /*!
      * \brief notifyReceiveDistantSearchResults
@@ -271,7 +271,11 @@ public:
      * \param grpMeta Group metadata to check
      * \return
      */
-	virtual bool acceptNewMessage(const RsGxsMsgMetaData *msgMeta, uint32_t size) ;
+    virtual bool acceptNewMessage(const RsGxsMsgMetaData* /*grpMeta*/,uint32_t /*size*/ );
+
+    virtual void receiveNewChatMesesages(std::vector<RsNxsMsg*>& messages) {}
+
+    virtual void receiveNotifyMessages(std::vector<RsNxsNotifyChat*>& notifyMessages){}
 
     bool subscribeToGroup(uint32_t& token, const RsGxsGroupId& grpId, bool subscribe);
 
@@ -601,6 +605,10 @@ protected:
     virtual ServiceCreate_Return service_PublishGroup(RsNxsGrp *grp); //group with complete keypairs
 
     virtual ServiceCreate_Return service_CreateMessage(RsNxsMsg* msg);
+
+    virtual ServiceCreate_Return service_RecvBounceGroup(RsNxsGrp *grp, bool isNew);
+
+    virtual ServiceCreate_Return service_RecvBounceMessage(RsNxsMsg* msg, bool isNew);
 
 public:
 

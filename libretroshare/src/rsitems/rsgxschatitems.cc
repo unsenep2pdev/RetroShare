@@ -46,6 +46,7 @@ void RsGxsChatGroupItem::clear()
 {
     mDescription.clear();
     mImage.TlvClear();
+    members.clear();
 }
 
 bool RsGxsChatGroupItem::fromChatGroup(RsGxsChatGroup &group, bool moveImage)
@@ -53,6 +54,8 @@ bool RsGxsChatGroupItem::fromChatGroup(RsGxsChatGroup &group, bool moveImage)
     clear();
     meta = group.mMeta;
     mDescription = group.mDescription;
+    type=group.type;
+    members = group.members;
 
     if (moveImage)
     {
@@ -71,6 +74,9 @@ bool RsGxsChatGroupItem::toChatGroup(RsGxsChatGroup &group, bool moveImage)
 {
     group.mMeta = meta;
     group.mDescription = mDescription;
+    group.type = type;
+    group.members = members;
+
     if (moveImage)
     {
         group.mImage.take((uint8_t *) mImage.binData.bin_data, mImage.binData.bin_len);
@@ -88,6 +94,8 @@ void RsGxsChatGroupItem::serial_process(RsGenericSerializer::SerializeJob j,RsGe
 {
     RsTypeSerializer::serial_process           (j,ctx,TLV_TYPE_STR_DESCR,mDescription,"mDescription") ;
     RsTypeSerializer::serial_process<RsTlvItem>(j,ctx,mImage,"mImage") ;
+    RS_SERIAL_PROCESS(type);
+    RsTypeSerializer::serial_process<GxsChatMember>(j,ctx,members,"members");
 }
 
 bool RsGxsChatMsgItem::fromChatPost(RsGxsChatMsg &post, bool moveImage)

@@ -269,6 +269,10 @@ void NewsFeed::updateDisplay()
                 if (flags & RS_FEED_TYPE_GXSCHAT)
                     addFeedItemChatNew(fi);
                 break;
+            case RS_FEED_ITEM_CHATS_NOTIFY:
+                if (flags & RS_FEED_TYPE_GXSCHAT)
+                    addFeedItemChatNotify(fi);
+                break;
             case RS_FEED_ITEM_CHATS_MSG:
                 if (flags & RS_FEED_TYPE_GXSCHAT)
                     addFeedItemChatMsg(fi);
@@ -301,19 +305,19 @@ void NewsFeed::updateDisplay()
                     mTokenQueueChat = new TokenQueue(rsGxsChats->getTokenService(), instance);
                 }
 
-                //addFeedItemChatPublishKey(fi);
+                addFeedItemChatPublishKey(fi);
 
-                    RsGxsGroupId grpId(fi.mId1);
-                    if (!grpId.isNull()) {
-                        RsTokReqOptions opts;
-                        opts.mReqType = GXS_REQUEST_TYPE_GROUP_DATA;
+//                    RsGxsGroupId grpId(fi.mId1);
+//                    if (!grpId.isNull()) {
+//                        RsTokReqOptions opts;
+//                        opts.mReqType = GXS_REQUEST_TYPE_GROUP_DATA;
 
-                        std::list<RsGxsGroupId> grpIds;
-                        grpIds.push_back(grpId);
+//                        std::list<RsGxsGroupId> grpIds;
+//                        grpIds.push_back(grpId);
 
-                        uint32_t token;
-                        mTokenQueueChat->requestGroupInfo(token, RS_TOKREQ_ANSTYPE_SUMMARY, opts, grpIds, TOKEN_TYPE_PUBLISHKEY);
-                    }
+//                        uint32_t token;
+//                        mTokenQueueChat->requestGroupInfo(token, RS_TOKREQ_ANSTYPE_SUMMARY, opts, grpIds, TOKEN_TYPE_PUBLISHKEY);
+//                    }
             }
             break;
 			case RS_FEED_ITEM_FORUM_NEW:
@@ -1378,6 +1382,25 @@ void NewsFeed::addFeedItemChatNew(const RsFeedItem &fi)
 #endif
 }
 
+void NewsFeed::addFeedItemChatNotify(const RsFeedItem &fi){
+    RsGxsGroupId grpId(fi.mId1);
+    RsGxsMessageId msgId(fi.mId2);
+
+    if (grpId.isNull()) {
+        return;
+    }
+    /* make new widget */
+
+   // GxsChatPostItem *item = new GxsChatPostItem(this, NEWSFEED_CHATNEWNOTIFY, grpId, msgId, false, true);
+
+    /* add to layout */
+   // addFeedItem(item);
+
+#ifdef NEWS_DEBUG
+    std::cerr << "NewsFeed::addFeedItemChatNotify()";
+    std::cerr << std::endl;
+#endif
+}
 //void NewsFeed::addFeedItemChannelUpdate(const RsFeedItem &fi)
 //{
 //	/* make new widget */

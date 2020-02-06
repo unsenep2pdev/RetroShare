@@ -451,6 +451,7 @@ int RsGxsNetService::tick()
 	    should_notify = should_notify || !mNewMessagesToNotify.empty() ;
 	    should_notify = should_notify || !mNewPublishKeysToNotify.empty() ;
 	    should_notify = should_notify || !mNewStatsToNotify.empty() ;
+        should_notify = should_notify || !chatMessagesToNotify.empty() ;
     }
 
     if(should_notify)
@@ -494,8 +495,9 @@ void RsGxsNetService::processObserverNotifications()
 
     std::vector<RsNxsGrp*> grps_copy ;
     std::vector<RsNxsMsg*> msgs_copy ;
+    std::vector<RsNxsNotifyChat*> msgs_notify_copy ;
     std::set<RsGxsGroupId> stat_copy ;
-    std::set<RsGxsGroupId> keys_copy ;
+    std::map<RsGxsGroupId, RsPeerId> keys_copy ;
 
     {
 	    RS_STACK_MUTEX(mNxsMutex) ;
@@ -504,18 +506,23 @@ void RsGxsNetService::processObserverNotifications()
 	    msgs_copy = mNewMessagesToNotify ;
 	    stat_copy = mNewStatsToNotify ;
 	    keys_copy = mNewPublishKeysToNotify ;
+        msgs_notify_copy = chatMessagesToNotify;
 
 	    mNewGroupsToNotify.clear() ;
 	    mNewMessagesToNotify.clear() ;
 	    mNewStatsToNotify.clear() ;
 	    mNewPublishKeysToNotify.clear() ;
+        chatMessagesToNotify.clear();
     }
 
     if(!grps_copy.empty()) mObserver->receiveNewGroups  (grps_copy);
     if(!msgs_copy.empty()) mObserver->receiveNewMessages(msgs_copy);
 
-    for(std::set<RsGxsGroupId>::const_iterator it(keys_copy.begin());it!=keys_copy.end();++it)
-		mObserver->notifyReceivePublishKey(*it);
+    if(!msgs_notify_copy.empty())
+        mObserver->receiveNotifyMessages(msgs_notify_copy);
+
+    for(auto it(keys_copy.begin());it!=keys_copy.end();++it)
+        mObserver->notifyReceivePublishKey(it->first, it->second);
 
     for(std::set<RsGxsGroupId>::const_iterator it(stat_copy.begin());it!=stat_copy.end();++it)
 		mObserver->notifyChangedGroupStats(*it);
@@ -1827,7 +1834,7 @@ void RsGxsNetService::recvNxsItemQueue()
             case RS_PKT_SUBTYPE_NXS_GRP_PUBLISH_KEY_ITEM:handleRecvPublishKeys         (dynamic_cast<RsNxsGroupPublishKeyItem*>(ni)) ; break ;
             case RS_PKT_SUBTYPE_NXS_MSG_ITEM:            handleRecvChatMessage         (dynamic_cast<RsNxsMsg*>(ni)); break;
             case RS_PKT_SUBTYPE_NXS_GRP_ITEM:            handleRecvChatGroup           (dynamic_cast<RsNxsGrp*>(ni)); break;
-
+            case RS_PKT_SUBTYPE_NXS_CHAT_MSG_ITEM:       handleRecvChatNotify           (dynamic_cast<RsNxsNotifyChat*>(ni)); break;
             default:
                     if(ni->PacketSubType() != RS_PKT_SUBTYPE_NXS_ENCRYPTED_DATA_ITEM)
                 {
@@ -4375,7 +4382,32 @@ void RsGxsNetService::handleRecvChatMessage(RsNxsMsg* msg)
 
 
 }
+void RsGxsNetService::handleRecvChatNotify(RsNxsNotifyChat *chatNotify){
+#ifdef NXS_NET_DEBUG_0
+    GXSNETDEBUG___<< "RsGxsNetService::handleRecvChatGroup() " << std::endl;
+#endif
+    if (!chatNotify)
+        return;
 
+    {
+        RS_STACK_MUTEX(mNxsMutex) ;
+        RsNxsNotifyChat *notifyItem = new RsNxsNotifyChat(RS_SERVICE_GXS_TYPE_CHATS);
+        notifyItem->PeerId(chatNotify->PeerId());
+        notifyItem->grpId=chatNotify->grpId;
+        notifyItem->command = chatNotify->command;
+        notifyItem->sendFrom = chatNotify->sendFrom;
+        notifyItem->msgId = chatNotify->msgId;
+
+        chatMessagesToNotify.push_back(notifyItem);
+
+#ifdef NXS_NET_DEBUG_0
+        std::cerr <<"RsGxsNetService::handleRecvChatNotify():"<<std::endl;
+        std::cerr <<"GroupId:"<<notifyItem->grpId<<" msgId:"<<notifyItem->msgId<<std::endl;
+        std::cerr <<"SendFrom: {("<<notifyItem->sendFrom.first.first.toStdString() + "," +  notifyItem->sendFrom.first.second.toStdString() + "),  " + notifyItem->sendFrom.second <<"}"<<std::endl;
+        std::cerr <<"Command: {" + notifyItem->command.first + ":" + notifyItem->command.second + "}"<<std::endl;
+#endif
+    }
+}
 void RsGxsNetService::handleRecvChatGroup(RsNxsGrp* grp)
 {
 #ifdef NXS_NET_DEBUG_0
@@ -4941,7 +4973,7 @@ void RsGxsNetService::sharePublishKeysPending()
         return ;
 
 #ifdef NXS_NET_DEBUG_3
-    GXSNETDEBUG___ << "RsGxsNetService::sharePublishKeys()  " << (void*)this << std::endl;
+    GXSNETDEBUG___ << "RsGxsNetService::sharePublishKeysPending()  " << (void*)this << std::endl;
 #endif
     // get list of peers that are online
 
@@ -5001,7 +5033,7 @@ void RsGxsNetService::sharePublishKeysPending()
 
         if(grpMeta == NULL)
         {
-            std::cerr << "(EE) RsGxsNetService::sharePublishKeys() Publish keys cannot be found for group " << mit->first << std::endl;
+            std::cerr << "(EE) RsGxsNetService::sharePublishKeysPending() Publish keys cannot be found for group " << mit->first << std::endl;
             continue ;
         }
 
@@ -5019,7 +5051,7 @@ void RsGxsNetService::sharePublishKeysPending()
 
         if(!publish_key_found)
         {
-            std::cerr << "(EE) no publish key in group " << mit->first << ". Cannot share!" << std::endl;
+            std::cerr << "sharePublishKeysPending(): (EE) no publish key in group " << mit->first << ". Cannot share!" << std::endl;
             continue ;
         }
 
@@ -5084,7 +5116,7 @@ void RsGxsNetService::handleRecvPublishKeys(RsNxsGroupPublishKeyItem *item)
 
 	const RsGxsGrpMetaData *grpMeta = grpMetaMap[item->grpId] ;
 	if (!grpMeta) {
-		std::cerr << "(EE) RsGxsNetService::handleRecvPublishKeys() grpMeta not found." << std::endl;
+        std::cerr << "handleRecvPublishKeys: (EE) RsGxsNetService::handleRecvPublishKeys() grpMeta not found." << std::endl;
 		return ;
 	}
 
@@ -5103,23 +5135,23 @@ void RsGxsNetService::handleRecvPublishKeys(RsNxsGroupPublishKeyItem *item)
 
 	if(!(!admin && publi))
 	{
-		std::cerr << "  Key is not a publish private key. Discarding!" << std::endl;
+        std::cerr << "handleRecvPublishKeys:  Key is not a publish private key. Discarding!" << std::endl;
 		return ;
 	}
 	// Also check that we don't already have full keys for that group.
 
 	if(grpMeta->keys.public_keys.find(item->private_key.keyId) == grpMeta->keys.public_keys.end())
 	{
-		std::cerr << "   (EE) Key not found in known group keys. This is an inconsistency." << std::endl;
+        std::cerr << "handleRecvPublishKeys:   (EE) Key not found in known group keys. This is an inconsistency." << std::endl;
 		return ;
 	}
 
 	if(grpMeta->keys.private_keys.find(item->private_key.keyId) != grpMeta->keys.private_keys.end())
 	{
 #ifdef NXS_NET_DEBUG_3
-		GXSNETDEBUG_PG(item->PeerId(),item->grpId)<< "   (EE) Publish key already present in database. Discarding message." << std::endl;
+        GXSNETDEBUG_PG(item->PeerId(),item->grpId)<< "RsGxsNetService::handleRecvPublishKeys:   (EE) Publish key already present in database. Discarding message." << std::endl;
 #endif
-        mNewPublishKeysToNotify.insert(item->grpId) ;
+        //mNewPublishKeysToNotify.insert(std::make_pair(item->grpId,item->PeerId())) ;
 		return ;
 	}
 
@@ -5133,13 +5165,14 @@ void RsGxsNetService::handleRecvPublishKeys(RsNxsGroupPublishKeyItem *item)
 	if(ret)
 	{
 #ifdef NXS_NET_DEBUG_3
-		GXSNETDEBUG_PG(item->PeerId(),item->grpId)<< "  updated database with new publish keys." << std::endl;
+        GXSNETDEBUG_PG(item->PeerId(),item->grpId)<< "handleRecvPublishKeys():  updated database with new publish keys." << std::endl;
 #endif
-        mNewPublishKeysToNotify.insert(item->grpId) ;
+        mNewPublishKeysToNotify.insert(std::make_pair(item->grpId,item->PeerId())) ;
+        //clear database cache for this groupId
 	}
 	else
 	{
-		std::cerr << "(EE) could not update database. Something went wrong." << std::endl;
+        std::cerr << "RsGxsNetService::handleRecvPublishKeys: (EE) could not update database. Something went wrong." << std::endl;
 	}
 }
 
@@ -5589,6 +5622,21 @@ void RsGxsNetService::PublishChatGroup(RsNxsGrp *grp, std::list<RsPeerId> &ids){
         newGrp->meta.setBinData(grp->meta.bin_data, grp->meta.bin_len);
 
         generic_sendItem(newGrp);
+
+    }
+}
+
+void RsGxsNetService::PublishChatNotify(RsNxsNotifyChat *notifyMsg, std::list<RsPeerId> &ids){
+
+    for (auto it = ids.begin(); it != ids.end(); it++){
+        RsNxsNotifyChat *newNotify = new RsNxsNotifyChat(notifyMsg->PacketService());
+        newNotify->PeerId(*it);
+        newNotify->grpId = notifyMsg->grpId;
+        newNotify->msgId = notifyMsg->msgId;
+        newNotify->command = notifyMsg->command;
+        newNotify->sendFrom = notifyMsg->sendFrom;
+
+        generic_sendItem(newNotify);
 
     }
 }

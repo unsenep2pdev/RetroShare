@@ -366,6 +366,25 @@ public:
 
 };
 
+struct RsNxsNotifyChat : RsNxsItem
+{
+    explicit RsNxsNotifyChat(uint16_t servtype)
+        : RsNxsItem(servtype, RS_PKT_SUBTYPE_NXS_CHAT_MSG_ITEM)
+    {clear();}
+    virtual ~RsNxsNotifyChat(){}
+    virtual void serial_process( RsGenericSerializer::SerializeJob j,
+                                     RsGenericSerializer::SerializeContext& ctx );
+
+    virtual void clear();
+    virtual std::ostream &print(std::ostream& out, uint16_t indent);
+
+    RsGxsGroupId grpId; /// group id, forms part of version id
+    uint32_t msgId; /// msg id for unique message
+    std::pair<std::string, std::string> command;  //signal messages: typing, calling ice signal, etc....
+    //typingstatus:typing, audio_call:audio_p2p_ICE, etc.
+    //it will save store these online signal messages.
+    RsGxsContactPerson  sendFrom; //sending from this person (RsPeerId, GxsId, and Person's Name).
+};
 
 /*!
  * Used to respond to a RsGrpMsgsReq

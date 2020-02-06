@@ -1074,6 +1074,8 @@ int RsDataService::updateGroupKeys(const RsGxsGroupId& grpId,const RsTlvSecurity
 {
     RsStackMutex stack(mDbMutex);
 
+    locked_clearGrpMetaCache(grpId); //force to reload new info after commit.
+
     // begin transaction
     mDb->beginTransaction();
 
@@ -1093,7 +1095,8 @@ int RsDataService::updateGroupKeys(const RsGxsGroupId& grpId,const RsTlvSecurity
     mDb->sqlUpdate(GRP_TABLE_NAME, "grpId='" + grpId.toStdString() + "'", cv);
 
     // finish transaction
-    return  mDb->commitTransaction();
+    return mDb->commitTransaction();
+
 }
 
 bool RsDataService::validSize(RsNxsGrp* grp) const

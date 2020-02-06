@@ -1646,7 +1646,7 @@ void RsGenExchange::receiveDistantSearchResults(TurtleRequestId id,const RsGxsGr
     std::cerr << "RsGenExchange::receiveDistantSearchResults(): received result for request " << std::hex << id << std::dec << std::endl;
 }
 
-void RsGenExchange::notifyReceivePublishKey(const RsGxsGroupId &grpId)
+void RsGenExchange::notifyReceivePublishKey(const RsGxsGroupId &grpId, const RsPeerId &peerid)
 {
 	RS_STACK_MUTEX(mGenMtx);
 
@@ -2358,6 +2358,22 @@ RsGenExchange::ServiceCreate_Return RsGenExchange::service_PublishGroup(RsNxsGrp
     return SERVICE_CREATE_SUCCESS;
 }
 
+RsGenExchange::ServiceCreate_Return RsGenExchange::service_RecvBounceGroup(RsNxsGrp *grp, bool isNew){
+#ifdef GEN_EXCH_DEBUG
+    std::cerr << "RsGenExchange::service_RecvBounceGroup(): Does nothing"
+              << std::endl;
+#endif
+    return SERVICE_CREATE_SUCCESS;
+}
+
+RsGenExchange::ServiceCreate_Return RsGenExchange::service_RecvBounceMessage(RsNxsMsg* msg, bool isNew){
+#ifdef GEN_EXCH_DEBUG
+    std::cerr << "RsGenExchange::service_RecvBounceMessage(): Does nothing"
+              << std::endl;
+#endif
+    return SERVICE_CREATE_SUCCESS;
+}
+
 #define PENDING_SIGN_TIMEOUT 10 //  5 seconds
 
 
@@ -2703,10 +2719,7 @@ void RsGenExchange::publishGrps()
 							    mDataAccess->addGroupData(grp);
 
                             grp->metaData->keys.private_keys.clear() ;
-                            std::cerr << "******publishGrps****************"<<std::endl;
-                            std::cerr <<"Sendin Group to peers"<<grp->grpId <<std::endl;
-                            std::cerr <<"groupSize():" << grp->grp.TlvSize() <<std::endl;
-                            std::cerr << "GroupMeta Size(): "<< grp->meta.TlvSize() <<std::endl;
+
                             ServiceCreate_Return grpRet = service_PublishGroup(grp);
                             if (grpRet)
                                 delete grp ;
@@ -2922,7 +2935,7 @@ void RsGenExchange::processRecvdMessages()
 					delete meta;
 			}
 
-			bool accept_new_msg = msg->metaData != NULL && acceptNewMessage(msg->metaData,msg->msg.bin_len);
+            bool accept_new_msg = msg->metaData != NULL && acceptNewMessage(msg->metaData,msg->msg.bin_len );
 
 			if(!accept_new_msg)
 				messages_to_reject.push_back(msg->metaData->mMsgId); // This prevents reloading the message again at next sync.
@@ -3044,6 +3057,7 @@ void RsGenExchange::processRecvdMessages()
 				std::cerr << "Message received. Identity=" << msg->metaData->mAuthorId << ", from peer " << msg->PeerId() << std::endl;
 
 #endif
+                service_RecvBounceMessage(msg, true); //for gsxchat bouncing messages.
 
 				if(!msg->metaData->mAuthorId.isNull())
 					mRoutingClues[msg->metaData->mAuthorId].insert(msg->PeerId()) ;
@@ -3103,6 +3117,7 @@ void RsGenExchange::processRecvdMessages()
 
 bool RsGenExchange::acceptNewGroup(const RsGxsGrpMetaData* /*grpMeta*/ ) { return true; }
 bool RsGenExchange::acceptNewMessage(const RsGxsMsgMetaData* /*grpMeta*/,uint32_t /*size*/ ) { return true; }
+
 
 void RsGenExchange::processRecvdGroups()
 {
@@ -3187,13 +3202,16 @@ void RsGenExchange::processRecvdGroups()
 
 				grps_to_store.push_back(grp);
 				grpIds.push_back(grp->grpId);
+                service_RecvBounceGroup(grp,true); //gxschat bouncing group.
 			}
 			else
 			{
 				GroupUpdate update;
 				update.newGrp = grp;
 				mGroupUpdates.push_back(update);
+                service_RecvBounceGroup(grp,false); //gxschat bouncing group.
 			}
+
 		}
 		else if(ret == VALIDATE_FAIL)
 		{

@@ -28,6 +28,7 @@
 #include <string>
 #include <list>
 #include <functional>
+#include <map>
 
 #include "retroshare/rstokenservice.h"
 #include "retroshare/rsgxsifacehelper.h"
@@ -43,25 +44,71 @@ class RsGxsChats;
  */
 extern RsGxsChats *rsGxsChats;
 
+
+class GxsChatMember: RsSerializable
+{
+    public:
+    std::string nickname;  //chat display name
+    RsPeerId chatPeerId;
+    RsGxsId  chatGxsId;
+    std::map<std::string,std::string> chatinfo;
+
+    virtual void serial_process( RsGenericSerializer::SerializeJob j,
+                             RsGenericSerializer::SerializeContext& ctx )
+    {
+        RS_SERIAL_PROCESS(nickname);
+        RS_SERIAL_PROCESS(chatPeerId);
+        RS_SERIAL_PROCESS(chatGxsId);
+        RsTypeSerializer::serial_process<std::string,std::string>(j,ctx,chatinfo,"chatinfo");
+    }
+
+    void operator=(const GxsChatMember &member){
+        nickname    = member.nickname;
+        chatPeerId  = member.chatPeerId;
+        chatGxsId   = member.chatGxsId;
+        chatinfo    = member.chatinfo;
+    }
+    bool operator==(const GxsChatMember& comp ) const
+    {
+        //if chatId match exactly.
+        return chatPeerId== comp.chatPeerId && chatGxsId == comp.chatGxsId;
+    }
+    bool operator()(const GxsChatMember& b) const
+    {
+        return chatPeerId < b.chatPeerId;
+    }
+
+    bool operator<(const GxsChatMember b) const
+    {
+        return chatPeerId < b.chatPeerId;
+    }
+
+};
+
+std::ostream &operator<<(std::ostream& out, const GxsChatMember& member);
+
+
 class RsGxsChatGroup : RsSerializable
 {
     public:
+        enum ChatType { ONE2ONE, GROUPCHAT, CHANNEL } ;
+        ChatType  type;  //one2one,groupchat, and channel
         RsGroupMetaData mMeta;
         std::string mDescription;   //conversation display name or groupname
         RsGxsImage  mImage; //conversation avatar image
-        std::map<RsPeerId,RsGxsId> members;
+        std::list<GxsChatMember> members;
         /// @see RsSerializable
         bool mAutoDownload;
+        RsGxsChatGroup(): type(GROUPCHAT){}
         virtual void serial_process( RsGenericSerializer::SerializeJob j,
                                  RsGenericSerializer::SerializeContext& ctx )
         {
             RS_SERIAL_PROCESS(mMeta);
             RS_SERIAL_PROCESS(mImage);
             RS_SERIAL_PROCESS(mDescription);
-            RS_SERIAL_PROCESS(members);
             RS_SERIAL_PROCESS(mAutoDownload);
-
-            RsTypeSerializer::serial_process<RsPeerId,RsGxsId>(j,ctx,members,"members");
+            RS_SERIAL_PROCESS(type);
+            RsTypeSerializer::serial_process<GxsChatMember>(j,ctx,members,"members");
         }
 };
 
@@ -131,6 +178,7 @@ public:
             const std::list<RsGxsGroupId>& chanIds,
             std::vector<RsGxsChatGroup>& chatsInfo ) = 0;
 
+
     /**
      * @brief Get content of specified chats. Blocking API
      * @jsonapi{development}
@@ -152,6 +200,7 @@ public:
     virtual bool getPostData(const uint32_t &token, std::vector<RsGxsChatMsg> &posts, std::vector<RsGxsComment> &cmts) = 0;
     virtual bool getPostData(const uint32_t &token, std::vector<RsGxsChatMsg> &posts) = 0;
 
+    virtual bool getOwnMember(GxsChatMember &ownId)=0;
 
     /**
      * @brief toggle message read status

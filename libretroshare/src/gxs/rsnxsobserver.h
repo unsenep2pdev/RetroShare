@@ -60,7 +60,7 @@ public:
     /*!
      * @param grpId group id
      */
-    virtual void notifyReceivePublishKey(const RsGxsGroupId &grpId) = 0;
+    virtual void notifyReceivePublishKey(const RsGxsGroupId &grpId, const RsPeerId &peerId) = 0;
 
     /*!
      * @param grpId group id
@@ -68,7 +68,8 @@ public:
     virtual void notifyChangedGroupStats(const RsGxsGroupId &grpId) = 0;
 
 
-
+    virtual void receiveNewChatMesesages(std::vector<RsNxsMsg*>& messages) = 0;
+    virtual void receiveNotifyMessages(std::vector<RsNxsNotifyChat*>& notifyMessages) = 0;
 
 
 };

@@ -174,6 +174,7 @@ public:
 
     virtual void PublishChat(RsNxsMsg* msg, std::list<RsPeerId> &ids)=0;
     virtual void PublishChatGroup(RsNxsGrp *grp, std::list<RsPeerId> &ids)=0;
+    virtual void PublishChatNotify(RsNxsNotifyChat *notifyMsg, std::list<RsPeerId> &ids)=0;
 
 
     /*!
