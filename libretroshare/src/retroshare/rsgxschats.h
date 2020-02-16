@@ -51,6 +51,7 @@ class GxsChatMember: RsSerializable
     std::string nickname;  //chat display name
     RsPeerId chatPeerId;
     RsGxsId  chatGxsId;
+    bool status;  //true if a member has joined the conversation, default = false.
     std::map<std::string,std::string> chatinfo;
 
     virtual void serial_process( RsGenericSerializer::SerializeJob j,
@@ -59,6 +60,7 @@ class GxsChatMember: RsSerializable
         RS_SERIAL_PROCESS(nickname);
         RS_SERIAL_PROCESS(chatPeerId);
         RS_SERIAL_PROCESS(chatGxsId);
+        RS_SERIAL_PROCESS(status);
         RsTypeSerializer::serial_process<std::string,std::string>(j,ctx,chatinfo,"chatinfo");
     }
 
@@ -67,6 +69,7 @@ class GxsChatMember: RsSerializable
         chatPeerId  = member.chatPeerId;
         chatGxsId   = member.chatGxsId;
         chatinfo    = member.chatinfo;
+        status      = member.status;
     }
     bool operator==(const GxsChatMember& comp ) const
     {

@@ -529,9 +529,10 @@ void p3GxsChats::processRecvBounceGroup(){
         RsGxsGrpItem* gItem = dynamic_cast<RsGxsGrpItem*>(item);
         RsGxsChatGroupItem* grpItem = dynamic_cast<RsGxsChatGroupItem*>(gItem);
 
+#ifdef GXSCHATS_DEBUG
         std::cerr <<"Group Circle ID:"<<grpItem->meta.mCircleId<<std::endl;
         std::cerr <<"Group CircleType:"<<grpItem->meta.mCircleType<<std::endl;
-
+#endif
         auto mit = grpMembers.find(grpId);
         if (mit == grpMembers.end() && isNew){
             //new group just received. We have to deserialized to find out what type of conversation (ONE2ONE, GROUP, or CHANNEL)
@@ -556,7 +557,7 @@ void p3GxsChats::processRecvBounceGroup(){
                 }
             }//end switch
         }
-        else if(!isNew){
+        else if(mit != grpMembers.end() && !isNew){  //exist group and being update.
 
             std::map<RsGxsGroupId, RsGroupMetaData>::iterator git;
             git = mSubscribedGroups.find(bounceGrp->grpId);
@@ -573,12 +574,11 @@ void p3GxsChats::processRecvBounceGroup(){
                 case RsGxsChatGroup::CHANNEL:
                 {
                    if(!isNew){
-                        std::list<GxsChatMember> friendList = cinfo.second;
                         RsPeerId sender = bounceGrp->PeerId();
                         //std::list<GxsChatMember> sendList;
                         std::list<RsPeerId> tempSendList;
 
-                        for (auto sit=friendList.begin(); sit !=friendList.end(); sit++){
+                        for (auto sit=cinfo.second.begin(); sit !=cinfo.second.end(); sit++){
                             if(sit->chatPeerId == sender || sit->chatPeerId ==  ownChatId->chatPeerId){
                                 //Don't send to itself and sender peer.
                                 continue;
@@ -594,12 +594,9 @@ void p3GxsChats::processRecvBounceGroup(){
                         }
 
                         //forward to all members on this group.
-                        if(!tempSendList.empty()){
-                            std::cerr <<"Group Bouncing List of Peers:"<<std::endl;
-                            for(auto p=tempSendList.begin(); p!=tempSendList.end(); p++)
-                                std::cerr <<"PeerID: "<<*p <<std::endl;
+                        if(!tempSendList.empty())
                             netService->PublishChatGroup(bounceGrp,tempSendList);
-                        }
+
                     }
                 }
             }
@@ -793,6 +790,18 @@ void p3GxsChats::publishNotifyMessage(const RsGxsGroupId &grpId,std::pair<std::s
             }
             else{
                 //privateGroup. sending to only membership, except the sender.
+                std::list<RsPeerId> tempSendList;
+                std::list<RsPeerId> ids;
+                rsPeers->getOnlineList(ids);
+                for (auto sit=cinfo.second.begin(); sit !=cinfo.second.end(); sit++){
+                    if(sit->chatPeerId  != ownChatId->chatPeerId && contains(ids,sit->chatPeerId))
+                        tempSendList.push_back(sit->chatPeerId); //temp without gxs tunneling.
+                }
+
+                //send to all member of this group
+                if(!tempSendList.empty())
+                    netService->PublishChatNotify(notifyMsg, tempSendList);
+
             }
      }//send switch
 
@@ -832,6 +841,21 @@ void p3GxsChats::publishBounceNotifyMessage(RsNxsNotifyChat * notifyMsg){
             }
             else{
                 //privateGroup. sending to only membership, except the sender.
+                std::list<RsPeerId> tempSendList;
+                std::list<RsPeerId> ids;
+                rsPeers->getOnlineList(ids);
+                RsPeerId sender = notifyMsg->PeerId();
+
+                for (auto sit=cinfo.second.begin(); sit !=cinfo.second.end(); sit++){
+                    if( sit->chatPeerId != sender || sit->chatPeerId  != ownChatId->chatPeerId ){
+                        if (contains(ids,sit->chatPeerId))
+                            tempSendList.push_back(sit->chatPeerId);
+                    }
+                }
+
+                //send to all member of this group
+                if(!tempSendList.empty())
+                    netService->PublishChatNotify(notifyMsg, tempSendList);
             }
 
         }//end groupchat case
@@ -984,14 +1008,6 @@ static  rstime_t last_notifyClear = 0;
         dummy_tick();
         last_dummy_tick = time(NULL);
 
-
-//        std::pair<std::string, std::string> command;
-//        command = std::make_pair("chatstatus", "Typing");
-//        std::string hexGrpId="830e5b33f87c22088cca010e04e900f0";
-//        RsGxsGroupId grpId(hexGrpId);
-//        grpId.toStdString();
-//        publishNotifyMessage(grpId,command);
-
     }
 
     processRecvBounceGroup();
@@ -1061,11 +1077,8 @@ void p3GxsChats::loadChatsMembers(RsGxsChatGroup &grp){
     tmp.unique();
     grpMembers[grpId]=std::make_pair(grp.type,tmp);
 
-//    it->second.merge(grp.members);
-//    it->second.unique();
-
-
 }
+
 bool p3GxsChats::acceptNewMessage(const RsGxsMsgMetaData* grpMeta,uint32_t size)
 {
 
@@ -1092,7 +1105,6 @@ bool p3GxsChats::acceptNewMessage(const RsGxsMsgMetaData* grpMeta,uint32_t size)
     }
     return true;
 }
-
 
 bool p3GxsChats::groupShareKeys(
         const RsGxsGroupId &groupId, const std::set<RsPeerId>& peers )
