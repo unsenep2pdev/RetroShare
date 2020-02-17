@@ -627,81 +627,45 @@ void p3GxsChats::processRecvBounceMessage(){
         RsGxsGroupId grpId = msg->grpId;
 
         auto mit = grpMembers.find(grpId);
-         if (mit == grpMembers.end()){
+        if (mit == grpMembers.end()){
+             continue; //message doesn't belong to anygroup... Drop it!
+        }
 
-#ifdef GXSCHATS_DEBUG
-    std::cerr << "p3GxsChats::processRecvBounceMessage()  : no groupId is match our subscribed: "<<msg->grpId << std::endl;
-#endif
-             //message doesn't belong to anygroup... Drop it!
-             continue;
-         }
+        auto sit = mSubscribedGroups.find(grpId);
+        if(sit == mSubscribedGroups.end())
+             continue; //not a subscribe conversation, no bouncing on this message.
+
          ChatInfo cinfo = mit->second;
-         if(msg){
-             std::cerr <<"MesageId: "<< msg->msgId << "GroupId: "<<msg->grpId << "*****"<<std::endl;
-             std::cerr <<"Message Size(): "<<msg->msg.TlvSize()<<std::endl;
-             std::cerr <<"Meta Size() : "<<msg->meta.TlvSize()<<std::endl;
-             std::cerr <<"isNew: "<<isNew <<std::endl;
-             std::cerr <<"chatType: "<< cinfo.first <<std::endl;
-         }
          switch(cinfo.first){
-            case RsGxsChatGroup::ONE2ONE: {
-                //one2one message, drop off, final destination!
-             break;  //drop, no bouncing off
-            }
+            case RsGxsChatGroup::ONE2ONE: //one2one message, drop off, final destination! no bouncing off!
+             break;
             case RsGxsChatGroup::GROUPCHAT:
             case RsGxsChatGroup::CHANNEL:
             {
-#ifdef GXSCHATS_DEBUG
-    std::cerr << "p3GxsChats::processRecvBounceMessage()  : GROUPCHAT || CHANNEL "<<msg->grpId << std::endl;
-#endif
-
-                //bouncing all the message on the group, execept the sender of this message.
-                std::list<GxsChatMember> friendList = cinfo.second;
-                if(friendList.empty())
-                    continue;
-
-#ifdef GXSCHATS_DEBUG
-    std::cerr << "p3GxsChats::processRecvBounceMessage() : has GxsChatMember list: "<<friendList.size() << std::endl;
-#endif
                 RsPeerId sender = msg->PeerId();
-                //std::list<GxsChatMember> sendList;
                 std::list<RsPeerId> tempSendList;
-                //public group, you can grab all online plus the memberlist on the chat to send.
                 std::list<RsPeerId> ids;
                 rsPeers->getOnlineList(ids);
-                ids.remove(sender);
-                tempSendList.merge(ids);
 
-#ifdef GXSCHATS_DEBUG
-    std::cerr << "p3GxsChats::processRecvBounceMessage() : received from: "<<sender << " and ownId:"<<ownChatId->chatPeerId<< std::endl;
-#endif
-                for (auto sit=friendList.begin(); sit !=friendList.end(); sit++){
-                    if(sit->chatPeerId == sender || sit->chatPeerId ==  ownChatId->chatPeerId){
-                        //Don't send to itself and sender peer.
-                    }
-                    else{
-                        //sendList.push_back(*sit);
-                        //need to check if the member is owner friend and online
-                        //if member is not yet a friend, need to establish gxs tunnel if possible.
-                        //if not yet member and able to establish gxs tunnel, auto add friend (non-trust mode)
-                        //trust node = physical connection, non-trust node = gxs tunnel friend (People)
-                        tempSendList.push_back(sit->chatPeerId); //temp without gxs tunneling.
-                    }
+                RsGroupMetaData grpMeta = sit->second;
+                if(grpMeta.mCircleType !=GXS_CIRCLE_TYPE_PUBLIC){
+                    ids.remove(sender);
+                    tempSendList.merge(ids);
+                }else{
+                    //bouncing all private members with message on the group, execept the sender of this message.
+                    std::list<GxsChatMember> friendList = cinfo.second;
+                    for (auto sit=friendList.begin(); sit !=friendList.end(); sit++){
+                        if(sit->chatPeerId == sender || sit->chatPeerId ==  ownChatId->chatPeerId)
+                              continue;  //Don't send to itself and sender peer.
+                        else{
+                            if(contains(ids, sit->chatPeerId))
+                                tempSendList.push_back(sit->chatPeerId); //temp without gxs tunneling.
+                        }
+                    }//end forloop
                 }
-                if (!tempSendList.empty()){
-                    //publish the message with group of peerIds.
-#ifdef GXSCHATS_DEBUG
-    std::cerr << "p3GxsChats::processRecvBounceMessage() : bouncing msgId: "<<msg->msgId<< std::endl;
-    std::cerr <<"Sending To: ";
-    for (auto p=tempSendList.begin(); p!=tempSendList.end(); p++)
-        std::cerr <<"PeerId: "<<*p <<"  ";
-    std::cerr <<std::endl;
-#endif
+                if (!tempSendList.empty())   //publish the message with group of peerIds.
                    netService->PublishChat(msg, tempSendList);
-                }
             }
-
-
          }//end switch
     }//end for loop
     messageBouncePending.clear();
@@ -776,33 +740,24 @@ void p3GxsChats::publishNotifyMessage(const RsGxsGroupId &grpId,std::pair<std::s
 
         RsNetworkExchangeService *netService = RsGenExchange::getNetworkExchangeService();
         RsGroupMetaData grpMeta = sit->second;
+
+        std::list<RsPeerId> tempSendList;
+        std::list<RsPeerId> ids;
+        rsPeers->getOnlineList(ids);
+
         if(grpMeta.mCircleType ==GXS_CIRCLE_TYPE_PUBLIC){
-                //publicgroup with all user onlines. all online friends + groupMembership added & except the sender.
-                std::list<RsPeerId> ids;
-                rsPeers->getOnlineList(ids);
-                //or notifyMsg.
-#ifdef GXSCHATS_DEBUG
-    std::cerr << "p3GxsChats::publishNotifyMessage() sending : groupId"<<notifyMsg->grpId<<" msgId:"<< notifyMsg->msgId ;
-    std::cerr<<" sendFrom: "<<notifyMsg->sendFrom.first.first.toStdString()<< std::endl;
-    std::cerr <<"Command : {"<< notifyMsg->command.first<<", "<<notifyMsg->command.second<<"}"<< std::endl;
-#endif
-                netService->PublishChatNotify(notifyMsg, ids);
+            //publicgroup with all user onlines. all online friends + groupMembership added & except the sender.
+            tempSendList.merge(ids);
+        }else{
+            //privateGroup. sending to only membership, except the sender.
+            for (auto sit=cinfo.second.begin(); sit !=cinfo.second.end(); sit++){
+                if(sit->chatPeerId  != ownChatId->chatPeerId && contains(ids,sit->chatPeerId))
+                    tempSendList.push_back(sit->chatPeerId); //temp without gxs tunneling.
             }
-            else{
-                //privateGroup. sending to only membership, except the sender.
-                std::list<RsPeerId> tempSendList;
-                std::list<RsPeerId> ids;
-                rsPeers->getOnlineList(ids);
-                for (auto sit=cinfo.second.begin(); sit !=cinfo.second.end(); sit++){
-                    if(sit->chatPeerId  != ownChatId->chatPeerId && contains(ids,sit->chatPeerId))
-                        tempSendList.push_back(sit->chatPeerId); //temp without gxs tunneling.
-                }
+        }
+        if(!tempSendList.empty())
+            netService->PublishChatNotify(notifyMsg, tempSendList);
 
-                //send to all member of this group
-                if(!tempSendList.empty())
-                    netService->PublishChatNotify(notifyMsg, tempSendList);
-
-            }
      }//send switch
 
 
@@ -830,35 +785,30 @@ void p3GxsChats::publishBounceNotifyMessage(RsNxsNotifyChat * notifyMsg){
 
         RsNetworkExchangeService *netService = RsGenExchange::getNetworkExchangeService();
         RsGroupMetaData grpMeta = sit->second;
+        std::list<RsPeerId> tempSendList;
+        std::list<RsPeerId> ids;
+        rsPeers->getOnlineList(ids);
+        RsPeerId sender = notifyMsg->PeerId();
+
         if(grpMeta.mCircleType ==GXS_CIRCLE_TYPE_PUBLIC){
-                //publicgroup with all user onlines. all online friends + groupMembership added & except the sender.
-                std::list<RsPeerId> ids;
-                rsPeers->getOnlineList(ids);
-                RsPeerId sender = notifyMsg->PeerId();
-                ids.remove(sender);
+            //publicgroup with all user onlines. all online friends + groupMembership added & except the sender.
+            ids.remove(sender);
+            tempSendList.merge(ids);
                 //or notifyMsg.
-                netService->PublishChatNotify(notifyMsg, ids);
-            }
-            else{
-                //privateGroup. sending to only membership, except the sender.
-                std::list<RsPeerId> tempSendList;
-                std::list<RsPeerId> ids;
-                rsPeers->getOnlineList(ids);
-                RsPeerId sender = notifyMsg->PeerId();
-
-                for (auto sit=cinfo.second.begin(); sit !=cinfo.second.end(); sit++){
-                    if( sit->chatPeerId != sender || sit->chatPeerId  != ownChatId->chatPeerId ){
-                        if (contains(ids,sit->chatPeerId))
-                            tempSendList.push_back(sit->chatPeerId);
-                    }
+        }else{
+            //privateGroup. sending to only membership, except the sender.
+            for (auto sit=cinfo.second.begin(); sit !=cinfo.second.end(); sit++){
+                if( sit->chatPeerId != sender || sit->chatPeerId  != ownChatId->chatPeerId ){
+                    if (contains(ids,sit->chatPeerId))
+                        tempSendList.push_back(sit->chatPeerId);
                 }
-
-                //send to all member of this group
-                if(!tempSendList.empty())
-                    netService->PublishChatNotify(notifyMsg, tempSendList);
             }
+        }
+        //send to all member of this group
+        if(!tempSendList.empty())
+            netService->PublishChatNotify(notifyMsg, tempSendList);
 
-        }//end groupchat case
+       }//end groupchat case
     }//end switch
 }
 
