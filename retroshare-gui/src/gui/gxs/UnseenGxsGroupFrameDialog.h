@@ -32,7 +32,7 @@
 
 #include "util/TokenQueue.h"
 #include "GxsIdTreeWidgetItem.h"
-#include "GxsGroupDialog.h"
+#include "UnseenGxsGroupDialog.h"
 #include "gui/gxschats/UnseenGxsSmartlistmodel.h"
 
 
@@ -41,6 +41,7 @@ namespace Ui {
 class UnseenGxsGroupFrameDialog;
 }
 
+class UnseenGxsGroupDialog;
 class UnseenGxsChatLobbyDialog;
 //class UnseenGroupTreeWidget;
 class UnseenGxsSmartListView;
@@ -169,8 +170,8 @@ private:
 	virtual QString settingsGroupName() = 0;
     //virtual TurtleRequestId distantSearch(const QString& search_string) ;
 
-	virtual GxsGroupDialog *createNewGroupDialog(TokenQueue *tokenQueue) = 0;
-	virtual GxsGroupDialog *createGroupDialog(TokenQueue *tokenQueue, RsTokenService *tokenService, GxsGroupDialog::Mode mode, RsGxsGroupId groupId) = 0;
+    virtual UnseenGxsGroupDialog *createNewGroupDialog(TokenQueue *tokenQueue) = 0;
+    virtual UnseenGxsGroupDialog *createGroupDialog(TokenQueue *tokenQueue, RsTokenService *tokenService, UnseenGxsGroupDialog::Mode mode, RsGxsGroupId groupId) = 0;
 	virtual int shareKeyType() = 0;
 	virtual GxsMessageFrameWidget *createMessageFrameWidget(const RsGxsGroupId &groupId) = 0;
 	virtual void groupTreeCustomActions(RsGxsGroupId /*grpId*/, int /*subscribeFlags*/, QList<QAction*> &/*actions*/) {}

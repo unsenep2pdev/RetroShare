@@ -26,6 +26,11 @@
 
 #include "GxsChatDialog.h"
 #include "GxsChatGroupDialog.h"
+//unseenp2p - use the channel code, we create the GxsChatDialog (from GxsChannelDialg), also think as UnseenGxsChatDialog (not exist)
+// but we edit the GxsChatDialog for our case as we want:
+// 1. It will create the group chat with contact list so that user can add the member to list
+// 2. It still keeps all other needed functions for gxs like gxsChat or gxsChannel
+#include "UnseenGxsChatGroupDialog.h"
 #include "GxsChatPostsWidget.h"
 #include "CreateGxsChatMsg.h"
 #include "GxsChatUserNotify.h"
@@ -148,14 +153,20 @@ QString GxsChatDialog::icon(IconType type)
     return "";
 }
 
-GxsGroupDialog *GxsChatDialog::createNewGroupDialog(TokenQueue *tokenQueue)
+UnseenGxsGroupDialog *GxsChatDialog::createNewGroupDialog(TokenQueue *tokenQueue)
 {
-    return new GxsChatGroupDialog(tokenQueue, this);
+    //unseenp2p comment:
+    //Here we can create a new UnseenGxsChatGroupDialog instead of GxsChatGroupDialog (that inherit from GxsGroupDialog)
+    // UnseenGxsChatGroupDialog will take GxsChatGroupDialog functions and add some new functions
+
+    return new UnseenGxsChatGroupDialog(tokenQueue, this);
+    //return new GxsChatGroupDisalog(tokenQueue, this); //old code
 }
 
-GxsGroupDialog *GxsChatDialog::createGroupDialog(TokenQueue *tokenQueue, RsTokenService *tokenService, GxsGroupDialog::Mode mode, RsGxsGroupId groupId)
+UnseenGxsGroupDialog *GxsChatDialog::createGroupDialog(TokenQueue *tokenQueue, RsTokenService *tokenService, UnseenGxsGroupDialog::Mode mode, RsGxsGroupId groupId)
 {
-    return new GxsChatGroupDialog(tokenQueue, tokenService, mode, groupId, this);
+    return new UnseenGxsChatGroupDialog(tokenQueue, tokenService, mode, groupId, this);
+    //return new GxsChatGroupDialog(tokenQueue, tokenService, mode, groupId, this); //old code
 }
 
 int GxsChatDialog::shareKeyType()

@@ -36,6 +36,9 @@
 #include "GxsCommentDialog.h"
 
 #include "gui/gxschats/UnseenGxsChatLobbyDialog.h"
+//unseenp2p
+#include "gui/gxs/UnseenGxsGroupDialog.h"
+
 //unseenp2p - using SmartListView and SmartListModel
 #include "gui/common/GroupTreeWidget.h"
 #include "gui/gxschats/UnseenGxsSmartlistview.h"
@@ -522,7 +525,22 @@ void UnseenGxsGroupFrameDialog::restoreGroupKeys(void)
 
 void UnseenGxsGroupFrameDialog::newGroup()
 {
-	GxsGroupDialog *dialog = createNewGroupDialog(mTokenQueue);
+    //Need to change new conversation dialog here, add member list into the dialog for choosing
+    // Use the CreateLobbyDialog to create the dialog GUI,
+    // Copy the CreateLobbyDialog and customize as CreateGxsConversationDialog with 3 options:
+    // 1. one2one conversation,
+    // 2. group chat conversation:
+    //      2.1. private groupchat (member only),
+    //      2.2. public groupchat (like forum)
+    // 3. Channel conversation:
+    //      In channel there are 2 buttons Mute and discuss,
+    //          when clicking on discuss, it will open the groupchat
+    //          when clicking on Mute -> maybe do not receive any msg
+
+    // In CreateLobbyDialog there is a class named FriendSelectionWidget *keyShareList;
+    // we can re-use it to add contact list into the dialog
+    UnseenGxsGroupDialog *dialog = createNewGroupDialog(mTokenQueue);
+    //GxsGroupDialog *dialog = createNewGroupDialog(mTokenQueue); //old codes
 	if (!dialog) {
 		return;
 	}
@@ -559,7 +577,7 @@ void UnseenGxsGroupFrameDialog::showGroupDetails()
 		return;
 	}
 
-	GxsGroupDialog *dialog = createGroupDialog(mTokenQueue, mInterface->getTokenService(), GxsGroupDialog::MODE_SHOW, mGroupId);
+    UnseenGxsGroupDialog *dialog = createGroupDialog(mTokenQueue, mInterface->getTokenService(), UnseenGxsGroupDialog::MODE_SHOW, mGroupId);
 	if (!dialog) {
 		return;
 	}
@@ -574,7 +592,7 @@ void UnseenGxsGroupFrameDialog::editGroupDetails()
 		return;
 	}
 
-	GxsGroupDialog *dialog = createGroupDialog(mTokenQueue, mInterface->getTokenService(), GxsGroupDialog::MODE_EDIT, mGroupId);
+    UnseenGxsGroupDialog *dialog = createGroupDialog(mTokenQueue, mInterface->getTokenService(), UnseenGxsGroupDialog::MODE_EDIT, mGroupId);
 	if (!dialog) {
 		return;
 	}

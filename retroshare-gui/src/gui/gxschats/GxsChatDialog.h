@@ -67,8 +67,8 @@ private:
     virtual QString text(TextType type);
     virtual QString icon(IconType type);
     virtual QString settingsGroupName() { return "ChatDialog"; }
-    virtual GxsGroupDialog *createNewGroupDialog(TokenQueue *tokenQueue);
-    virtual GxsGroupDialog *createGroupDialog(TokenQueue *tokenQueue, RsTokenService *tokenService, GxsGroupDialog::Mode mode, RsGxsGroupId groupId);
+    virtual UnseenGxsGroupDialog *createNewGroupDialog(TokenQueue *tokenQueue);
+    virtual UnseenGxsGroupDialog *createGroupDialog(TokenQueue *tokenQueue, RsTokenService *tokenService, UnseenGxsGroupDialog::Mode mode, RsGxsGroupId groupId);
     virtual int shareKeyType();
     virtual GxsMessageFrameWidget *createMessageFrameWidget(const RsGxsGroupId &groupId);
     virtual void groupTreeCustomActions(RsGxsGroupId grpId, int subscribeFlags, QList<QAction*> &actions);
