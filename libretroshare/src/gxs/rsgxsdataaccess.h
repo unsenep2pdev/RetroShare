@@ -244,9 +244,10 @@ public:
      *
      * @param token request token to be redeemed
      * @param msgData
+     * @param page (page=0, returl all messages, page=1 (1,24), page =2, (25,49).
      * @return false if data cannot be found for token
      */
-    bool getMsgData(const uint32_t &token, NxsMsgDataResult& msgData);
+    bool getMsgData(const uint32_t &token, NxsMsgDataResult& msgData, int page=0);
 
     /*!
      *

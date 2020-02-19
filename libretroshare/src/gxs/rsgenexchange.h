@@ -365,8 +365,9 @@ public:
      * retrieves message data associated to a request token
      * @param token token to be redeemed for message item retrieval
      * @param msgItems
+     * @param page (pagination 0,1,2...) 0, to retrieve all messages, page=1 retrieve first 24 messages, page=retrieve 25-49 messages.
      */
-	bool getMsgData(uint32_t token, GxsMsgDataMap& msgItems);
+    bool getMsgData(uint32_t token, GxsMsgDataMap& msgItems, int page=0);
 
     template <class MsgType>
 	bool getMsgDataT( uint32_t token, std::map<RsGxsGroupId,

@@ -121,8 +121,8 @@ virtual void handle_event(uint32_t event_type, const std::string &elabel);
 public:
 
 virtual bool getGroupData(const uint32_t &token, std::vector<RsGxsChatGroup> &groups);
-virtual bool getPostData(const uint32_t &token, std::vector<RsGxsChatMsg> &posts, std::vector<RsGxsComment> &cmts);
-virtual bool getPostData(const uint32_t &token, std::vector<RsGxsChatMsg> &posts) {	std::vector<RsGxsComment> cmts; return getPostData( token, posts, cmts);}
+virtual bool getPostData(const uint32_t &token, std::vector<RsGxsChatMsg> &posts, std::vector<RsGxsComment> &cmts, int page=0);
+virtual bool getPostData(const uint32_t &token, std::vector<RsGxsChatMsg> &posts, int page=0) {	std::vector<RsGxsComment> cmts; return getPostData( token, posts, cmts, page);}
 //Not currently used
 //virtual bool getRelatedPosts(const uint32_t &token, std::vector<RsGxsChannelPost> &posts);
 
@@ -217,10 +217,10 @@ virtual bool ExtraFileRemove(const RsFileHash &hash);
             const std::list<RsGxsGroupId>& chanIds,
             std::vector<RsGxsChatGroup>& channelsInfo );
 
-    /// Implementation of @see RsGxsChannels::getChannelContent
+    /// Implementation of @see RsGxsChannels::getChatContent
     virtual bool getChatsContent(
             const std::list<RsGxsGroupId>& chanIds,
-            std::vector<RsGxsChatMsg>& posts );
+            std::vector<RsGxsChatMsg>& posts, int page=0 );
 
 protected:
     // Overloaded from GxsTokenQueue for Request callbacks.

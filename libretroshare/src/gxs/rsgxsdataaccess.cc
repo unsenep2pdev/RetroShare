@@ -454,7 +454,7 @@ bool RsGxsDataAccess::getGroupData(const uint32_t& token, std::list<RsNxsGrp*>& 
 	return true;
 }
 
-bool RsGxsDataAccess::getMsgData(const uint32_t& token, NxsMsgDataResult& msgData)
+bool RsGxsDataAccess::getMsgData(const uint32_t& token, NxsMsgDataResult& msgData, int page)
 {
 
 	RsStackMutex stack(mDataMutex);

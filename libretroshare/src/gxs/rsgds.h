@@ -144,9 +144,10 @@ public:
      * @param reqIds requested msg ids (grpId,msgId), leave msg list empty to get all msgs for the grp
      * @param msg result of msg retrieval
      * @param cache whether to store results of this retrieval in memory for faster later retrieval
+     * param  page result messages in pagination (page=0, all), (page 1, 24 messages), (page 2, 25-49) messages....etc.
      * @return error code
      */
-    virtual int retrieveNxsMsgs(const GxsMsgReq& reqIds, GxsMsgResult& msg, bool cache, bool withMeta=false) = 0;
+    virtual int retrieveNxsMsgs(const GxsMsgReq& reqIds, GxsMsgResult& msg, bool cache, bool withMeta=false, int page=0) = 0;
 
     /*!
      * Retrieves all groups stored

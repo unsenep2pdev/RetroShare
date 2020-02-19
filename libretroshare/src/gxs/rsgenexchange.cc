@@ -1430,11 +1430,11 @@ bool RsGenExchange::getGroupData(const uint32_t &token, std::vector<RsGxsGrpItem
 	return ok;
 }
 
-bool RsGenExchange::getMsgData(uint32_t token, GxsMsgDataMap &msgItems)
+bool RsGenExchange::getMsgData(uint32_t token, GxsMsgDataMap &msgItems, int page)
 {
 	RS_STACK_MUTEX(mGenMtx) ;
 	NxsMsgDataResult msgResult;
-	bool ok = mDataAccess->getMsgData(token, msgResult);
+    bool ok = mDataAccess->getMsgData(token, msgResult, page);
 	if(ok)
 	{
 		NxsMsgDataResult::iterator mit = msgResult.begin();

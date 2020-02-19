@@ -50,7 +50,7 @@ public:
      * @param cache whether to store results of this retrieval in memory for faster later retrieval
      * @return error code
      */
-    int retrieveNxsMsgs(const GxsMsgReq& reqIds, GxsMsgResult& msg, bool cache, bool withMeta = false);
+    int retrieveNxsMsgs(const GxsMsgReq& reqIds, GxsMsgResult& msg, bool cache, bool withMeta = false, int page=0);
 
     /*!
      * Retrieves groups, if empty, retrieves all grps, if map is not empty
@@ -58,6 +58,7 @@ public:
      * @param grp retrieved groups
      * @param withMeta this initialise the metaData member of the nxsgroups retrieved
      * @param cache whether to store retrieval in mem for faster later retrieval
+     * @param pagination is limited number of return records offset=25 (pagination=0, return all, pagination=1, return 1-25, pagination=2, return 26-50,51-75, etc.
      * @return error code
      */
     int retrieveNxsGrps(std::map<RsGxsGroupId, RsNxsGrp*>& grp, bool withMeta, bool cache);
