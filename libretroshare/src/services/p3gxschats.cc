@@ -327,8 +327,16 @@ RsGenExchange::ServiceCreate_Return p3GxsChats::service_CreateMessage(RsNxsMsg* 
     if (it == mSubscribedGroups.end() )
         return SERVICE_CREATE_FAIL;  //message doesn't belong to any group.
 
+    auto mit = grpMembers.find(msg->grpId);
+    if(mit == grpMembers.end())
+        return SERVICE_CREATE_FAIL;  //message doesn't belong to any group.
+
     RsGroupMetaData chatGrpMeta =it->second;
     RsNetworkExchangeService *netService = RsGenExchange::getNetworkExchangeService();
+
+
+    std::list<RsPeerId> ids;
+    rsPeers->getOnlineList(ids);
 
     switch(chatGrpMeta.mCircleType){
     case GXS_CIRCLE_TYPE_PUBLIC:
@@ -344,9 +352,12 @@ RsGenExchange::ServiceCreate_Return p3GxsChats::service_CreateMessage(RsNxsMsg* 
     {
         std::cerr << "CircleType: GXS_CIRCLE_TYPE_EXTERNAL"<<std::endl;
         break;
-    }
+    }   
     case GXS_CIRCLE_TYPE_YOUR_FRIENDS_ONLY:	// restricted to a subset of friend nodes of a given RS node given by a RsPgpId list
     {
+        std::set<RsPeerId> tempSendList;
+
+        //getting all member of group node memberlist.
         if(!chatGrpMeta.mInternalCircle.isNull())
         {
             RsGroupInfo ginfo ;
@@ -355,12 +366,30 @@ RsGenExchange::ServiceCreate_Return p3GxsChats::service_CreateMessage(RsNxsMsg* 
             if(rsPeers->getGroupInfo(groupId,ginfo))
             {
                 for (auto it = ginfo.peerIds.begin(); it != ginfo.peerIds.end(); it++ ){
-                    std::list<RsPeerId> ids;
-                    if (rsPeers->getAssociatedSSLIds(*it,ids))
-                        netService->PublishChat(msg,ids);
+                    std::list<RsPeerId> nodeIds;
+                    if (rsPeers->getAssociatedSSLIds(*it,nodeIds)){
+                        for(auto lit=nodeIds.begin(); lit !=nodeIds.end(); lit++){
+                            if (contains(ids,*lit))
+                                tempSendList.insert(*lit); //filter for only online status friend.
+                        }
+                    }
                 }//end for loop
             }
         }
+        //getting all member on conversation memberlist.
+        //privateGroup. sending to only membership, except the sender.
+        ChatInfo cinfo = mit->second;
+        for (auto sit=cinfo.second.begin(); sit !=cinfo.second.end(); sit++){
+            if(sit->chatPeerId  != ownChatId->chatPeerId && contains(ids,sit->chatPeerId))
+                tempSendList.insert(sit->chatPeerId); //member of the group and also online status.
+        }
+
+
+        if(!tempSendList.empty()){
+            std::list<RsPeerId> sendlist(tempSendList.begin(),tempSendList.end()); //convert Set to List type. Using Set to eliminate any duplicate between both group.
+            netService->PublishChat(msg,sendlist);
+        }
+
         break;
     }
 
