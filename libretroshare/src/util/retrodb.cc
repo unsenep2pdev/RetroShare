@@ -235,7 +235,7 @@ RetroCursor* RetroDb::sqlQuery(const std::string& tableName, const std::list<std
 
     if(page > 0){
         std::string offset("1");
-        std::string limit(" limit 24 offset ");
+        std::string limit(" LIMIT 24 OFFSET ");
 
         if(page > 1){
             offset = std::to_string((page - 1)*25 );
@@ -244,9 +244,12 @@ RetroCursor* RetroDb::sqlQuery(const std::string& tableName, const std::list<std
          *  page =2 (offset=25, limit 24) -> (25,49)
          *  page =3 (offset=50, limit 24) -> (50,74)
          */
-        sqlQuery += limit + offset +" ";
+        sqlQuery += limit + offset ;
+        std::cerr<<"SQL: "<< sqlQuery <<std::endl;
     }
+
     sqlQuery += " ;";
+
 
 #ifdef RETRODB_DEBUG
     std::cerr << "RetroDb::sqlQuery(): " << sqlQuery << std::endl;

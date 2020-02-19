@@ -121,8 +121,8 @@ virtual void handle_event(uint32_t event_type, const std::string &elabel);
 public:
 
 virtual bool getGroupData(const uint32_t &token, std::vector<RsGxsChatGroup> &groups);
-virtual bool getPostData(const uint32_t &token, std::vector<RsGxsChatMsg> &posts, std::vector<RsGxsComment> &cmts, int page=0);
-virtual bool getPostData(const uint32_t &token, std::vector<RsGxsChatMsg> &posts, int page=0) {	std::vector<RsGxsComment> cmts; return getPostData( token, posts, cmts, page);}
+virtual bool getPostData(const uint32_t &token, std::vector<RsGxsChatMsg> &posts, std::vector<RsGxsComment> &cmts);
+virtual bool getPostData(const uint32_t &token, std::vector<RsGxsChatMsg> &posts) {	std::vector<RsGxsComment> cmts; return getPostData( token, posts, cmts);}
 //Not currently used
 //virtual bool getRelatedPosts(const uint32_t &token, std::vector<RsGxsChannelPost> &posts);
 

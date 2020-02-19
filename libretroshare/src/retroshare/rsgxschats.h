@@ -200,8 +200,8 @@ public:
      */
 
     virtual bool getGroupData(const uint32_t &token, std::vector<RsGxsChatGroup> &groups) = 0;
-    virtual bool getPostData(const uint32_t &token, std::vector<RsGxsChatMsg> &posts, std::vector<RsGxsComment> &cmts, int page=0) = 0;
-    virtual bool getPostData(const uint32_t &token, std::vector<RsGxsChatMsg> &posts, int page=0) = 0;
+    virtual bool getPostData(const uint32_t &token, std::vector<RsGxsChatMsg> &posts, std::vector<RsGxsComment> &cmts) = 0;
+    virtual bool getPostData(const uint32_t &token, std::vector<RsGxsChatMsg> &posts) = 0;
 
     virtual bool getOwnMember(GxsChatMember &ownId)=0;
 

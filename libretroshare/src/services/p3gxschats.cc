@@ -569,18 +569,14 @@ void p3GxsChats::processRecvBounceGroup(){
             switch(grpItem->type){
                 case RsGxsChatGroup::ONE2ONE:   break;  //drop, no bouncing off
                 case RsGxsChatGroup::GROUPCHAT:
-                case RsGxsChatGroup::CHANNEL:
-                {
+                case RsGxsChatGroup::CHANNEL:                
                 if(grpItem->meta.mCircleType==GXS_CIRCLE_TYPE_PUBLIC ){
-                    std::cerr <<"Re broadcast the group its just received!"<<std::endl;
-                    std::cerr <<"To PeerId:";
-                    for (auto p=ids.begin(); p!=ids.end(); p++)
-                        std::cerr <<*p<<std::endl;
-
                     netService->PublishChatGroup(bounceGrp, ids);
+                    //this is a questionable if we want to sending to all other friend-of-friends on this public groupchat.
+                }else{
+                    //first time receive private group, it should not re-broadcast to other friends.
                 }
-                //private group or channel will not bounce if it is received new group invitation.
-                }
+
             }//end switch
         }
         else if(mit != grpMembers.end() && !isNew){  //exist group and being update.
@@ -1089,7 +1085,7 @@ bool p3GxsChats::groupShareKeys(
     return true;
 }
 
-bool p3GxsChats::getPostData(const uint32_t &token, std::vector<RsGxsChatMsg> &msgs, std::vector<RsGxsComment> &cmts, int page)
+bool p3GxsChats::getPostData(const uint32_t &token, std::vector<RsGxsChatMsg> &msgs, std::vector<RsGxsComment> &cmts)
 {
 
     GxsMsgDataMap msgData;
@@ -1553,9 +1549,12 @@ bool p3GxsChats::getChatsContent(
     uint32_t token;
     RsTokReqOptions opts;
     opts.mReqType = GXS_REQUEST_TYPE_MSG_DATA;
+    opts.page = 1;
+    std::cerr<<"GetChatsContent: Page = "<<opts.page <<std::endl;
+
     if( !requestMsgInfo(token, opts, chanIds)
             || waitToken(token) != RsTokenService::COMPLETE ) return false;
-    return getPostData(token, posts, page);
+    return getPostData(token, posts);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

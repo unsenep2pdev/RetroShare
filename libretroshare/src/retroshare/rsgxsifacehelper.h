@@ -254,7 +254,8 @@ struct RsGxsIfaceHelper
 	bool requestMsgInfo(
 	        uint32_t& token, const RsTokReqOptions& opts,
 	        const std::list<RsGxsGroupId>& grpIds )
-	{ return mTokenService.requestMsgInfo(token, 0, opts, grpIds); }
+        { std::cerr<<"requestMsgInfo:Page = "<<opts.page<<std::endl;
+            return mTokenService.requestMsgInfo(token, 0, opts, grpIds); }
 
 	/// @see RsTokenService::requestMsgRelatedInfo
 	bool requestMsgRelatedInfo(

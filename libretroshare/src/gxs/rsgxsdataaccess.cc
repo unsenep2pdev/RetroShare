@@ -454,7 +454,7 @@ bool RsGxsDataAccess::getGroupData(const uint32_t& token, std::list<RsNxsGrp*>& 
 	return true;
 }
 
-bool RsGxsDataAccess::getMsgData(const uint32_t& token, NxsMsgDataResult& msgData, int page)
+bool RsGxsDataAccess::getMsgData(const uint32_t& token, NxsMsgDataResult& msgData)
 {
 
 	RsStackMutex stack(mDataMutex);
@@ -836,6 +836,7 @@ void RsGxsDataAccess::processRequests()
 		}
 		else if((mdr = dynamic_cast<MsgDataReq*>(req)) != NULL)
 		{
+            std::cerr<<"Page:"<< req->Options.page << std::endl;
 			ok = getMsgData(mdr);
 		}
 		else if((mir = dynamic_cast<MsgIdReq*>(req)) != NULL)
@@ -1044,8 +1045,7 @@ bool RsGxsDataAccess::getMsgData(MsgDataReq* req)
 
 	// filter based on options
 	getMsgList(req->mMsgIds, req->Options, msgIdOut);
-
-	mDataStore->retrieveNxsMsgs(msgIdOut, req->mMsgData, true, true);
+    mDataStore->retrieveNxsMsgs(msgIdOut, req->mMsgData, true, true, req->Options.page);
 
 	return true;
 }
