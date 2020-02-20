@@ -294,23 +294,43 @@ RsGenExchange::ServiceCreate_Return p3GxsChats::service_CreateGroup(RsGxsGrpItem
 }
 
 RsGenExchange::ServiceCreate_Return p3GxsChats::service_PublishGroup(RsNxsGrp *grp){
-    if (ownChatId==NULL){
-        //initalized chatInfo
+    if (ownChatId==NULL){ //initalized chatInfo
         initChatId();
     }
+
+    std::map<RsGxsGroupId, RsGroupMetaData>::iterator it;
+    it = mSubscribedGroups.find(grp->grpId);
+    if (it == mSubscribedGroups.end() )
+        return SERVICE_CREATE_FAIL;  //message doesn't belong to any group.
+
     std::list<RsPeerId> ids;
+    rsPeers->getOnlineList(ids);
+    std::set<RsPeerId> tempSendList;
     RsNetworkExchangeService *netService = RsGenExchange::getNetworkExchangeService();
 
-    rsPeers->getOnlineList(ids);
-    netService->PublishChatGroup(grp,ids);
+    RsGroupMetaData grpMeta = it->second;
+    if(grpMeta.mCircleType==GXS_CIRCLE_TYPE_PUBLIC && !ids.empty()){
+            std::set<RsPeerId> peers(ids.begin(), ids.end());
+            netService->PublishChatGroup(grp,ids);
+            groupShareKeys(grp->grpId,peers);
+            //sharing publish key to all invite members.
+    }else{
+        auto mit = grpMembers.find(grp->grpId);
+        if(mit == grpMembers.end())
+            return SERVICE_CREATE_FAIL;  //message doesn't belong to any group.
 
-    //sharing publish key to all invite members.
-    std::set<RsPeerId> peers;
-    for (auto it=ids.begin(); it !=ids.end(); it++)
-            peers.insert(*it);
-
-    groupShareKeys(grp->grpId,peers);
-
+        ChatInfo cinfo = mit->second;
+        for (auto sit=cinfo.second.begin(); sit !=cinfo.second.end(); sit++){
+            if(sit->chatPeerId  != ownChatId->chatPeerId && contains(ids,sit->chatPeerId))
+                tempSendList.insert(sit->chatPeerId); //member of the group and also online status.
+        }
+        if(!tempSendList.empty()){
+            std::list<RsPeerId> sendlist(tempSendList.begin(), tempSendList.end());
+            netService->PublishChatGroup(grp,sendlist);
+            groupShareKeys(grp->grpId,tempSendList);          //sharing publish key to all invite members.
+        }
+    }
+    return SERVICE_CREATE_SUCCESS;
 }
 
 RsGenExchange::ServiceCreate_Return p3GxsChats::service_CreateMessage(RsNxsMsg* msg){
