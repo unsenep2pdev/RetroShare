@@ -1569,8 +1569,7 @@ bool p3GxsChats::getChatsContent(
     uint32_t token;
     RsTokReqOptions opts;
     opts.mReqType = GXS_REQUEST_TYPE_MSG_DATA;
-    opts.page = 1;
-    std::cerr<<"GetChatsContent: Page = "<<opts.page <<std::endl;
+    opts.page = page;
 
     if( !requestMsgInfo(token, opts, chanIds)
             || waitToken(token) != RsTokenService::COMPLETE ) return false;

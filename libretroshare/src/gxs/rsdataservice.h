@@ -75,9 +75,10 @@ public:
      * @param grpIds grpIds for which to retrieve meta data
      * @param msgMeta meta data result as map of grpIds to array of metadata for that grpId
      * @param cache whether to store retrieval in mem for faster later retrieval
+     * @param page is query pagination
      * @return error code
      */
-    int retrieveGxsMsgMetaData(const GxsMsgReq& reqIds, GxsMsgMetaResult& msgMeta);
+    int retrieveGxsMsgMetaData(const GxsMsgReq& reqIds, GxsMsgMetaResult& msgMeta, int page=0);
 
     /*!
      * remove msgs in data store

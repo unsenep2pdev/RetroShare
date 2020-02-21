@@ -172,9 +172,10 @@ public:
      * @param grpIds grpIds for which to retrieve meta data
      * @param msgMeta meta data result as map of grpIds to array of metadata for that grpId
      * @param cache whether to store retrieval in mem for faster later retrieval
+     * @param page is the query pagination(0,1,2,3,4) page=0, all messages. Page 1= 24 messages.
      * @return error code
      */
-    virtual int retrieveGxsMsgMetaData(const GxsMsgReq& msgIds, GxsMsgMetaResult& msgMeta) = 0;
+    virtual int retrieveGxsMsgMetaData(const GxsMsgReq& msgIds, GxsMsgMetaResult& msgMeta, int page=0) = 0;
 
     /*!
      * remove msgs in data store listed in msgIds param

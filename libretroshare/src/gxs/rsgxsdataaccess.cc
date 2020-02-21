@@ -836,7 +836,7 @@ void RsGxsDataAccess::processRequests()
 		}
 		else if((mdr = dynamic_cast<MsgDataReq*>(req)) != NULL)
 		{
-            std::cerr<<"Page:"<< req->Options.page << std::endl;
+            std::cerr<<"RsGxsDataAccess::processRequests() Page:"<< req->Options.page << std::endl;
 			ok = getMsgData(mdr);
 		}
 		else if((mir = dynamic_cast<MsgIdReq*>(req)) != NULL)
@@ -1058,7 +1058,7 @@ bool RsGxsDataAccess::getMsgSummary(MsgMetaReq* req)
         // filter based on options
         getMsgList(req->mMsgIds, req->Options, msgIdOut);
 
-        mDataStore->retrieveGxsMsgMetaData(msgIdOut, req->mMsgMetaData);
+        mDataStore->retrieveGxsMsgMetaData(msgIdOut, req->mMsgMetaData, req->Options.page);
 
 	return true;
 }
@@ -1068,7 +1068,7 @@ bool RsGxsDataAccess::getMsgList(const GxsMsgReq& msgIds, const RsTokReqOptions&
 {
     GxsMsgMetaResult result;
 
-    mDataStore->retrieveGxsMsgMetaData(msgIds, result);
+    mDataStore->retrieveGxsMsgMetaData(msgIds, result, opts.page);
 
     /* CASEs this handles.
      * Input is groupList + Flags.
