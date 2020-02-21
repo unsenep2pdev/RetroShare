@@ -836,7 +836,6 @@ void RsGxsDataAccess::processRequests()
 		}
 		else if((mdr = dynamic_cast<MsgDataReq*>(req)) != NULL)
 		{
-            std::cerr<<"RsGxsDataAccess::processRequests() Page:"<< req->Options.page << std::endl;
 			ok = getMsgData(mdr);
 		}
 		else if((mir = dynamic_cast<MsgIdReq*>(req)) != NULL)
