@@ -433,7 +433,7 @@ private:
 
     //unseenp2p
     std::map<RsPgpId, std::string> mCertList;
-    std::list<std::string> mSupernodeCertList;  //save at least 3 supernode certificates
+    std::list<std::string> mSupernodeCertList;  //save at least 3 supernode certificates, should use std::set to keep unique record of supernodes.
     std::string mAddFriendOption; //
     std::map<RsPgpId, UnseenNetworkContactsItem> mNetworkContacts;
 

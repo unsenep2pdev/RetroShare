@@ -303,6 +303,11 @@ RsGenExchange::ServiceCreate_Return p3GxsChats::service_PublishGroup(RsNxsGrp *g
     if (it == mSubscribedGroups.end() )
         return SERVICE_CREATE_FAIL;  //message doesn't belong to any group.
 
+    auto mit = grpMembers.find(grp->grpId);
+    if(mit == grpMembers.end())
+        return SERVICE_CREATE_FAIL;  //message doesn't belong to any group.
+
+    ChatInfo cinfo = mit->second;
     std::list<RsPeerId> ids;
     rsPeers->getOnlineList(ids);
     std::set<RsPeerId> tempSendList;
@@ -312,14 +317,10 @@ RsGenExchange::ServiceCreate_Return p3GxsChats::service_PublishGroup(RsNxsGrp *g
     if(grpMeta.mCircleType==GXS_CIRCLE_TYPE_PUBLIC && !ids.empty()){
             std::set<RsPeerId> peers(ids.begin(), ids.end());
             netService->PublishChatGroup(grp,ids);
-            groupShareKeys(grp->grpId,peers);
+            if(cinfo.first !=RsGxsChatGroup::CHANNEL)
+                groupShareKeys(grp->grpId,peers);
             //sharing publish key to all invite members.
     }else{
-        auto mit = grpMembers.find(grp->grpId);
-        if(mit == grpMembers.end())
-            return SERVICE_CREATE_FAIL;  //message doesn't belong to any group.
-
-        ChatInfo cinfo = mit->second;
         for (auto sit=cinfo.second.begin(); sit !=cinfo.second.end(); sit++){
             if(sit->chatPeerId  != ownChatId->chatPeerId && contains(ids,sit->chatPeerId))
                 tempSendList.insert(sit->chatPeerId); //member of the group and also online status.
@@ -327,7 +328,8 @@ RsGenExchange::ServiceCreate_Return p3GxsChats::service_PublishGroup(RsNxsGrp *g
         if(!tempSendList.empty()){
             std::list<RsPeerId> sendlist(tempSendList.begin(), tempSendList.end());
             netService->PublishChatGroup(grp,sendlist);
-            groupShareKeys(grp->grpId,tempSendList);          //sharing publish key to all invite members.
+            if(cinfo.first !=RsGxsChatGroup::CHANNEL)
+                groupShareKeys(grp->grpId,tempSendList);          //sharing publish key to all invite members.
         }
     }
     return SERVICE_CREATE_SUCCESS;
@@ -382,7 +384,7 @@ RsGenExchange::ServiceCreate_Return p3GxsChats::service_CreateMessage(RsNxsMsg* 
 
             if(rsPeers->getGroupInfo(groupId,ginfo))
             {
-                for (auto it = ginfo.peerIds.begin(); it != ginfo.peerIds.end(); it++ ){
+                for (auto it = ginfo.peerIds.begin(); it != ginfo.peerIds.end(); it++ ){ //list of PgPId
                     std::list<RsPeerId> nodeIds;
                     if (rsPeers->getAssociatedSSLIds(*it,nodeIds)){
                         for(auto lit=nodeIds.begin(); lit !=nodeIds.end(); lit++){
