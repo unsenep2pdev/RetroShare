@@ -41,12 +41,12 @@ protected:
     virtual bool service_loadGroup(uint32_t token, Mode mode, RsGroupMetaData& groupMetaData, QString &description);
     virtual bool service_EditGroup(uint32_t &token, RsGroupMetaData &editedMeta);
 
-    virtual bool Service_AddMembers(uint32_t &token, RsGroupMetaData &editedMeta, std::list<GxsChatMember> friendlist);
-    virtual bool Service_RemoveMembers(uint32_t &token, RsGroupMetaData &editedMeta, std::list<GxsChatMember> friendlist);
+    virtual bool Service_AddMembers(uint32_t &token, RsGroupMetaData &editedMeta, std::set<GxsChatMember> friendlist);
+    virtual bool Service_RemoveMembers(uint32_t &token, RsGroupMetaData &editedMeta, std::set<GxsChatMember> friendlist);
 
 private:
     void prepareChannelGroup(RsGxsChatGroup &group, const RsGroupMetaData &meta);
-    std::list<GxsChatMember> members;
+    std::set<GxsChatMember> members;
     RsGxsChatGroup::ChatType chattype;
     GxsChatMember ownChatId;
 };

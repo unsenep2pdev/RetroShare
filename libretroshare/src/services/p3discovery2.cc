@@ -1593,6 +1593,8 @@ void p3discovery2::setGPGOperation(AuthGPGOperation *operation)
 
 void p3discovery2::fromPeerDetailToStateDetail(const RsPeerDetails &peerDetail,peerState &stateDetail )
 {
+    RsStackMutex stack(mDiscMtx); /********** STACK LOCKED MTX ******/
+
     stateDetail.name = peerDetail.name;
     stateDetail.id = peerDetail.id;
     stateDetail.gpg_id = peerDetail.gpg_id;

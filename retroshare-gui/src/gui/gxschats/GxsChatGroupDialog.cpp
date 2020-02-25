@@ -70,7 +70,7 @@ GxsChatGroupDialog::GxsChatGroupDialog(TokenQueue *tokenExternalQueue, RsTokenSe
     GxsChatMember chatId;
     rsGxsChats->getOwnMember(chatId);
     ownChatId=chatId;
-    members.push_back(chatId);
+    members.insert(chatId);
     chattype=RsGxsChatGroup::GROUPCHAT;  //set default for now...
 
 
@@ -185,7 +185,7 @@ bool GxsChatGroupDialog::service_loadGroup(uint32_t token, Mode /*mode*/, RsGrou
     groupMetaData = group.mMeta;
     description = QString::fromUtf8(group.mDescription.c_str());
 
-    members = group.members;
+    std::copy(group.members.begin(), group.members.end(),std::inserter(members, members.begin()));
     chattype=group.type;
 
     if (group.mImage.mData) {
@@ -199,10 +199,9 @@ bool GxsChatGroupDialog::service_loadGroup(uint32_t token, Mode /*mode*/, RsGrou
     return true;
 }
 
-bool GxsChatGroupDialog::Service_AddMembers(uint32_t &token, RsGroupMetaData &editedMeta, std::list<GxsChatMember> friendlist){
+bool GxsChatGroupDialog::Service_AddMembers(uint32_t &token, RsGroupMetaData &editedMeta, std::set<GxsChatMember> friendlist){
 
-    members.merge(friendlist);
-    members.unique();
+    std::copy(friendlist.begin(), friendlist.end(),std::inserter(members, members.begin()));
 
     RsGxsChatGroup grp;
     prepareChannelGroup(grp, editedMeta);
@@ -214,10 +213,10 @@ bool GxsChatGroupDialog::Service_AddMembers(uint32_t &token, RsGroupMetaData &ed
     return true;
 }
 
-bool GxsChatGroupDialog::Service_RemoveMembers(uint32_t &token, RsGroupMetaData &editedMeta, std::list<GxsChatMember> friendlist){
+bool GxsChatGroupDialog::Service_RemoveMembers(uint32_t &token, RsGroupMetaData &editedMeta, std::set<GxsChatMember> friendlist){
 
     for(auto it=friendlist.begin(); it !=friendlist.end(); it++){
-        members.remove(*it);
+        members.erase(*it);
     }
 
     RsGxsChatGroup grp;

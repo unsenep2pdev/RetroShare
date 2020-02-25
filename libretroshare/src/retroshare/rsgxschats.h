@@ -99,7 +99,7 @@ class RsGxsChatGroup : RsSerializable
         RsGroupMetaData mMeta;
         std::string mDescription;   //conversation display name or groupname
         RsGxsImage  mImage; //conversation avatar image
-        std::list<GxsChatMember> members;
+        std::set<GxsChatMember> members;
         /// @see RsSerializable
         bool mAutoDownload;
         RsGxsChatGroup(): type(GROUPCHAT){}

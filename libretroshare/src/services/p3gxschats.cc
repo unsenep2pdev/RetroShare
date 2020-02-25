@@ -322,7 +322,7 @@ RsGenExchange::ServiceCreate_Return p3GxsChats::service_PublishGroup(RsNxsGrp *g
             //sharing publish key to all invite members.
     }else{
         for (auto sit=cinfo.second.begin(); sit !=cinfo.second.end(); sit++){
-            if(sit->chatPeerId  != ownChatId->chatPeerId && contains(ids,sit->chatPeerId))
+            if(sit->chatPeerId  != ownChatId->chatPeerId && rsPeers->isOnline(sit->chatPeerId))
                 tempSendList.insert(sit->chatPeerId); //member of the group and also online status.
         }
         if(!tempSendList.empty()){
@@ -374,8 +374,8 @@ RsGenExchange::ServiceCreate_Return p3GxsChats::service_CreateMessage(RsNxsMsg* 
     }
     case GXS_CIRCLE_TYPE_YOUR_FRIENDS_ONLY:	// restricted to a subset of friend nodes of a given RS node given by a RsPgpId list
     {
-        std::set<RsPeerId> tempSendList;
-
+        std::list<RsPeerId> tempSendList;
+        /*
         //getting all member of group node memberlist.
         if(!chatGrpMeta.mInternalCircle.isNull())
         {
@@ -388,25 +388,26 @@ RsGenExchange::ServiceCreate_Return p3GxsChats::service_CreateMessage(RsNxsMsg* 
                     std::list<RsPeerId> nodeIds;
                     if (rsPeers->getAssociatedSSLIds(*it,nodeIds)){
                         for(auto lit=nodeIds.begin(); lit !=nodeIds.end(); lit++){
-                            if (contains(ids,*lit))
+                            if (rsPeers->isOnline(*lit))
                                 tempSendList.insert(*lit); //filter for only online status friend.
                         }
                     }
                 }//end for loop
             }
         }
+        */
         //getting all member on conversation memberlist.
         //privateGroup. sending to only membership, except the sender.
         ChatInfo cinfo = mit->second;
         for (auto sit=cinfo.second.begin(); sit !=cinfo.second.end(); sit++){
-            if(sit->chatPeerId  != ownChatId->chatPeerId && contains(ids,sit->chatPeerId))
-                tempSendList.insert(sit->chatPeerId); //member of the group and also online status.
+            if(sit->chatPeerId  != ownChatId->chatPeerId && rsPeers->isOnline(sit->chatPeerId))
+                tempSendList.push_back(sit->chatPeerId); //member of the group and also online status.
         }
 
 
         if(!tempSendList.empty()){
-            std::list<RsPeerId> sendlist(tempSendList.begin(),tempSendList.end()); //convert Set to List type. Using Set to eliminate any duplicate between both group.
-            netService->PublishChat(msg,sendlist);
+            //std::list<RsPeerId> sendlist(tempSendList.begin(),tempSendList.end()); //convert Set to List type. Using Set to eliminate any duplicate between both group.
+            netService->PublishChat(msg,tempSendList);
         }
 
         break;
@@ -507,7 +508,7 @@ void p3GxsChats::handleBounceShareKey(){
             continue; //skip reshare if the group is private.
 
         ChatInfo cinfo = mit->second;
-        std::list<GxsChatMember> friendList = cinfo.second;
+        std::set<GxsChatMember> friendList = cinfo.second;
         std::set<RsPeerId> tempSendList;
         std::list<RsPeerId> ids;
         //ids.remove(sender);
@@ -697,12 +698,12 @@ void p3GxsChats::processRecvBounceMessage(){
                     tempSendList.merge(ids);
                 }else{
                     //bouncing all private members with message on the group, execept the sender of this message.
-                    std::list<GxsChatMember> friendList = cinfo.second;
+                    std::set<GxsChatMember> friendList = cinfo.second;
                     for (auto sit=friendList.begin(); sit !=friendList.end(); sit++){
                         if(sit->chatPeerId == sender || sit->chatPeerId ==  ownChatId->chatPeerId)
                               continue;  //Don't send to itself and sender peer.
                         else{
-                            if(contains(ids, sit->chatPeerId))
+                            if(rsPeers->isOnline(sit->chatPeerId))
                                 tempSendList.push_back(sit->chatPeerId); //temp without gxs tunneling.
                         }
                     }//end forloop
@@ -795,7 +796,7 @@ void p3GxsChats::publishNotifyMessage(const RsGxsGroupId &grpId,std::pair<std::s
         }else{
             //privateGroup. sending to only membership, except the sender.
             for (auto sit=cinfo.second.begin(); sit !=cinfo.second.end(); sit++){
-                if(sit->chatPeerId  != ownChatId->chatPeerId && contains(ids,sit->chatPeerId))
+                if(sit->chatPeerId  != ownChatId->chatPeerId && rsPeers->isOnline(sit->chatPeerId))
                     tempSendList.push_back(sit->chatPeerId); //temp without gxs tunneling.
             }
         }
@@ -843,7 +844,7 @@ void p3GxsChats::publishBounceNotifyMessage(RsNxsNotifyChat * notifyMsg){
             //privateGroup. sending to only membership, except the sender.
             for (auto sit=cinfo.second.begin(); sit !=cinfo.second.end(); sit++){
                 if( sit->chatPeerId != sender || sit->chatPeerId  != ownChatId->chatPeerId ){
-                    if (contains(ids,sit->chatPeerId))
+                    if (rsPeers->isOnline(sit->chatPeerId))
                         tempSendList.push_back(sit->chatPeerId);
                 }
             }
@@ -1066,10 +1067,9 @@ void p3GxsChats::loadChatsMembers(RsGxsChatGroup &grp){
         return;
     }
 
-    std::list<GxsChatMember> tmp=grp.members;
-    tmp.merge(grpMembers[grpId].second);
-    tmp.unique();
-    grpMembers[grpId]=std::make_pair(grp.type,tmp);
+    for(auto nIt=grp.members.begin(); nIt != grp.members.end(); nIt++){
+        grpMembers[grpId].second.insert(*nIt);
+    }
 
 }
 
@@ -1632,7 +1632,7 @@ bool p3GxsChats::createGroup(uint32_t &token, RsGxsChatGroup &group)
     if(grpItem->members.empty() && ownChatId !=NULL ){
         GxsChatMember myself =*ownChatId;
         grpItem->type = RsGxsChatGroup::GROUPCHAT;
-        grpItem->members.push_front(myself);
+        grpItem->members.insert(myself);
     }
 
     RsGenExchange::publishGroup(token, grpItem);

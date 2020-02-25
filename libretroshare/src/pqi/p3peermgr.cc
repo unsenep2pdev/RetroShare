@@ -3028,8 +3028,6 @@ std::map<RsPgpId, std::string> p3PeerMgrIMPL::certListOfContact()
 
 bool p3PeerMgrIMPL::getPeerDetailsFromNetworkContacts(const RsPgpId &pgp_id, UnseenNetworkContactsItem &d)
 {
-    RsStackMutex stack(mPeerMtx); /****** STACK LOCK MUTEX *******/
-
     std::map<RsPgpId, UnseenNetworkContactsItem>::iterator itDetails;
     itDetails = mNetworkContacts.find(pgp_id);
     if (itDetails == mNetworkContacts.end())
@@ -3045,8 +3043,6 @@ bool p3PeerMgrIMPL::getPeerDetailsFromNetworkContacts(const RsPgpId &pgp_id, Uns
 }
 std::list<RsPgpId> p3PeerMgrIMPL::getNetworkContactsPgpIdList()
 {
-    RsStackMutex stack(mPeerMtx); /****** STACK LOCK MUTEX *******/
-
     std::list<RsPgpId> list;
     list.clear() ;
 
@@ -3094,7 +3090,6 @@ bool p3PeerMgrIMPL::isFriendOfContact( const RsPgpId& rsPgpId)
  }
  void p3PeerMgrIMPL::setAddFriendOption(const std::string&  option)
  {
-     RsStackMutex stack(mPeerMtx); /****** STACK LOCK MUTEX *******/
      mAddFriendOption = option;
  }
 

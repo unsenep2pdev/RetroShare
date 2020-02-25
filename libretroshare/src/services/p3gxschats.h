@@ -306,7 +306,7 @@ bool generateGroup(uint32_t &token, std::string groupName);
     GxsChatMember *ownChatId; //computing your RsPeerId and GxsId then chat service start. We keep unique pair <RsPeerId,GxsId>.
     void initChatId();
 
-    typedef std::pair<RsGxsChatGroup::ChatType, std::list<GxsChatMember>> ChatInfo; //one2one-list, group-list, channel-list
+    typedef std::pair<RsGxsChatGroup::ChatType, std::set<GxsChatMember>> ChatInfo; //one2one-list, group-list, channel-list
     std::map<RsGxsGroupId,ChatInfo> grpMembers;  //conversationId, {chattype, memberlist}.
     void loadChatsMembers(RsGxsChatGroup &grp);
     std::vector<std::pair<RsNxsGrp*,bool>> groupBouncePending;
