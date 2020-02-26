@@ -122,7 +122,7 @@ void UnseenGxsChatGroupDialog::prepareGxsChatGroup(RsGxsChatGroup &group, const 
     std::set<RsPeerId> shareList;
     this->getShareFriends(shareList);
 
-    std::list<GxsChatMember> membersFromList;
+    //std::list<GxsChatMember> membersFromList;
     for(std::set<RsPeerId>::const_iterator it(shareList.begin());it!=shareList.end();++it)
     {
         GxsChatMember member;
@@ -132,12 +132,19 @@ void UnseenGxsChatGroupDialog::prepareGxsChatGroup(RsGxsChatGroup &group, const 
             member.chatPeerId = (*it);
             member.nickname = detail.name;
             //member.chatGxsId = detail.
-            membersFromList.push_back(member);
+            members.push_back(member);
         }
     }
     //End of get member list
+    //adding itself to the group, otherwise, your friend won't have your information to response to.
+    GxsChatMember owner;
+    if(rsGxsChats->getOwnMember(owner))
+        members.push_back(owner);  //otherwise will failed
+    else{
+        return;
+    }
 
-    group.members= members = membersFromList;
+    group.members= members;
 
     //unseen2p - meiyousixin - add more function from UnseenGxsGroupDialog to get chat type
     group.type= chattype = this->getChatType();
