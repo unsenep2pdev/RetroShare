@@ -249,47 +249,26 @@ RsSerialiser* p3GxsChats::setupSerialiser()
 RsGenExchange::ServiceCreate_Return p3GxsChats::service_CreateGroup(RsGxsGrpItem* grpItem, RsTlvSecurityKeySet& keySet)
 {
     updateSubscribedGroup(grpItem->meta);
-
-    bool serialOk = false;
-    RsNxsGrp* grp = new RsNxsGrp(RS_PKT_SUBTYPE_NXS_CHAT_GRP_ITEM);
-
-    uint32_t size = mSerialiser->size(grpItem);
-    char *gData = new char[size];
-    serialOk = mSerialiser->serialise(grpItem, gData, &size);
-    if (serialOk){  //push group to your peers before GxsSync Start!
-        grp->grp.setBinData(gData, size);
-
-        grp->metaData = new RsGxsGrpMetaData();
-        *(grp->metaData) = grpItem->meta;
-
-        // TODO: change when publish key optimisation added (public groups don't have publish key
-        grp->metaData->mSubscribeFlags = GXS_SERV::GROUP_SUBSCRIBE_ADMIN | GXS_SERV::GROUP_SUBSCRIBE_SUBSCRIBED
-                        | GXS_SERV::GROUP_SUBSCRIBE_PUBLISH;
-
-        //send Group to the network
-         RsGxsChatGroupItem *item = dynamic_cast<RsGxsChatGroupItem*>(grpItem);
-         if (item){
-             //groupId should exist by now.
-             grpMembers[item->meta.mGroupId]= make_pair(item->type,item->members);
+    //send Group to the network
+    RsGxsChatGroupItem *item = dynamic_cast<RsGxsChatGroupItem*>(grpItem);
+    if (item){
+        //groupId should exist by now.
+        grpMembers[item->meta.mGroupId]= make_pair(item->type,item->members);
 
 #ifdef GXSCHATS_DEBUG
-            std::cerr <<"*****************p3GxsChats::service_CreateGroup(**********"<<std::endl;
-            std::cerr <<"GroupId:"<<item->meta.mGroupId<< "group.type:"<<item->type<<std::endl;
-            std::cerr <<"GroupMembers:";
-            for(auto it=item->members.begin(); it !=item->members.end(); it++){
-                std::cerr << "chatPeerId:"<< it->chatPeerId<< "Username: "<<it->nickname<< std::endl;
-            }
+        std::cerr <<"*****************p3GxsChats::service_CreateGroup(**********"<<std::endl;
+        std::cerr <<"*****************GroupId:"<<item->meta.mGroupId<< "  and   group.type:"<<item->type<<std::endl;
+        std::cerr <<"*****************GroupMembers: *************"<<std::endl;
+        for(auto it=item->members.begin(); it !=item->members.end(); it++){
+            std::cerr << "chatPeerId:"<< it->chatPeerId<< "Username: "<<it->nickname<< std::endl;
+        }
 #endif
-         }
-         else {
-             std::cerr <<"Failed to cast object: dynamic_cast<RsGxsChatGroupItem*>(grpItem); "<<std::endl;
-         }
+    }
+    else {
+        std::cerr <<"Failed to cast object: dynamic_cast<RsGxsChatGroupItem*>(grpItem); "<<std::endl;
+        return SERVICE_CREATE_FAIL;
+    }
 
-        //mChatSrv->sendGxsItem(grp);  //need to include a list of members or getting circle or private node members.
-        delete grp;
-        delete[] gData;
-
-    } //end pushing group to all add members.
     return SERVICE_CREATE_SUCCESS;
 }
 
