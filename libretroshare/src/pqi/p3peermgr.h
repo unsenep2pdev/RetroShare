@@ -140,7 +140,7 @@ virtual bool 	removeAllFriendLocations(const RsPgpId &gpgid) = 0;
 	/******************** Groups **********************/
 	/* This is solely used by p3peers - makes sense   */
 
-virtual bool    addGroup(RsGroupInfo &groupInfo) = 0;
+virtual bool    addGroup(RsGroupInfo &groupInfo,bool hide) = 0;
 virtual bool    editGroup(const RsNodeGroupId &groupId, RsGroupInfo &groupInfo) = 0;
 virtual bool    removeGroup(const RsNodeGroupId &groupId) = 0;
 virtual bool    getGroupInfo(const RsNodeGroupId &groupId, RsGroupInfo &groupInfo) = 0;
@@ -271,7 +271,7 @@ public:
     /******************** Groups **********************/
     /* This is solely used by p3peers - makes sense   */
 
-    virtual bool    addGroup(RsGroupInfo &groupInfo);
+    virtual bool    addGroup(RsGroupInfo &groupInfo, bool hide);
     virtual bool    editGroup(const RsNodeGroupId &groupId, RsGroupInfo &groupInfo);
     virtual bool    removeGroup(const RsNodeGroupId &groupId);
     virtual bool    getGroupInfo(const RsNodeGroupId &groupId, RsGroupInfo &groupInfo);

@@ -1362,13 +1362,13 @@ bool 	p3Peers::trustGPGCertificate(const RsPgpId &id, uint32_t trustlvl)
 }
 
 	/* Group Stuff */
-bool p3Peers::addGroup(RsGroupInfo &groupInfo)
+bool p3Peers::addGroup(RsGroupInfo &groupInfo, bool hide)
 {
 #ifdef P3PEERS_DEBUG
         std::cerr << "p3Peers::addGroup()" << std::endl;
 #endif
 
-		  bool res = mPeerMgr->addGroup(groupInfo);
+          bool res = mPeerMgr->addGroup(groupInfo, hide);
 		  rsFiles->updateSinceGroupPermissionsChanged() ;
 		  return res ;
 }
