@@ -122,7 +122,6 @@ void UnseenGxsChatGroupDialog::prepareGxsChatGroup(RsGxsChatGroup &group, const 
     std::set<RsPeerId> shareList;
     this->getShareFriends(shareList);
 
-    //std::list<GxsChatMember> membersFromList;
     for(std::set<RsPeerId>::const_iterator it(shareList.begin());it!=shareList.end();++it)
     {
         GxsChatMember member;
