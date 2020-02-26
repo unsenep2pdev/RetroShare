@@ -68,32 +68,6 @@
        <layout class="QGridLayout" name="gridLayout_7">
         <item row="0" column="0">
          <layout class="QGridLayout" name="gridLayout">
-          <item row="0" column="0" colspan="4">
-           <widget class="QRadioButton" name="typeOne2One">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="toolTip">
-             <string/>
-            </property>
-            <property name="text">
-             <string>One to One Chat</string>
-            </property>
-            <property name="icon">
-             <iconset resource="../icons.qrc">
-              <normaloff>:/icons/png/network-puplic.png</normaloff>:/icons/png/network-puplic.png</iconset>
-            </property>
-            <property name="iconSize">
-             <size>
-              <width>24</width>
-              <height>24</height>
-             </size>
-            </property>
-           </widget>
-          </item>
           <item row="2" column="0" colspan="2">
            <widget class="QRadioButton" name="typeChannel">
             <property name="sizePolicy">
@@ -120,30 +94,30 @@
             </property>
            </widget>
           </item>
-          <item row="1" column="2" colspan="2">
-           <widget class="GxsCircleChooser" name="groupTypeComboBox">
+          <item row="0" column="0" colspan="3">
+           <widget class="QRadioButton" name="typeOne2One">
             <property name="sizePolicy">
-             <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+             <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
             </property>
-            <property name="currentText">
-             <string>Private (members only)</string>
+            <property name="toolTip">
+             <string/>
             </property>
-            <property name="currentIndex">
-             <number>0</number>
+            <property name="text">
+             <string>One to One Chat</string>
             </property>
-            <item>
-             <property name="text">
-              <string>Private (members only)</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Public (visible for all friends, like forum)</string>
-             </property>
-            </item>
+            <property name="icon">
+             <iconset resource="../icons.qrc">
+              <normaloff>:/icons/png/network-puplic.png</normaloff>:/icons/png/network-puplic.png</iconset>
+            </property>
+            <property name="iconSize">
+             <size>
+              <width>24</width>
+              <height>24</height>
+             </size>
+            </property>
            </widget>
           </item>
           <item row="1" column="0" colspan="2">
@@ -170,6 +144,34 @@
               <height>24</height>
              </size>
             </property>
+           </widget>
+          </item>
+          <item row="1" column="2">
+           <widget class="QComboBox" name="groupTypeComboBox">
+            <item>
+             <property name="text">
+              <string>Private (members only)</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Public (visible for all, like forum)</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+          <item row="2" column="2">
+           <widget class="QComboBox" name="channelType">
+            <item>
+             <property name="text">
+              <string>Private (members only)</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Public (visible for all)</string>
+             </property>
+            </item>
            </widget>
           </item>
          </layout>
@@ -217,19 +219,6 @@
            <string>No Comments</string>
           </property>
          </widget>
-        </item>
-        <item>
-         <spacer name="horizontalSpacer_5">
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>40</width>
-            <height>20</height>
-           </size>
-          </property>
-         </spacer>
         </item>
        </layout>
       </widget>

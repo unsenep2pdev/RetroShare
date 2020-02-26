@@ -357,24 +357,24 @@ RsGenExchange::ServiceCreate_Return p3GxsChats::service_CreateMessage(RsNxsMsg* 
         std::set<RsPeerId> tempSendList;
 
         //getting all member of group node memberlist.
-        if(!chatGrpMeta.mInternalCircle.isNull())
-        {
-            RsGroupInfo ginfo ;
-            RsNodeGroupId  groupId = RsNodeGroupId(chatGrpMeta.mInternalCircle);
+//        if(!chatGrpMeta.mInternalCircle.isNull())
+//        {
+//            RsGroupInfo ginfo ;
+//            RsNodeGroupId  groupId = RsNodeGroupId(chatGrpMeta.mInternalCircle);
 
-            if(rsPeers->getGroupInfo(groupId,ginfo))
-            {
-                for (auto it = ginfo.peerIds.begin(); it != ginfo.peerIds.end(); it++ ){
-                    std::list<RsPeerId> nodeIds;
-                    if (rsPeers->getAssociatedSSLIds(*it,nodeIds)){
-                        for(auto lit=nodeIds.begin(); lit !=nodeIds.end(); lit++){
-                            if (contains(ids,*lit))
-                                tempSendList.insert(*lit); //filter for only online status friend.
-                        }
-                    }
-                }//end for loop
-            }
-        }
+//            if(rsPeers->getGroupInfo(groupId,ginfo))
+//            {
+//                for (auto it = ginfo.peerIds.begin(); it != ginfo.peerIds.end(); it++ ){
+//                    std::list<RsPeerId> nodeIds;
+//                    if (rsPeers->getAssociatedSSLIds(*it,nodeIds)){
+//                        for(auto lit=nodeIds.begin(); lit !=nodeIds.end(); lit++){
+//                            if (contains(ids,*lit))
+//                                tempSendList.insert(*lit); //filter for only online status friend.
+//                        }
+//                    }
+//                }//end for loop
+//            }
+//        }
         //getting all member on conversation memberlist.
         //privateGroup. sending to only membership, except the sender.
         ChatInfo cinfo = mit->second;

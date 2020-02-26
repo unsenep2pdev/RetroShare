@@ -199,6 +199,7 @@ static const RsNodeGroupId RS_GROUP_ID_FAVORITES ("00000000000000000000000000000
 #define RS_GROUP_DEFAULT_NAME_FAVORITES  "Favorites"
 
 const uint32_t RS_GROUP_FLAG_STANDARD = 0x0001;
+const uint32_t RS_GROUP_FLAG_HIDE     = 0x0002;
 
 //unseenp2p - add friend options
 static const std::string ADDFRIEND_PQISSLLISTENNER = "ADDFRIEND_PQISSLLISTENNER";
@@ -399,6 +400,8 @@ struct RsPeerCryptoParams
 struct RsGroupInfo : RsSerializable
 {
     RsGroupInfo();
+    enum GroupType { ONE2ONE, GROUPCHAT, CHANNEL, DEFAULTS } ;
+    GroupType  type;  //one2one,groupchat, and channel
 
     RsNodeGroupId   id;
     std::string     name;
@@ -415,6 +418,7 @@ struct RsGroupInfo : RsSerializable
 		RS_SERIAL_PROCESS(name);
 		RS_SERIAL_PROCESS(flag);
 		RS_SERIAL_PROCESS(peerIds);
+        RS_SERIAL_PROCESS(type);
 	}
 };
 
@@ -664,7 +668,7 @@ public:
 	 * @param[in] groupInfo
 	 * @return
 	 */
-    virtual bool addGroup(RsGroupInfo& groupInfo) = 0;
+    virtual bool addGroup(RsGroupInfo& groupInfo, bool hide) = 0;
 
 	/**
 	 * @brief editGroup edit an existing group

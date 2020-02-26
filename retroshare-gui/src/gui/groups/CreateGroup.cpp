@@ -124,7 +124,7 @@ void CreateGroup::changeGroup()
 		// add new group
 		groupInfo.name = misc::removeNewLine(ui.groupName->text()).toUtf8().constData();
 
-        if (!rsPeers->addGroup(groupInfo))
+        if (!rsPeers->addGroup(groupInfo, false))
 			return;
 
     }

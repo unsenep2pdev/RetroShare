@@ -142,7 +142,8 @@ public:
 
 private:
 	void newGroup();
-    void init(const std::set<RsPeerId>& friends_list);
+    //void init(const std::set<RsPeerId>& friends_list, const std::set<RsPgpId>& peer_list2);
+    void init(const std::set<RsPgpId>& peer_list2, const std::set<RsPeerId>& peer_list);
 	void initMode();
 
 	// Functions that can be overloaded for specific stuff.
@@ -264,6 +265,7 @@ private:
 	uint32_t mDefaultsFlags;
 
     std::set<RsPeerId> mShareFriends;
+    std::set<RsPgpId> mShareGpgIds;
     RsGxsChatGroup::ChatType chatType;
 
 protected:
