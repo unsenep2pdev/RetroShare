@@ -496,6 +496,7 @@ void UnseenGxsGroupDialog::createGroup()
     }
 
     std::set<RsPgpId> gpgIds;
+    ui.keyShareList->selectedIds<RsPeerId,FriendSelectionWidget::IDTYPE_SSL>(mShareFriends, false);
     ui.keyShareList->selectedIds<RsPgpId,FriendSelectionWidget::IDTYPE_GPG>(gpgIds, false);
 
     //ui.keyShareList->selectedIds<RsPeerId,FriendSelectionWidget::IDTYPE_SSL>(mShareFriends, false);
