@@ -118,10 +118,21 @@ void UnseenGxsChatGroupDialog::prepareGxsChatGroup(RsGxsChatGroup &group, const 
     group.mMeta = meta;
     group.mDescription = getDescription().toUtf8().constData();
 
+    //testing online list versus groupNodelist
+
+    std::list<RsPeerId> ids;
+    rsPeers->getOnlineList(ids);
+
+    std::cerr <<"*******Print all Onine RsPeerId *********"<< std::endl;
+    for(auto it=ids.begin(); it !=ids.end(); it++)
+    {
+        std::cerr <<" ID: "<< *it << std::endl;
+    }
     //unseenp2p - meiyousixin: try to get all member list from the Create Conversation Dialog
     std::set<RsPeerId> shareList;
     this->getShareFriends(shareList);
 
+    std::cerr <<"*********Print All NodeGroupID: *********"<<std::endl;
     for(std::set<RsPeerId>::const_iterator it(shareList.begin());it!=shareList.end();++it)
     {
         GxsChatMember member;
@@ -132,6 +143,7 @@ void UnseenGxsChatGroupDialog::prepareGxsChatGroup(RsGxsChatGroup &group, const 
             member.nickname = detail.name;
             //member.chatGxsId = detail.
             members.push_back(member);
+            std::cerr <<" Name: " << member.nickname << " and RsPeerID: "<<member.chatPeerId << std::endl;
         }
     }
     //End of get member list

@@ -595,7 +595,7 @@ void UnseenGxsGroupDialog::createGroup()
     }
     meta.mInternalCircle = RsGxsCircleId(groupInfo.id);
     meta.mGroupFlags = flags;
-
+    meta.mSignFlags = getGroupSignFlags();
 
 	if (!prepareGroupMetaData(meta))
 	{

@@ -114,11 +114,10 @@ uint32_t p3GxsChats::chatsAuthenPolicy()
     uint32_t policy = 0;
     uint32_t flag = 0;
 
-    flag = GXS_SERV::MSG_AUTHEN_ROOT_PUBLISH_SIGN | GXS_SERV::MSG_AUTHEN_CHILD_AUTHOR_SIGN;
+    flag =  GXS_SERV::MSG_AUTHEN_ROOT_AUTHOR_SIGN | GXS_SERV::MSG_AUTHEN_CHILD_AUTHOR_SIGN;
     RsGenExchange::setAuthenPolicyFlag(flag, policy, RsGenExchange::PUBLIC_GRP_BITS);
 
-    flag |= GXS_SERV::MSG_AUTHEN_CHILD_PUBLISH_SIGN;
-    //flag |= GXS_SERV::MSG_AUTHEN_ROOT_PUBLISH_SIGN | GXS_SERV::MSG_AUTHEN_CHILD_PUBLISH_SIGN;
+    flag = GXS_SERV::MSG_AUTHEN_ROOT_PUBLISH_SIGN | GXS_SERV::MSG_AUTHEN_CHILD_PUBLISH_SIGN;
     RsGenExchange::setAuthenPolicyFlag(flag, policy, RsGenExchange::RESTRICTED_GRP_BITS);
     RsGenExchange::setAuthenPolicyFlag(flag, policy, RsGenExchange::PRIVATE_GRP_BITS);
 
@@ -291,7 +290,7 @@ RsGenExchange::ServiceCreate_Return p3GxsChats::service_PublishGroup(RsNxsGrp *g
     if(grpMeta.mCircleType==GXS_CIRCLE_TYPE_PUBLIC && !ids.empty()){
             std::set<RsPeerId> peers(ids.begin(), ids.end());
             netService->PublishChatGroup(grp,ids);
-            groupShareKeys(grp->grpId,peers);
+            //groupShareKeys(grp->grpId,peers);
             //sharing publish key to all invite members.
     }else{
         auto mit = grpMembers.find(grp->grpId);
@@ -306,7 +305,7 @@ RsGenExchange::ServiceCreate_Return p3GxsChats::service_PublishGroup(RsNxsGrp *g
         if(!tempSendList.empty()){
             std::list<RsPeerId> sendlist(tempSendList.begin(), tempSendList.end());
             netService->PublishChatGroup(grp,sendlist);
-            groupShareKeys(grp->grpId,tempSendList);          //sharing publish key to all invite members.
+            //groupShareKeys(grp->grpId,tempSendList);          //sharing publish key to all invite members.
         }
     }
     return SERVICE_CREATE_SUCCESS;
