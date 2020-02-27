@@ -119,10 +119,13 @@ uint32_t p3GxsChats::chatsAuthenPolicy()
 
     flag = GXS_SERV::MSG_AUTHEN_ROOT_PUBLISH_SIGN | GXS_SERV::MSG_AUTHEN_CHILD_PUBLISH_SIGN;
     RsGenExchange::setAuthenPolicyFlag(flag, policy, RsGenExchange::RESTRICTED_GRP_BITS);
-    RsGenExchange::setAuthenPolicyFlag(flag, policy, RsGenExchange::PRIVATE_GRP_BITS);
 
-    flag = 0;
-    RsGenExchange::setAuthenPolicyFlag(flag, policy, RsGenExchange::GRP_OPTION_BITS);
+//    RsGenExchange::setAuthenPolicyFlag(flag, policy, RsGenExchange::PRIVATE_GRP_BITS);
+//    std::cerr <<"PRIVATE_GRP_BITS Policy(Hex): "<<policy <<std::hex <<std::endl;
+
+//    flag = 0;
+//    RsGenExchange::setAuthenPolicyFlag(flag, policy, RsGenExchange::GRP_OPTION_BITS);
+//    std::cerr <<"GRP_OPTION_BITS Policy(Hex): "<<std::hex << policy <<std::endl;
 
     return policy;
 }
