@@ -21,19 +21,24 @@ libresapihttpserver {
 
 FORMS   += TorControl/TorControlWindow.ui \
     gui/gxs/UnseenGxsGroupFrameDialog.ui \
-    gui/gxschats/UnseenGxsChatLobbyDialog.ui
+    gui/gxschats/UnseenGxsChatLobbyDialog.ui \
+    gui/gxs/UnseenGxsGroupDialog.ui
 SOURCES += TorControl/TorControlWindow.cpp \
     gui/gxs/UnseenGxsGroupFrameDialog.cpp \
     gui/gxschats/UnseenGxsSmartlistmodel.cpp \
     gui/gxschats/UnseenGxsSmartlistview.cpp \
     gui/UnseenGxsConversationitemdelegate.cpp \
-    gui/gxschats/UnseenGxsChatLobbyDialog.cpp
+    gui/gxschats/UnseenGxsChatLobbyDialog.cpp \
+    gui/gxschats/UnseenGxsChatGroupDialog.cpp \
+    gui/gxs/UnseenGxsGroupDialog.cpp
 HEADERS += TorControl/TorControlWindow.h \
     gui/gxs/UnseenGxsGroupFrameDialog.h \
     gui/gxschats/UnseenGxsSmartlistmodel.h \
     gui/gxschats/UnseenGxsSmartlistview.h \
     gui/UnseenGxsConversationitemdelegate.h \
-    gui/gxschats/UnseenGxsChatLobbyDialog.h
+    gui/gxschats/UnseenGxsChatLobbyDialog.h \
+    gui/gxschats/UnseenGxsChatGroupDialog.h \
+    gui/gxs/UnseenGxsGroupDialog.h
 
 
 #QMAKE_CFLAGS += -fmudflap 

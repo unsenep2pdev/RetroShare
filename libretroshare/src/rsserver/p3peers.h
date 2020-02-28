@@ -144,7 +144,7 @@ public:
 	virtual	bool trustGPGCertificate(const RsPgpId &id, uint32_t trustlvl);
 
 	/* Group Stuff */
-	virtual bool addGroup(RsGroupInfo &groupInfo);
+    virtual bool addGroup(RsGroupInfo &groupInfo, bool hide);
     virtual bool editGroup(const RsNodeGroupId &groupId, RsGroupInfo &groupInfo);
     virtual bool removeGroup(const RsNodeGroupId &groupId);
     virtual bool getGroupInfo(const RsNodeGroupId &groupId, RsGroupInfo &groupInfo);

@@ -2603,7 +2603,7 @@ void  printConnectState(std::ostream &out, peerState &peer)
  **********************************************************************
  **********************************************************************/
 
-bool p3PeerMgrIMPL::addGroup(RsGroupInfo &groupInfo)
+bool p3PeerMgrIMPL::addGroup(RsGroupInfo &groupInfo, bool hide)
 {
 	{
 		RsStackMutex stack(mPeerMtx); /****** STACK LOCK MUTEX *******/
@@ -2615,6 +2615,7 @@ bool p3PeerMgrIMPL::addGroup(RsGroupInfo &groupInfo)
 		// remove standard flag
 
         groupItem.flag &= ~RS_GROUP_FLAG_STANDARD;
+        if (hide) groupItem.flag |= RS_GROUP_FLAG_HIDE;
         groupList[groupInfo.id] = groupItem;
 
         std::cerr << "(II) Added new group with ID " << groupInfo.id << ", name=\"" << groupInfo.name << "\"" << std::endl;

@@ -345,7 +345,7 @@ RsGenExchange::ServiceCreate_Return p3GxsChats::service_CreateMessage(RsNxsMsg* 
     {
         std::cerr << "CircleType: GXS_CIRCLE_TYPE_EXTERNAL"<<std::endl;
         break;
-    }
+    }   
     case GXS_CIRCLE_TYPE_YOUR_FRIENDS_ONLY:	// restricted to a subset of friend nodes of a given RS node given by a RsPgpId list
     {
         std::list<RsPeerId> tempSendList;
