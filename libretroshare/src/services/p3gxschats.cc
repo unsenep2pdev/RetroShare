@@ -114,16 +114,11 @@ uint32_t p3GxsChats::chatsAuthenPolicy()
     uint32_t policy = 0;
     uint32_t flag = 0;
 
-    flag = GXS_SERV::MSG_AUTHEN_ROOT_PUBLISH_SIGN | GXS_SERV::MSG_AUTHEN_CHILD_AUTHOR_SIGN;
+    flag =  GXS_SERV::MSG_AUTHEN_ROOT_AUTHOR_SIGN | GXS_SERV::MSG_AUTHEN_CHILD_AUTHOR_SIGN;
     RsGenExchange::setAuthenPolicyFlag(flag, policy, RsGenExchange::PUBLIC_GRP_BITS);
 
-    flag |= GXS_SERV::MSG_AUTHEN_CHILD_PUBLISH_SIGN;
-    //flag |= GXS_SERV::MSG_AUTHEN_ROOT_PUBLISH_SIGN | GXS_SERV::MSG_AUTHEN_CHILD_PUBLISH_SIGN;
+    flag = GXS_SERV::MSG_AUTHEN_ROOT_PUBLISH_SIGN | GXS_SERV::MSG_AUTHEN_CHILD_PUBLISH_SIGN;
     RsGenExchange::setAuthenPolicyFlag(flag, policy, RsGenExchange::RESTRICTED_GRP_BITS);
-    RsGenExchange::setAuthenPolicyFlag(flag, policy, RsGenExchange::PRIVATE_GRP_BITS);
-
-    flag = 0;
-    RsGenExchange::setAuthenPolicyFlag(flag, policy, RsGenExchange::GRP_OPTION_BITS);
 
     return policy;
 }
@@ -296,8 +291,8 @@ RsGenExchange::ServiceCreate_Return p3GxsChats::service_PublishGroup(RsNxsGrp *g
     if(grpMeta.mCircleType==GXS_CIRCLE_TYPE_PUBLIC && !ids.empty()){
             std::set<RsPeerId> peers(ids.begin(), ids.end());
             netService->PublishChatGroup(grp,ids);
-            if(cinfo.first !=RsGxsChatGroup::CHANNEL)
-                groupShareKeys(grp->grpId,peers);
+            //if(cinfo.first !=RsGxsChatGroup::CHANNEL)
+            //    groupShareKeys(grp->grpId,peers);
             //sharing publish key to all invite members.
     }else{
         for (auto sit=cinfo.second.begin(); sit !=cinfo.second.end(); sit++){
@@ -307,8 +302,8 @@ RsGenExchange::ServiceCreate_Return p3GxsChats::service_PublishGroup(RsNxsGrp *g
         if(!tempSendList.empty()){
             std::list<RsPeerId> sendlist(tempSendList.begin(), tempSendList.end());
             netService->PublishChatGroup(grp,sendlist);
-            if(cinfo.first !=RsGxsChatGroup::CHANNEL)
-                groupShareKeys(grp->grpId,tempSendList);          //sharing publish key to all invite members.
+            //if(cinfo.first !=RsGxsChatGroup::CHANNEL)
+            //    groupShareKeys(grp->grpId,tempSendList);          //sharing publish key to all invite members.
         }
     }
     return SERVICE_CREATE_SUCCESS;
@@ -557,10 +552,6 @@ void p3GxsChats::processRecvBounceGroup(){
         RsGxsGrpItem* gItem = dynamic_cast<RsGxsGrpItem*>(item);
         RsGxsChatGroupItem* grpItem = dynamic_cast<RsGxsChatGroupItem*>(gItem);
 
-#ifdef GXSCHATS_DEBUG
-        std::cerr <<"Group Circle ID:"<<grpItem->meta.mCircleId<<std::endl;
-        std::cerr <<"Group CircleType:"<<grpItem->meta.mCircleType<<std::endl;
-#endif
         auto mit = grpMembers.find(grpId);
         if (mit == grpMembers.end() && isNew){
             //new group just received. We have to deserialized to find out what type of conversation (ONE2ONE, GROUP, or CHANNEL)
@@ -986,7 +977,7 @@ static  rstime_t last_notifyClear = 0;
 
     processRecvBounceGroup();
     processRecvBounceMessage();
-    handleBounceShareKey();
+    //handleBounceShareKey();
     processRecvBounceNotify();
 
     RsTickEvent::tick_events();
