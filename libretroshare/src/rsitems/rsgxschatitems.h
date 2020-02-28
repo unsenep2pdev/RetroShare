@@ -37,7 +37,7 @@ public:
     std::string mDescription;  //conversation display by name
     RsTlvImage mImage;   //avatar image per conversation
     RsGxsChatGroup::ChatType  type;  //one2one,groupchat, and channel
-    std::list<GxsChatMember> members;
+    std::set<GxsChatMember> members;
 };
 
 

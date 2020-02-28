@@ -594,20 +594,16 @@ macx-* {
 	message(***retroshare.pri:MacOSX)
 
         ##DEFINES *=BUNDLED_TOR_PATH=\\\"{RS_DATA_DIR}\\\"
-
         ## 11 Sep 2018 - meiyousixin - use config in one MacOS comp
 	BIN_DIR += "/Applications/Xcode.app/Contents/Developer/usr/bin"
 	INC_DIR += "/usr/local/Cellar/miniupnpc/2.1/include"
 	INC_DIR += "/usr/local/Cellar/libmicrohttpd/0.9.63/include"
-	INC_DIR += "/usr/local/Cellar/sqlcipher/4.1.0/include"
-
+        INC_DIR += "/usr/local/Cellar/sqlcipher/4.1.0/include"
 
 	LIB_DIR += "/usr/local/opt/openssl/lib/"
         LIB_DIR += "/usr/local/Cellar/libmicrohttpd/0.9.59/lib"
         LIB_DIR += "/usr/local/Cellar/sqlcipher/4.0.1/lib"
-	LIB_DIR += "/usr/local/Cellar/miniupnpc/2.1/lib"
-
-
+        LIB_DIR += "/usr/local/Cellar/miniupnpc/2.1/lib"
 
         CONFIG += c++11
         INCLUDEPATH += "/usr/local/include"

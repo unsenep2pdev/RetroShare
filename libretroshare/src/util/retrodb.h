@@ -145,11 +145,12 @@ public:
      *        an SQL WHERE clause (excluding the WHERE itself). Passing null will \n
      *        return all rows for the given table.
      * @param order the rows, formatted as an SQL ORDER BY clause (excluding the ORDER BY itself)
+     * @param offset page the rows (page=0, return all messages, page=1 (offset =1  and limit 25), page=2 (offset=25 and limit 25)
      * @return cursor over result set, this allocated resource should be free'd after use \n
      *         column order is in list order.
      */
     RetroCursor* sqlQuery(const std::string& tableName, const std::list<std::string>& columns,
-                          const std::string& selection, const std::string& orderBy);
+                          const std::string& selection, const std::string& orderBy, int page=0);
 
     /*!
      * delete row in an sql table

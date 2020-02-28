@@ -1205,7 +1205,7 @@ void RsDataService::locked_retrieveGroups(RetroCursor* c, std::vector<RsNxsGrp*>
     }
 }
 
-int RsDataService::retrieveNxsMsgs(const GxsMsgReq &reqIds, GxsMsgResult &msg, bool /* cache */, bool withMeta)
+int RsDataService::retrieveNxsMsgs(const GxsMsgReq &reqIds, GxsMsgResult &msg, bool /* cache */, bool withMeta, int page)
 {
 #ifdef RS_DATA_SERVICE_DEBUG_TIME
     rstime::RsScopeTimer timer("");
@@ -1227,7 +1227,12 @@ int RsDataService::retrieveNxsMsgs(const GxsMsgReq &reqIds, GxsMsgResult &msg, b
 
             RsStackMutex stack(mDbMutex);
 
-            RetroCursor* c = mDb->sqlQuery(MSG_TABLE_NAME, withMeta ? mMsgColumnsWithMeta : mMsgColumns, KEY_GRP_ID+ "='" + grpId.toStdString() + "'", "");
+            std::string orderby = "";
+            if(page>0){
+                orderby = " recv_time_stamp DESC ";
+            }
+
+            RetroCursor* c = mDb->sqlQuery(MSG_TABLE_NAME, withMeta ? mMsgColumnsWithMeta : mMsgColumns, KEY_GRP_ID+ "='" + grpId.toStdString() + "'", orderby, page);
 
             if(c)
             {
@@ -1290,7 +1295,7 @@ void RsDataService::locked_retrieveMessages(RetroCursor *c, std::vector<RsNxsMsg
     return;
 }
 
-int RsDataService::retrieveGxsMsgMetaData(const GxsMsgReq& reqIds, GxsMsgMetaResult &msgMeta)
+int RsDataService::retrieveGxsMsgMetaData(const GxsMsgReq& reqIds, GxsMsgMetaResult &msgMeta, int page)
 {
     RsStackMutex stack(mDbMutex);
 
@@ -1298,6 +1303,7 @@ int RsDataService::retrieveGxsMsgMetaData(const GxsMsgReq& reqIds, GxsMsgMetaRes
     rstime::RsScopeTimer timer("");
     int resultCount = 0;
 #endif
+
 
     GxsMsgReq::const_iterator mit = reqIds.begin();
 
@@ -1311,7 +1317,11 @@ int RsDataService::retrieveGxsMsgMetaData(const GxsMsgReq& reqIds, GxsMsgMetaRes
         std::vector<RsGxsMsgMetaData*> metaSet;
 
         if(msgIdV.empty()){
-            RetroCursor* c = mDb->sqlQuery(MSG_TABLE_NAME, mMsgMetaColumns, KEY_GRP_ID+ "='" + grpId.toStdString() + "'", "");
+            std::string orderby = "";  //pagination if page is greater than 0
+            if(page>0)
+                orderby = " recv_time_stamp DESC ";
+
+            RetroCursor* c = mDb->sqlQuery(MSG_TABLE_NAME, mMsgMetaColumns, KEY_GRP_ID+ "='" + grpId.toStdString() + "'", orderby, page);
 
             if (c)
             {

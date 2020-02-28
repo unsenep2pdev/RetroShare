@@ -71,7 +71,7 @@ UnseenGxsChatGroupDialog::UnseenGxsChatGroupDialog(TokenQueue *tokenExternalQueu
     GxsChatMember chatId;
     rsGxsChats->getOwnMember(chatId);
     ownChatId=chatId;
-    members.push_back(chatId);
+    members.insert(chatId);
     chattype=RsGxsChatGroup::GROUPCHAT;  //set default for now...
 
 
@@ -131,14 +131,14 @@ void UnseenGxsChatGroupDialog::prepareGxsChatGroup(RsGxsChatGroup &group, const 
             member.chatPeerId = (*it);
             member.nickname = detail.name;
             //member.chatGxsId = detail.
-            members.push_back(member);
+            members.insert(member);
         }
     }
     //End of get member list
     //adding itself to the group, otherwise, your friend won't have your information to response to.
     GxsChatMember owner;
     if(rsGxsChats->getOwnMember(owner))
-        members.push_back(owner);  //otherwise will failed
+        members.insert(owner);  //otherwise will failed
     else{
         return;
     }
@@ -227,10 +227,9 @@ bool UnseenGxsChatGroupDialog::service_loadGroup(uint32_t token, Mode /*mode*/, 
     return true;
 }
 
-bool UnseenGxsChatGroupDialog::Service_AddMembers(uint32_t &token, RsGroupMetaData &editedMeta, std::list<GxsChatMember> friendlist){
+bool UnseenGxsChatGroupDialog::Service_AddMembers(uint32_t &token, RsGroupMetaData &editedMeta, std::set<GxsChatMember> friendlist){
 
-    members.merge(friendlist);
-    members.unique();
+    std::copy(friendlist.begin(), friendlist.end(),std::inserter(members, members.begin()));
 
     RsGxsChatGroup grp;
     prepareGxsChatGroup(grp, editedMeta);
@@ -242,11 +241,12 @@ bool UnseenGxsChatGroupDialog::Service_AddMembers(uint32_t &token, RsGroupMetaDa
     return true;
 }
 
-bool UnseenGxsChatGroupDialog::Service_RemoveMembers(uint32_t &token, RsGroupMetaData &editedMeta, std::list<GxsChatMember> friendlist){
+bool UnseenGxsChatGroupDialog::Service_RemoveMembers(uint32_t &token, RsGroupMetaData &editedMeta, std::set<GxsChatMember> friendlist){
 
     for(auto it=friendlist.begin(); it !=friendlist.end(); it++){
-        members.remove(*it);
+        members.erase(*it);
     }
+    //need to remove from groupNode to prevent GSX Sync to these members.
 
     RsGxsChatGroup grp;
     prepareGxsChatGroup(grp, editedMeta);

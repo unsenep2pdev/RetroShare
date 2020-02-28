@@ -29,13 +29,12 @@
 struct GxsRequest
 {
 	GxsRequest() :
-	    token(0), reqTime(0), ansType(0), reqType(0),
+        token(0), reqTime(0), ansType(0), reqType(0),
 	    status(RsTokenService::FAILED) {}
 	virtual ~GxsRequest() {}
 
 	uint32_t token;
 	uint32_t reqTime;
-
 	RS_DEPRECATED uint32_t ansType; /// G10h4ck: This is of no use
 	uint32_t reqType;
 	RsTokReqOptions Options;

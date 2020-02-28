@@ -1546,7 +1546,7 @@ void UnseenGxsChatLobbyDialog::requestAllPosts()
 
     RsTokReqOptions opts;
     opts.mReqType = GXS_REQUEST_TYPE_MSG_DATA;
-
+    opts.page=1;
     uint32_t token;
     mTokenQueue->requestMsgInfo(token, RS_TOKREQ_ANSTYPE_DATA, opts, groupIds, mTokenTypeAllPosts);
 }

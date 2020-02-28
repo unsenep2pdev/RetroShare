@@ -51,6 +51,7 @@ class GxsChatMember: RsSerializable
     std::string nickname;  //chat display name
     RsPeerId chatPeerId;
     RsGxsId  chatGxsId;
+    bool status;  //true if a member has joined the conversation, default = false.
     std::map<std::string,std::string> chatinfo;
 
     virtual void serial_process( RsGenericSerializer::SerializeJob j,
@@ -59,6 +60,7 @@ class GxsChatMember: RsSerializable
         RS_SERIAL_PROCESS(nickname);
         RS_SERIAL_PROCESS(chatPeerId);
         RS_SERIAL_PROCESS(chatGxsId);
+        RS_SERIAL_PROCESS(status);
         RsTypeSerializer::serial_process<std::string,std::string>(j,ctx,chatinfo,"chatinfo");
     }
 
@@ -67,6 +69,7 @@ class GxsChatMember: RsSerializable
         chatPeerId  = member.chatPeerId;
         chatGxsId   = member.chatGxsId;
         chatinfo    = member.chatinfo;
+        status      = member.status;
     }
     bool operator==(const GxsChatMember& comp ) const
     {
@@ -96,7 +99,7 @@ class RsGxsChatGroup : RsSerializable
         RsGroupMetaData mMeta;
         std::string mDescription;   //conversation display name or groupname
         RsGxsImage  mImage; //conversation avatar image
-        std::list<GxsChatMember> members;
+        std::set<GxsChatMember> members;
         /// @see RsSerializable
         bool mAutoDownload;
         RsGxsChatGroup(): type(GROUPCHAT){}
@@ -189,7 +192,7 @@ public:
      */
     virtual bool getChatsContent(
             const std::list<RsGxsGroupId>& chatIds,
-            std::vector<RsGxsChatMsg>& posts) = 0;
+            std::vector<RsGxsChatMsg>& posts, int page=0) = 0;
 
     /* Specific Service Data
      * TODO: change the orrible const uint32_t &token to uint32_t token

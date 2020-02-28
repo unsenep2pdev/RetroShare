@@ -1434,7 +1434,7 @@ bool RsGenExchange::getMsgData(uint32_t token, GxsMsgDataMap &msgItems)
 {
 	RS_STACK_MUTEX(mGenMtx) ;
 	NxsMsgDataResult msgResult;
-	bool ok = mDataAccess->getMsgData(token, msgResult);
+    bool ok = mDataAccess->getMsgData(token, msgResult);
 	if(ok)
 	{
 		NxsMsgDataResult::iterator mit = msgResult.begin();

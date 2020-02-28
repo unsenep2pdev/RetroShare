@@ -366,7 +366,7 @@ public:
      * @param token token to be redeemed for message item retrieval
      * @param msgItems
      */
-	bool getMsgData(uint32_t token, GxsMsgDataMap& msgItems);
+    bool getMsgData(uint32_t token, GxsMsgDataMap& msgItems);
 
     template <class MsgType>
 	bool getMsgDataT( uint32_t token, std::map<RsGxsGroupId,
