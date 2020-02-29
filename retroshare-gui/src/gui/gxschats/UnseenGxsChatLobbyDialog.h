@@ -80,7 +80,7 @@ public:
     //unseenp2p - move from protected to public
     void processSettings(bool load);
     //unseenp2p - add for gxs groupchat
-    RsGxsGroupId groupId() const {return mGXSGroupId; }
+    RsGxsGroupId groupId() const {return mGroupId; }
 
 private slots:
 	void participantsTreeWidgetCustomPopupMenu( QPoint point );
@@ -169,7 +169,7 @@ private:
     QIcon bullet_unknown_128;
 
     //unseenp2p - add for gxs groupchat
-    RsGxsGroupId  mGXSGroupId;
+    //RsGxsGroupId  mGXSGroupId;
 
     ////////////////////////////////////////////////////////////////////////////////////////////
     ///             THESE ARE FOR 4 CLASS THAT THIS CLASS NEED TO DO                ////////////
@@ -213,7 +213,7 @@ private:
 
 public:
 
-    const RsGxsGroupId &groupId();
+    const RsGxsGroupId &groupId();  //need to consider with the
     void setGroupId(const RsGxsGroupId &groupId);
     void setAllMessagesRead(bool read);
     void groupIdChanged();

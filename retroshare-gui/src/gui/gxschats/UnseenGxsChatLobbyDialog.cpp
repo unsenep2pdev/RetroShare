@@ -77,7 +77,7 @@ const static uint32_t timeToInactivity = 60 * 10;   // in seconds
 
 /** Default constructor */
 UnseenGxsChatLobbyDialog::UnseenGxsChatLobbyDialog( const RsGxsGroupId& id, QWidget *parent, Qt::WindowFlags flags)
-        : ChatDialog(parent, flags), mGXSGroupId(id),
+        : ChatDialog(parent, flags), mGroupId(id),
           bullet_red_128(":/app/images/statusicons/dnd.png"), bullet_grey_128(":/app/images/statusicons/bad.png"),
           bullet_green_128(":/app/images/statusicons/online.png"), bullet_yellow_128(":/app/images/statusicons/away.png"), bullet_unknown_128(":/app/images/statusicons/ask.png")
 {
@@ -581,111 +581,136 @@ void UnseenGxsChatLobbyDialog::updateParticipantsList()
     ChatLobbyInfo linfo;
 
     bool hasNewMemberJoin = false;
-//    if(rsMsgs->getChatLobbyInfo(lobbyId,linfo))
-//    {
 
-//        //rsMsgs->locked_printDebugInfo();
-//        rstime_t now = time(NULL) ;
-////        std::cerr << "   Participating friends: " << std::endl;
-////        std::cerr << "   groupchat name: " << linfo.lobby_name << std::endl;
-////        std::cerr << "   Participating nick names (rsgxsId): " << std::endl;
+    std::list<RsGxsGroupId> groupChatId;
+    groupChatId.push_back(mGroupId);
+    std::vector<RsGxsChatGroup> chatsInfo;
+    if (rsGxsChats->getChatsInfo(groupChatId, chatsInfo))
+    {
+        if (chatsInfo.size() > 0)
+        {
+            RsGxsChatGroup thisGroup = chatsInfo[0];
+            //at first we can add the own member to the groupData and sync for others
+            std::list<GxsChatMember> members_update2;
+            GxsChatMember myown;
+             for (auto it(chatsInfo[0].members.begin()); it != chatsInfo[0].members.end(); ++it)
+             {
+                 //check own ssld
+                 if (it->chatPeerId == rsPeers->getOwnId())
+                 {
+                     std::list<RsGxsId> own_ids ;
+                     rsIdentity->getOwnIds(own_ids) ;
+                     if(!own_ids.empty())
+                     {
+                         it->chatGxsId = own_ids.front() ;
+                         it->status = true;
+                         myown = (*it);
+                     }
+                 }
+                 else
+                 {
+                     members_update2.push_back(*it);
+                 }
+             }
+             members_update2.push_back(myown);
+            thisGroup.members = members_update2;
+            uint32_t token;
+            rsGxsChats->updateGroup(token, thisGroup);
 
-////        for(std::map<RsGxsId,rstime_t>::const_iterator it2(linfo.gxs_ids.begin());it2!=linfo.gxs_ids.end();++it2)
-////            std::cerr << "       " << it2->first << ": " << now - it2->second << " secs ago" << std::endl;
+            std::cerr << "   Participating friends: " << std::endl;
+            std::cerr << "   groupchat name: " << chatsInfo[0].mDescription<< std::endl;
+            std::cerr << "   Participating nick names (sslId): " << std::endl;
 
-//        ChatLobbyInfo cliInfo=linfo;
-//        QList<QTreeWidgetItem*>  qlOldParticipants=ui.participantsList->findItems("*",Qt::MatchWildcard,COLUMN_ID);
+            for (auto it2(thisGroup.members.begin()); it2 != thisGroup.members.end(); ++it2)
+            {
+                std::cerr << " nick:  " <<(*it2).nickname << ", sslId:  " << (*it2).chatPeerId.toStdString() << ", gxsId:  " << (*it2).chatGxsId.toStdString() << std::endl;
+                QString participant = QString::fromUtf8( it2->chatGxsId.toStdString().c_str() );
 
-//        foreach(QTreeWidgetItem *qtwiCur,qlOldParticipants)
-//            if(cliInfo.gxs_ids.find(RsGxsId((*qtwiCur).text(COLUMN_ID).toStdString())) == cliInfo.gxs_ids.end())
-//            {
-//                //Old Participant go out, remove it
-//                int index = ui.participantsList->indexOfTopLevelItem(qtwiCur);
-//                delete ui.participantsList->takeTopLevelItem(index);
-//            }
+                QList<QTreeWidgetItem*>  qlFoundParticipants=ui.participantsList->findItems(participant,Qt::MatchExactly,COLUMN_ID);
+                GxsIdRSTreeWidgetItem *widgetitem;
+
+                if (qlFoundParticipants.count()==0)
+                {
+                    // TE: Add Wigdet to participantsList with Checkbox, to mute Participant
+
+                    widgetitem = new GxsIdRSTreeWidgetItem(mParticipantCompareRole,GxsIdDetails::ICON_TYPE_AVATAR);
+                    widgetitem->setId(it2->chatGxsId,COLUMN_NAME, true) ;
+                    //widgetitem->setText(COLUMN_NAME, participant);
+                    // set activity time to the oast so that the peer is marked as inactive
+                    widgetitem->setText(COLUMN_ACTIVITY,QString::number(time(NULL) - timeToInactivity));
+                    widgetitem->setText(COLUMN_ID,QString::fromStdString(it2->chatGxsId.toStdString()));
+
+                    ui.participantsList->addTopLevelItem(widgetitem);
+                    hasNewMemberJoin = true;
+                }
+                else
+                    widgetitem = dynamic_cast<GxsIdRSTreeWidgetItem*>(qlFoundParticipants.at(0));
+
+                if (isParticipantMuted(it2->chatGxsId)) {
+                    widgetitem->setTextColor(COLUMN_NAME,QColor(255,0,0));
+                } else {
+                    widgetitem->setTextColor(COLUMN_NAME,ui.participantsList->palette().color(QPalette::Active, QPalette::Text));
+                }
+
+                //try to update the avatar
+                widgetitem->forceUpdate();
+
+                time_t tLastAct=widgetitem->text(COLUMN_ACTIVITY).toInt();
+                time_t now = time(NULL);
+
+                widgetitem->setSizeHint(COLUMN_ICON, QSize(20,20));
+
+                //Change the member status using ssl connection here
+                RsIdentityDetails details;
+                RsPeerId sslId;
+                if (rsIdentity->getIdDetails(it2->chatGxsId, details ))
+                {
+                    RsPeerDetails detail;
+                    if (rsPeers->getGPGDetails(details.mPgpId, detail))
+                    {
+                        std::list<RsPeerId> sslIds;
+                        rsPeers->getAssociatedSSLIds(detail.gpg_id, sslIds);
+                        if (sslIds.size() >= 1) {
+                            sslId = sslIds.front();
+                        }
+                    }
+                }
+
+                if (!sslId.isNull())
+                {
+                    StatusInfo statusContactInfo;
+                    rsStatus->getStatus(sslId,statusContactInfo);
+                    switch (statusContactInfo.status)
+                    {
+                    case RS_STATUS_OFFLINE:
+                        widgetitem->setIcon(COLUMN_ICON, bullet_grey_128 );
+                        break;
+                    case RS_STATUS_INACTIVE:
+                        widgetitem->setIcon(COLUMN_ICON, bullet_yellow_128 );
+                        break;
+                    case RS_STATUS_ONLINE:
+                        widgetitem->setIcon(COLUMN_ICON, bullet_green_128);
+                        break;
+                    case RS_STATUS_AWAY:
+                        widgetitem->setIcon(COLUMN_ICON, bullet_yellow_128);
+                        break;
+                    case RS_STATUS_BUSY:
+                        widgetitem->setIcon(COLUMN_ICON, bullet_red_128);
+                        break;
+                    }
+                }
+                else
+                {
+                    widgetitem->setIcon(COLUMN_ICON, bullet_unknown_128 );
+                }
+            }
+        }
 
 
-//        for (auto it2(linfo.gxs_ids.begin()); it2 != linfo.gxs_ids.end(); ++it2)
-//        {
-//            QString participant = QString::fromUtf8( (it2->first).toStdString().c_str() );
+    }
 
-//            QList<QTreeWidgetItem*>  qlFoundParticipants=ui.participantsList->findItems(participant,Qt::MatchExactly,COLUMN_ID);
-//            GxsIdRSTreeWidgetItem *widgetitem;
 
-//            if (qlFoundParticipants.count()==0)
-//            {
-//                // TE: Add Wigdet to participantsList with Checkbox, to mute Participant
 
-//                widgetitem = new GxsIdRSTreeWidgetItem(mParticipantCompareRole,GxsIdDetails::ICON_TYPE_AVATAR);
-//                widgetitem->setId(it2->first,COLUMN_NAME, true) ;
-//                //widgetitem->setText(COLUMN_NAME, participant);
-//                // set activity time to the oast so that the peer is marked as inactive
-//                widgetitem->setText(COLUMN_ACTIVITY,QString::number(time(NULL) - timeToInactivity));
-//                widgetitem->setText(COLUMN_ID,QString::fromStdString(it2->first.toStdString()));
-
-//                ui.participantsList->addTopLevelItem(widgetitem);
-//                hasNewMemberJoin = true;
-//            }
-//            else
-//                widgetitem = dynamic_cast<GxsIdRSTreeWidgetItem*>(qlFoundParticipants.at(0));
-
-//            if (isParticipantMuted(it2->first)) {
-//                widgetitem->setTextColor(COLUMN_NAME,QColor(255,0,0));
-//            } else {
-//                widgetitem->setTextColor(COLUMN_NAME,ui.participantsList->palette().color(QPalette::Active, QPalette::Text));
-//            }
-
-//            //try to update the avatar
-//            widgetitem->forceUpdate();
-
-//            time_t tLastAct=widgetitem->text(COLUMN_ACTIVITY).toInt();
-//            time_t now = time(NULL);
-
-//            widgetitem->setSizeHint(COLUMN_ICON, QSize(20,20));
-
-//            //Change the member status using ssl connection here
-//            RsIdentityDetails details;
-//            RsPeerId sslId;
-//            if (rsIdentity->getIdDetails(it2->first, details ))
-//            {
-//                RsPeerDetails detail;
-//                if (rsPeers->getGPGDetails(details.mPgpId, detail))
-//                {
-//                    std::list<RsPeerId> sslIds;
-//                    rsPeers->getAssociatedSSLIds(detail.gpg_id, sslIds);
-//                    if (sslIds.size() >= 1) {
-//                        sslId = sslIds.front();
-//                    }
-//                }
-//            }
-
-//            if (!sslId.isNull())
-//            {
-////                StatusInfo statusContactInfo;
-////                rsStatus->getStatus(sslId,statusContactInfo);
-////                switch (statusContactInfo.status)
-////                {
-////                case RS_STATUS_OFFLINE:
-////                    widgetitem->setIcon(COLUMN_ICON, bullet_grey_128 );
-////                    break;
-////                case RS_STATUS_INACTIVE:
-////                    widgetitem->setIcon(COLUMN_ICON, bullet_yellow_128 );
-////                    break;
-////                case RS_STATUS_ONLINE:
-////                    widgetitem->setIcon(COLUMN_ICON, bullet_green_128);
-////                    break;
-////                case RS_STATUS_AWAY:
-////                    widgetitem->setIcon(COLUMN_ICON, bullet_yellow_128);
-////                    break;
-////                case RS_STATUS_BUSY:
-////                    widgetitem->setIcon(COLUMN_ICON, bullet_red_128);
-////                    break;
-////                }
-//            }
-//            else
-//            {
-//                widgetitem->setIcon(COLUMN_ICON, bullet_unknown_128 );
-//            }
 
 ////            if(isParticipantMuted(it2->first))
 ////                widgetitem->setIcon(COLUMN_ICON, bullet_red_128);
