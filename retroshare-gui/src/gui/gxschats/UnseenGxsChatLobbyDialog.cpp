@@ -591,7 +591,7 @@ void UnseenGxsChatLobbyDialog::updateParticipantsList()
         {
             RsGxsChatGroup thisGroup = chatsInfo[0];
             //at first we can add the own member to the groupData and sync for others
-            std::list<GxsChatMember> members_update2;
+            std::set<GxsChatMember> members_update2;
             GxsChatMember myown;
              for (auto it(chatsInfo[0].members.begin()); it != chatsInfo[0].members.end(); ++it)
              {
@@ -602,17 +602,19 @@ void UnseenGxsChatLobbyDialog::updateParticipantsList()
                      rsIdentity->getOwnIds(own_ids) ;
                      if(!own_ids.empty())
                      {
-                         it->chatGxsId = own_ids.front() ;
-                         it->status = true;
-                         myown = (*it);
+                         myown.chatPeerId = it->chatPeerId;
+                         myown.nickname = it->nickname;
+                         myown.chatinfo = it->chatinfo;
+                         myown.chatGxsId = own_ids.front();
+                         myown.status = true;
                      }
                  }
                  else
                  {
-                     members_update2.push_back(*it);
+                     members_update2.insert(*it);
                  }
              }
-             members_update2.push_back(myown);
+             members_update2.insert(myown);
             thisGroup.members = members_update2;
             uint32_t token;
             rsGxsChats->updateGroup(token, thisGroup);
