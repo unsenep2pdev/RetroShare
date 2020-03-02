@@ -212,6 +212,8 @@ UnseenGxsChatLobbyDialog::UnseenGxsChatLobbyDialog( const RsGxsGroupId& id, QWid
 
     getChatWidget()->addTitleBarWidget(unsubscribeButton) ;
 
+    old_participating_friends.clear();
+
     //////////////////////////////////////////////////////////////////////////////
     /// //END of Keep for UnseenGxsChatLobbyDialog
     //////////////////////////////////////////////////////////////////////////////
@@ -593,119 +595,152 @@ void UnseenGxsChatLobbyDialog::updateParticipantsList()
             //at first we can add the own member to the groupData and sync for others
             std::set<GxsChatMember> members_update2;
             GxsChatMember myown;
-             for (auto it(chatsInfo[0].members.begin()); it != chatsInfo[0].members.end(); ++it)
-             {
-                 //check own ssld
-                 if (it->chatPeerId == rsPeers->getOwnId())
-                 {
-                     std::list<RsGxsId> own_ids ;
-                     rsIdentity->getOwnIds(own_ids) ;
-                     if(!own_ids.empty())
-                     {
-                         myown.chatPeerId = it->chatPeerId;
-                         myown.nickname = it->nickname;
-                         myown.chatinfo = it->chatinfo;
-                         myown.chatGxsId = own_ids.front();
-                         myown.status = true;
-                     }
-                 }
-                 else
-                 {
-                     members_update2.insert(*it);
-                 }
-             }
-             members_update2.insert(myown);
-            thisGroup.members = members_update2;
-            uint32_t token;
-            rsGxsChats->updateGroup(token, thisGroup);
-
-            std::cerr << "   Participating friends: " << std::endl;
-            std::cerr << "   groupchat name: " << chatsInfo[0].mDescription<< std::endl;
-            std::cerr << "   Participating nick names (sslId): " << std::endl;
-
-            for (auto it2(thisGroup.members.begin()); it2 != thisGroup.members.end(); ++it2)
+            std::set<RsPeerId> new_participating_friends ;
+            bool isIdentical = true;
+            if (old_participating_friends.size() > 0) // that mean it already saved the member list at least one time
             {
-                std::cerr << " nick:  " <<(*it2).nickname << ", sslId:  " << (*it2).chatPeerId.toStdString() << ", gxsId:  " << (*it2).chatGxsId.toStdString() << std::endl;
-                QString participant = QString::fromUtf8( it2->chatGxsId.toStdString().c_str() );
 
-                QList<QTreeWidgetItem*>  qlFoundParticipants=ui.participantsList->findItems(participant,Qt::MatchExactly,COLUMN_ID);
-                GxsIdRSTreeWidgetItem *widgetitem;
-
-                if (qlFoundParticipants.count()==0)
+                //need to compare the new list and the old list, if there is only one different so need to update all again!
+                // if the 2 lists are identical, just return and do nothing. Need to check this option first!
+                for (auto it(chatsInfo[0].members.begin()); it != chatsInfo[0].members.end(); ++it)
                 {
-                    // TE: Add Wigdet to participantsList with Checkbox, to mute Participant
-
-                    widgetitem = new GxsIdRSTreeWidgetItem(mParticipantCompareRole,GxsIdDetails::ICON_TYPE_AVATAR);
-                    widgetitem->setId(it2->chatGxsId,COLUMN_NAME, true) ;
-                    //widgetitem->setText(COLUMN_NAME, participant);
-                    // set activity time to the oast so that the peer is marked as inactive
-                    widgetitem->setText(COLUMN_ACTIVITY,QString::number(time(NULL) - timeToInactivity));
-                    widgetitem->setText(COLUMN_ID,QString::fromStdString(it2->chatGxsId.toStdString()));
-
-                    ui.participantsList->addTopLevelItem(widgetitem);
-                    hasNewMemberJoin = true;
-                }
-                else
-                    widgetitem = dynamic_cast<GxsIdRSTreeWidgetItem*>(qlFoundParticipants.at(0));
-
-                if (isParticipantMuted(it2->chatGxsId)) {
-                    widgetitem->setTextColor(COLUMN_NAME,QColor(255,0,0));
-                } else {
-                    widgetitem->setTextColor(COLUMN_NAME,ui.participantsList->palette().color(QPalette::Active, QPalette::Text));
-                }
-
-                //try to update the avatar
-                widgetitem->forceUpdate();
-
-                time_t tLastAct=widgetitem->text(COLUMN_ACTIVITY).toInt();
-                time_t now = time(NULL);
-
-                widgetitem->setSizeHint(COLUMN_ICON, QSize(20,20));
-
-                //Change the member status using ssl connection here
-                RsIdentityDetails details;
-                RsPeerId sslId;
-                if (rsIdentity->getIdDetails(it2->chatGxsId, details ))
-                {
-                    RsPeerDetails detail;
-                    if (rsPeers->getGPGDetails(details.mPgpId, detail))
+                    //at first get all new list, and check in the old one
+                    if (new_participating_friends.find((*it).chatPeerId) == new_participating_friends.end())
                     {
-                        std::list<RsPeerId> sslIds;
-                        rsPeers->getAssociatedSSLIds(detail.gpg_id, sslIds);
-                        if (sslIds.size() >= 1) {
-                            sslId = sslIds.front();
+                        new_participating_friends.insert((*it).chatPeerId);
+                        //only if check there is one new member that not exist in the old list
+                        if (old_participating_friends.find((*it).chatPeerId) == old_participating_friends.end())
+                        {
+                            isIdentical = false;
+                            break;
                         }
                     }
                 }
 
-                if (!sslId.isNull())
+                if (new_participating_friends == old_participating_friends)
                 {
-                    StatusInfo statusContactInfo;
-                    rsStatus->getStatus(sslId,statusContactInfo);
-                    switch (statusContactInfo.status)
+                    isIdentical = true;
+                }
+                // if the member number in the new list is less than member number in the old list (it removed at least one member)
+                if (new_participating_friends.size() < old_participating_friends.size() )
+                {
+                    isIdentical = false;
+                }
+
+                // if 2 lists are the same, just return and do nothing
+                if (isIdentical)
+                {
+                    return;
+                }
+
+            }
+
+            if (old_participating_friends.size() == 0 || !isIdentical)       // this mean this is the first time, need to do at first time
+            {
+                for (auto it(chatsInfo[0].members.begin()); it != chatsInfo[0].members.end(); ++it)
+                {
+                    if (old_participating_friends.find((*it).chatPeerId) == old_participating_friends.end())
                     {
-                    case RS_STATUS_OFFLINE:
-                        widgetitem->setIcon(COLUMN_ICON, bullet_grey_128 );
-                        break;
-                    case RS_STATUS_INACTIVE:
-                        widgetitem->setIcon(COLUMN_ICON, bullet_yellow_128 );
-                        break;
-                    case RS_STATUS_ONLINE:
-                        widgetitem->setIcon(COLUMN_ICON, bullet_green_128);
-                        break;
-                    case RS_STATUS_AWAY:
-                        widgetitem->setIcon(COLUMN_ICON, bullet_yellow_128);
-                        break;
-                    case RS_STATUS_BUSY:
-                        widgetitem->setIcon(COLUMN_ICON, bullet_red_128);
-                        break;
+                        old_participating_friends.insert((*it).chatPeerId);
+                    }
+                    if (new_participating_friends.find((*it).chatPeerId) == new_participating_friends.end())
+                    {
+                        new_participating_friends.insert((*it).chatPeerId);
+                    }
+
+                    //check own ssld
+                    if (it->chatPeerId == rsPeers->getOwnId())
+                    {
+                        std::list<RsGxsId> own_ids ;
+                        rsIdentity->getOwnIds(own_ids) ;
+                        if(!own_ids.empty())
+                        {
+                            myown.chatPeerId = it->chatPeerId;
+                            myown.nickname = it->nickname;
+                            myown.chatinfo = it->chatinfo;
+                            myown.chatGxsId = own_ids.front();
+                            myown.status = true;
+                        }
+                    }
+                    else
+                    {
+                        members_update2.insert(*it);
                     }
                 }
-                else
-                {
-                    widgetitem->setIcon(COLUMN_ICON, bullet_unknown_128 );
-                }
+               members_update2.insert(myown);
+               thisGroup.members = members_update2;
+               uint32_t token;
+               rsGxsChats->updateGroup(token, thisGroup);
+
+               std::cerr << "   Participating friends: " << std::endl;
+               std::cerr << "   groupchat name: " << chatsInfo[0].mDescription<< std::endl;
+               std::cerr << "   Participating nick names (sslId): " << std::endl;
+
+
+               for (auto it2(thisGroup.members.begin()); it2 != thisGroup.members.end(); ++it2)
+               {
+                   std::cerr << " nick:  " <<(*it2).nickname << ", sslId:  " << (*it2).chatPeerId.toStdString() << ", gxsId:  " << (*it2).chatGxsId.toStdString() << std::endl;
+                   QString participant = QString::fromUtf8( it2->chatGxsId.toStdString().c_str() );
+
+                   QList<QTreeWidgetItem*>  qlFoundParticipants=ui.participantsList->findItems(participant,Qt::MatchExactly,COLUMN_ID);
+
+                   //GxsIdRSTreeWidgetItem *widgetitem;
+                   UnseenMemberTreeWidgetItem *unsWidgetItem;
+
+                   if (qlFoundParticipants.count()==0)
+                   {
+                       // TE: Add Wigdet to participantsList with Checkbox, to mute Participant
+                       unsWidgetItem = new UnseenMemberTreeWidgetItem(mParticipantCompareRole,GxsIdDetails::ICON_TYPE_AVATAR);
+                       unsWidgetItem->setMember((*it2), COLUMN_NAME, true) ;
+                       unsWidgetItem->setText(COLUMN_ACTIVITY,QString::number(time(NULL) - timeToInactivity));
+                       unsWidgetItem->setText(COLUMN_ID,QString::fromStdString(it2->chatPeerId.toStdString()));
+
+                       ui.participantsList->addTopLevelItem(unsWidgetItem);
+                       hasNewMemberJoin = true;
+                   }
+                   else
+                       unsWidgetItem = dynamic_cast<UnseenMemberTreeWidgetItem*>(qlFoundParticipants.at(0));
+
+                   //try to update the avatar
+                   unsWidgetItem->forceUpdate();
+
+                   time_t tLastAct=unsWidgetItem->text(COLUMN_ACTIVITY).toInt();
+                   time_t now = time(NULL);
+                   unsWidgetItem->setSizeHint(COLUMN_ICON, QSize(20,20));
+
+                   //Change the member status using ssl connection here
+
+                   if (!it2->chatPeerId.isNull())
+                   {
+                       StatusInfo statusContactInfo;
+                       rsStatus->getStatus(it2->chatPeerId,statusContactInfo);
+                       switch (statusContactInfo.status)
+                       {
+                       case RS_STATUS_OFFLINE:
+                           unsWidgetItem->setIcon(COLUMN_ICON, bullet_grey_128 );
+                           break;
+                       case RS_STATUS_INACTIVE:
+                           unsWidgetItem->setIcon(COLUMN_ICON, bullet_yellow_128 );
+                           break;
+                       case RS_STATUS_ONLINE:
+                           unsWidgetItem->setIcon(COLUMN_ICON, bullet_green_128);
+                           break;
+                       case RS_STATUS_AWAY:
+                           unsWidgetItem->setIcon(COLUMN_ICON, bullet_yellow_128);
+                           break;
+                       case RS_STATUS_BUSY:
+                           unsWidgetItem->setIcon(COLUMN_ICON, bullet_red_128);
+                           break;
+                       }
+                   }
+                   else
+                   {
+                       unsWidgetItem->setIcon(COLUMN_ICON, bullet_unknown_128 );
+                   }
+               }
             }
+
+
         }
 
 
@@ -1265,6 +1300,7 @@ void UnseenGxsChatLobbyDialog::insertChannelPosts(std::vector<RsGxsChatMsg> &pos
 
         //uneenp2p - need to check if these are files sharing, need to show "Download" link
         ui.chatWidget->addChatMsg(incomming, nickname, gxs_id, sendTime, recvTime, mmsg, ChatWidget::MSGTYPE_NORMAL);
+        updateParticipantsList();
     }
 
 #ifdef DEBUG_CHAT

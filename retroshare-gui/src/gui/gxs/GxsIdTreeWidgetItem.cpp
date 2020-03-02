@@ -227,3 +227,193 @@ QVariant GxsIdRSTreeWidgetItem::data(int column, int role) const
 
     return RSTreeWidgetItem::data(column, role);
 }
+
+//////////// for UnseenMemberTreeWidgetItem /////////////
+/// \brief UnseenMemberTreeWidgetItem::UnseenMemberTreeWidgetItem
+/// \param compareRole
+/// \param icon_mask
+/// \param parent
+///
+
+UnseenMemberTreeWidgetItem::UnseenMemberTreeWidgetItem(const RSTreeWidgetItemCompareRole *compareRole, uint32_t icon_mask,QTreeWidget *parent)
+    : QObject(NULL), RSTreeWidgetItem(compareRole, parent), mColumn(0), mIconTypeMask(icon_mask)
+{
+    init();
+}
+
+void UnseenMemberTreeWidgetItem::init()
+{
+    mIdFound = false;
+    mRetryWhenFailed = false;
+    mBannedState = false ;
+}
+
+
+static void fillUnseenMemberTreeWidgetItemCallback(GxsIdDetailsType type, const RsIdentityDetails &details, QObject *object, const QVariant &/*data*/)
+{
+    //GxsIdRSTreeWidgetItem *item = dynamic_cast<GxsIdRSTreeWidgetItem*>(object);
+    UnseenMemberTreeWidgetItem *item = dynamic_cast<UnseenMemberTreeWidgetItem*>(object);
+    if (!item) {
+        return;
+    }
+
+    QList<QIcon> icons;
+
+    switch (type) {
+    case GXS_ID_DETAILS_TYPE_EMPTY:
+        item->processResult(true);
+        break;
+
+    case GXS_ID_DETAILS_TYPE_FAILED:
+        item->processResult(false);
+        break;
+
+    case GXS_ID_DETAILS_TYPE_LOADING:
+        icons.push_back(GxsIdDetails::getLoadingIcon(details.mId));
+        break;
+
+    case GXS_ID_DETAILS_TYPE_DONE:
+        GxsIdDetails::getIcons(details, icons, item->iconTypeMask());
+        item->processResult(true);
+        break;
+
+        case GXS_ID_DETAILS_TYPE_BANNED:
+            icons.push_back(QIcon("BANNED_IMAGE")) ;
+                break ;
+    }
+
+    int column = item->idColumn();
+    item->setToolTip(column, GxsIdDetails::getComment(details));
+    GxsChatMember member;
+    item->getMember(member);
+    //item->setText(column, GxsIdDetails::getNameForType(type, details));
+    item->setText(column, QString::fromStdString(member.nickname));
+    item->setData(column, Qt::UserRole, QString::fromStdString(member.chatPeerId.toStdString()));
+
+    QPixmap combinedPixmap;
+    if (!icons.empty()) {
+        GxsIdDetails::GenerateCombinedPixmap(combinedPixmap, icons, QFontMetricsF(item->font(item->idColumn())).height()*1.4);
+    }
+    item->setData(column, Qt::DecorationRole, combinedPixmap);
+    item->setAvatar(details.mAvatar);
+}
+
+void UnseenMemberTreeWidgetItem::setMember(const GxsChatMember member, int column, bool retryWhenFailed)
+{
+    mMember = member;
+    mIdFound = false;
+    mRetryWhenFailed = retryWhenFailed;
+    mColumn = column;
+
+    startProcess();
+}
+
+bool UnseenMemberTreeWidgetItem::getMember(GxsChatMember &member)
+{
+    member = mMember;
+    return true;
+}
+
+//do not use, just copy from GxsIdRSTreeWidgetItem
+void UnseenMemberTreeWidgetItem::setId(const RsGxsId &id, int column, bool retryWhenFailed)
+{
+    if (mIdFound && mColumn == column && mId == id && (mBannedState == rsReputations->isIdentityBanned(mId)))
+            return;
+
+    mBannedState = rsReputations->isIdentityBanned(mId);
+    mIdFound = false;
+    mRetryWhenFailed = retryWhenFailed;
+
+    mId = id;
+    mColumn = column;
+
+    startProcess();
+}
+
+void UnseenMemberTreeWidgetItem::updateBannedState()
+{
+    if(mBannedState != rsReputations->isIdentityBanned(mId))
+        forceUpdate() ;
+}
+
+void UnseenMemberTreeWidgetItem::forceUpdate()
+{
+    mIdFound = false;
+    mBannedState = (rsReputations->isIdentityBanned(mId));
+
+    startProcess();
+}
+
+void UnseenMemberTreeWidgetItem::startProcess()
+{
+    if (mRetryWhenFailed) {
+        disconnect(rApp, SIGNAL(minuteTick()), this, SLOT(startProcess()));
+    }
+
+    GxsIdDetails::process(mId, fillUnseenMemberTreeWidgetItemCallback, this);
+}
+
+bool UnseenMemberTreeWidgetItem::getId(RsGxsId &id)
+{
+    id = mId;
+    return true;
+}
+
+void UnseenMemberTreeWidgetItem::processResult(bool success)
+{
+    mIdFound = success;
+
+    if (!mIdFound && mRetryWhenFailed) {
+        /* Try again */
+        connect(rApp, SIGNAL(minuteTick()), this, SLOT(startProcess()));
+    }
+}
+
+void UnseenMemberTreeWidgetItem::setAvatar(const RsGxsImage &avatar)
+{
+   mAvatar = avatar;
+}
+
+QVariant UnseenMemberTreeWidgetItem::data(int column, int role) const
+{
+    if (column == idColumn())
+    {
+        if (role == Qt::ToolTipRole)
+        {
+            QString t = RSTreeWidgetItem::data(column, role).toString();
+            QImage pix;
+
+            if(mId.isNull())
+                return RSTreeWidgetItem::data(column, role);
+            else if(rsReputations->overallReputationLevel(mId) == RsReputations::REPUTATION_LOCALLY_NEGATIVE)
+                pix = QImage(BANNED_IMAGE) ;
+            else if (mAvatar.mSize == 0 || !pix.loadFromData(mAvatar.mData, mAvatar.mSize, "PNG"))
+            {
+                //Unseenp2p - try to get sslId (RsPeerId) from the RsGxsId to get the avatar from sllid
+                QPixmap avatar;
+                RsIdentityDetails details;
+                if (rsIdentity->getIdDetails(mId, details ))
+                {
+                    AvatarDefs::getAvatarFromGpgId(details.mPgpId,avatar);
+                    if (!avatar.isNull())  pix = avatar.toImage();
+                    else
+                        pix =  QImage(":/app/images/unseen128.png");
+                }
+                else pix = QImage(":/app/images/unseen128.png");
+            }
+
+            pix = getCirclePhoto(pix, pix.size().width());
+
+            int S = QFontMetricsF(font(column)).height();
+
+            QString embeddedImage;
+            if (RsHtml::makeEmbeddedImage(pix.scaled(QSize(4*S,4*S), Qt::KeepAspectRatio, Qt::SmoothTransformation), embeddedImage, 8*S * 8*S)) {
+                t = "<table><tr><td>" + embeddedImage + "</td><td>" + t + "</td></table>";
+            }
+
+            return t;
+        }
+    }
+
+    return RSTreeWidgetItem::data(column, role);
+}
