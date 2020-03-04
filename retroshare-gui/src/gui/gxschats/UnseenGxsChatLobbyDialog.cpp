@@ -1236,7 +1236,7 @@ void sortGxsMsgChat(std::vector<RsGxsChatMsg> &list)
     { return a.mMeta.mPublishTs < b.mMeta.mPublishTs; });
 }
 
-void UnseenGxsChatLobbyDialog::insertChannelPosts(std::vector<RsGxsChatMsg> &posts, GxsMessageFramePostThread2 *thread, bool related)
+void UnseenGxsChatLobbyDialog::insertGxsChatPosts(std::vector<RsGxsChatMsg> &posts, GxsMessageFramePostThread2 *thread, bool related)
 {
     if (related && thread) {
         std::cerr << "v::insertChannelPosts fill only related posts as thread is not possible" << std::endl;
@@ -1279,6 +1279,7 @@ void UnseenGxsChatLobbyDialog::insertChannelPosts(std::vector<RsGxsChatMsg> &pos
         QString mmsg = QString::fromUtf8(posts[i].mMsg.c_str());
         bool incomming = !rsIdentity->isOwnId(gxs_id);
         RsIdentityDetails details;
+        //get nickname from member list instead of getIdDetails
         QString nickname = "Unknown";
         if (rsIdentity->getIdDetails(gxs_id, details))
         {
@@ -1418,7 +1419,7 @@ void UnseenGxsChatLobbyDialog::insertAllPosts(const uint32_t &token, GxsMessageF
     std::vector<RsGxsChatMsg> posts;
     rsGxsChats->getPostData(token, posts);
 
-    insertChannelPosts(posts, thread, false);
+    insertGxsChatPosts(posts, thread, false);
 }
 
 
@@ -1786,7 +1787,7 @@ void UnseenGxsChatLobbyDialog::insertPosts(const uint32_t &token)
     std::vector<RsGxsChatMsg> posts;
     rsGxsChats->getPostData(token, posts);
 
-    insertChannelPosts(posts, NULL, true);
+    insertGxsChatPosts(posts, NULL, true);
 }
 
 void UnseenGxsChatLobbyDialog::setViewMode(int viewMode)

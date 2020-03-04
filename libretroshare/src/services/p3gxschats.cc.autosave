@@ -753,6 +753,7 @@ void p3GxsChats::publishNotifyMessage(const RsGxsGroupId &grpId,std::pair<std::s
         case RsGxsChatGroup::ONE2ONE:
         case RsGxsChatGroup::GROUPCHAT:
 
+        
         RsNetworkExchangeService *netService = RsGenExchange::getNetworkExchangeService();
         RsGroupMetaData grpMeta = sit->second;
 

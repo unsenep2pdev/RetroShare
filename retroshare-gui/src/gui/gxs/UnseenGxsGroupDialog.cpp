@@ -88,7 +88,6 @@ void UnseenGxsGroupDialog::init(const std::set<RsPgpId>& peer_list2, const std::
 	connect(ui.buttonBox, SIGNAL(accepted()), this, SLOT(submitGroup()));
 	connect(ui.buttonBox, SIGNAL(rejected()), this, SLOT(cancelDialog()));
     ui.typeGroup->setChecked(true);
-    ui.commentGroupBox->setVisible(false);
 
     setDefaultOptions();
 
@@ -178,13 +177,14 @@ void UnseenGxsGroupDialog::initMode()
 			mReadonlyFlags = 0xffffffff; // Force all to readonly.
 			ui.buttonBox->setStandardButtons(QDialogButtonBox::Close);
 			requestGroup(mGrpMeta.mGroupId);
+
 		}
 		break;
 
 		case MODE_EDIT:
 		{
             ui.stackedWidget->setCurrentIndex(0);
-			ui.buttonBox->setStandardButtons(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
+            ui.buttonBox->setStandardButtons(QDialogButtonBox::Apply | QDialogButtonBox::Cancel);
             //ui.buttonBox->button(QDialogButtonBox::Ok)->setText(tr("Submit Group Changes"));
 			requestGroup(mGrpMeta.mGroupId);
 		}
@@ -250,19 +250,16 @@ void UnseenGxsGroupDialog::setupDefaults()
 	{
 		if (mDefaultsFlags & GXS_GROUP_DEFAULTS_COMMENTS_YES)
 		{
-			ui.comments_allowed->setChecked(true);
 			ui.commentsValueLabel->setText(tr("Allowed"));
 		}
 		else if (mDefaultsFlags & GXS_GROUP_DEFAULTS_COMMENTS_NO)
 		{
-			ui.comments_no->setChecked(true);
-			ui.commentsValueLabel->setText(tr("Disallowed"));
+            ui.commentsValueLabel->setText(tr("Disallowed"));
 		}
 		else
 		{
 			// default
-			ui.comments_no->setChecked(true);
-			ui.commentsValueLabel->setText(tr("Allowed"));
+            ui.commentsValueLabel->setText(tr("Allowed"));
 		}
 	}
         
@@ -279,7 +276,6 @@ void UnseenGxsGroupDialog::setupVisibility()
     ui.groupName->setVisible(true);
     ui.distribGroupBox->setVisible(true);
     ui.typeGroup->setVisible(true);
-    ui.commentGroupBox->setVisible(false);
     ui.label_2->setVisible(true);
     ui.keyShareList->setVisible(true);
 
@@ -316,6 +312,7 @@ void UnseenGxsGroupDialog::updateFromExistingMeta(const QString &description)
     std::cerr << "void GxsGroupDialog::updateFromExistingMeta()";
     std::cerr << std::endl;
 
+    circleType = mGrpMeta.mCircleType;
     std::cerr << "void GxsGroupDialog::updateFromExistingMeta() mGrpMeta.mCircleType: ";
     std::cerr << mGrpMeta.mCircleType << " Internal: " << mGrpMeta.mInternalCircle;
     std::cerr << " External: " << mGrpMeta.mCircleId;
@@ -638,12 +635,10 @@ void UnseenGxsGroupDialog::setGroupSignFlags(uint32_t signFlags)
 	{
         	// (cyril) very weird piece of code. Need to clear this up.
         
-		ui.comments_allowed->setChecked(true);
         	ui.commentsValueLabel->setText("Allowed") ;
 	}
 	else
 	{
-		ui.comments_no->setChecked(true);
         	ui.commentsValueLabel->setText("Allowed") ;
 	}
 }
@@ -659,28 +654,56 @@ void UnseenGxsGroupDialog::setDefaultOptions()
     if (ui.typeOne2One->isChecked())
     {
         // Need to create one2one gxs chat, hide comment elements
-        ui.commentGroupBox->setVisible(false);
         ui.label_2->setText("Select one friend with which you want to chat (one2one):");
         ui.label->setVisible(false);
         ui.groupName->setVisible(false);
+        ui.channelType->setVisible(false);
+        if (mode() ==  MODE_EDIT)
+        {
+            ui.typeGroup->setDisabled(true);
+            ui.typeChannel->setDisabled(true);
+        }
     }
     else if (ui.typeGroup->isChecked())
     {
         // Need to create gxs group chat, hide comment elements
-        ui.commentGroupBox->setVisible(false);
         ui.groupTypeComboBox->setCurrentIndex(0);
         ui.label_2->setText("Select the friends with which you want to group chat: ");
         ui.label->setVisible(true);
         ui.groupName->setVisible(true);
+        ui.channelType->setVisible(false);
+        if (circleType == GXS_CIRCLE_TYPE_YOUR_FRIENDS_ONLY)
+            ui.groupTypeComboBox->setCurrentIndex(0);
+        else if (circleType == GXS_CIRCLE_TYPE_PUBLIC)
+            ui.groupTypeComboBox->setCurrentIndex(1);
+        if (mode() ==  MODE_EDIT)
+        {
+            ui.typeOne2One->setDisabled(true);
+            ui.typeChannel->setDisabled(true);
+            ui.groupTypeComboBox->setDisabled(true);
+        }
     }
     else if (ui.typeChannel->isChecked())
     {
         // Create channel, show the comment group elements
-        ui.commentGroupBox->setVisible(true);
         ui.label_2->setText("Select the friends with which you want to make channel: ");
         ui.label->setVisible(true);
         ui.groupName->setVisible(true);
+        ui.channelType->setVisible(true);
+        ui.channelType->setCurrentIndex(0);
+        if (circleType == GXS_CIRCLE_TYPE_YOUR_FRIENDS_ONLY)
+            ui.channelType->setCurrentIndex(0);
+        else if (circleType == GXS_CIRCLE_TYPE_PUBLIC)
+            ui.channelType->setCurrentIndex(1);
+        if (mode() ==  MODE_EDIT)
+        {
+            ui.typeOne2One->setDisabled(true);
+            ui.typeGroup->setDisabled(true);
+            ui.channelType->setDisabled(true);
+        }
     }
+
+
 }
 
 bool UnseenGxsGroupDialog::setCircleParameters(RsGroupMetaData &meta)

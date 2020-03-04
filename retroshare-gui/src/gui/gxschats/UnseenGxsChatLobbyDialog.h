@@ -337,7 +337,7 @@ private:
     int viewMode();
 
     void insertChannelDetails(const RsGxsChatGroup &group);
-    void insertChannelPosts(std::vector<RsGxsChatMsg> &posts, GxsMessageFramePostThread2 *thread, bool related);
+    void insertGxsChatPosts(std::vector<RsGxsChatMsg> &posts, GxsMessageFramePostThread2 *thread, bool related);
 
     void createPostItem(const RsGxsChatMsg &post, bool related);
 

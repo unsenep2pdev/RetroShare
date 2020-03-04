@@ -1324,6 +1324,13 @@ void ChatWidget::updateStatusTyping()
 		tr("is typing...");
 #endif
 		rsMsgs->sendStatusString(chatId, "is typing...");
+        RsGxsGroupId groupId = mGxsChatId.toGxsGroupId();
+        std::pair<std::string, std::string> commandForTyping;
+        RsPeerId thisPeer = rsPeers->getOwnId();
+
+        commandForTyping = {thisPeer.toStdString(),"typing"};
+        if (rsGxsChats)
+            rsGxsChats->publishNotifyMessage(groupId,commandForTyping);
 		lastStatusSendTime = time(NULL) ;
 	}
 }
