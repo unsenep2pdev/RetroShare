@@ -2,7 +2,7 @@
 
 TEMPLATE = app
 QT     += network xml 
-CONFIG += qt gui uic qrc resources idle 
+CONFIG += qt gui uic qrc resources idle
 CONFIG += console
 TARGET = unseenp2p
 DEFINES += TARGET=\\\"$${TARGET}\\\"
@@ -24,29 +24,12 @@ FORMS   += TorControl/TorControlWindow.ui \
     gui/gxschats/UnseenGxsChatLobbyDialog.ui \
     gui/gxs/UnseenGxsGroupDialog.ui \
     gui/common/UnseenFriendSelectionWidget.ui
-SOURCES += TorControl/TorControlWindow.cpp \
-    gui/gxs/UnseenGxsGroupFrameDialog.cpp \
-    gui/gxschats/UnseenGxsSmartlistmodel.cpp \
-    gui/gxschats/UnseenGxsSmartlistview.cpp \
-    gui/UnseenGxsConversationitemdelegate.cpp \
-    gui/gxschats/UnseenGxsChatLobbyDialog.cpp \
-    gui/gxschats/UnseenGxsChatGroupDialog.cpp \
-    gui/gxs/UnseenGxsGroupDialog.cpp \
-    gui/common/UnseenFriendSelectionWidget.cpp \
+SOURCES += gui/common/UnseenFriendSelectionWidget.cpp \
     gui/common/UnseenContactSmartlistview.cpp \
     gui/common/UnseenContactSmartlistmodel.cpp
-HEADERS += TorControl/TorControlWindow.h \
-    gui/gxs/UnseenGxsGroupFrameDialog.h \
-    gui/gxschats/UnseenGxsSmartlistmodel.h \
-    gui/gxschats/UnseenGxsSmartlistview.h \
-    gui/UnseenGxsConversationitemdelegate.h \
-    gui/gxschats/UnseenGxsChatLobbyDialog.h \
-    gui/gxschats/UnseenGxsChatGroupDialog.h \
-    gui/gxs/UnseenGxsGroupDialog.h \
-    gui/common/UnseenFriendSelectionWidget.h \
+HEADERS += gui/common/UnseenFriendSelectionWidget.h \
     gui/common/UnseenContactSmartlistview.h \
     gui/common/UnseenContactSmartlistmodel.h
-
 
 #QMAKE_CFLAGS += -fmudflap 
 #LIBS *= /usr/lib/gcc/x86_64-linux-gnu/4.4/libmudflap.a /usr/lib/gcc/x86_64-linux-gnu/4.4/libmudflapth.a
@@ -317,9 +300,34 @@ wikipoos {
 	LIBS *= $$OUT_PWD/../../supportlibs/pegmarkdown/lib/libpegmarkdown.a
 }
 
-# Tor controller
 
-HEADERS += 	TorControl/AddOnionCommand.h \
+#GxsChats
+FORMS   +=      gui/gxs/UnseenGxsGroupFrameDialog.ui \
+                                gui/gxschats/UnseenGxsChatLobbyDialog.ui \
+                                gui/gxs/UnseenGxsGroupDialog.ui
+
+SOURCES +=      gui/gxs/UnseenGxsGroupFrameDialog.cpp \
+                                gui/gxschats/UnseenGxsSmartlistmodel.cpp \
+                                gui/gxschats/UnseenGxsSmartlistview.cpp \
+                                gui/UnseenGxsConversationitemdelegate.cpp \
+                                gui/gxschats/UnseenGxsChatLobbyDialog.cpp \
+                                gui/gxschats/UnseenGxsChatGroupDialog.cpp \
+                                gui/gxs/UnseenGxsGroupDialog.cpp
+
+HEADERS +=      gui/gxs/UnseenGxsGroupFrameDialog.h \
+                                gui/gxschats/UnseenGxsSmartlistmodel.h \
+                                gui/gxschats/UnseenGxsSmartlistview.h \
+                                gui/UnseenGxsConversationitemdelegate.h \
+                                gui/gxschats/UnseenGxsChatLobbyDialog.h \
+                                gui/gxschats/UnseenGxsChatGroupDialog.h \
+                                gui/gxs/UnseenGxsGroupDialog.h
+
+
+# Tor controller
+FORMS   +=      TorControl/TorControlWindow.ui
+
+HEADERS += 	TorControl/TorControlWindow.h \
+                                TorControl/AddOnionCommand.h \
 				TorControl/AuthenticateCommand.h \
 				TorControl/GetConfCommand.h \
 				TorControl/HiddenService.h \
@@ -330,17 +338,18 @@ HEADERS += 	TorControl/AddOnionCommand.h \
 				TorControl/TorControlSocket.h \
 				TorControl/TorManager.h \
 				TorControl/TorProcess.h \
-				TorControl/TorProcess_p.h \
 				TorControl/TorSocket.h \
+                                TorControl/TorProcess_p.h   \
 				TorControl/Useful.h            \
 				TorControl/CryptoKey.h         \
 				TorControl/PendingOperation.h  \
 				TorControl/SecureRNG.h         \
 				TorControl/Settings.h          \
-				TorControl/StrUtil.h        \
-				TorControl/TorProcess_p.h        
+                                TorControl/StrUtil.h
 
-SOURCES += 	TorControl/AddOnionCommand.cpp \
+
+SOURCES += 	TorControl/TorControlWindow.cpp \
+                                TorControl/AddOnionCommand.cpp \
 				TorControl/AuthenticateCommand.cpp \
 				TorControl/GetConfCommand.cpp \
 				TorControl/HiddenService.cpp \
