@@ -40,8 +40,8 @@
 
 #include <QMessageBox>
 //unseenp2p
-#include "gui/gxschats/UnseenGxsSmartlistview.h"
-#include "gui/UnseenGxsConversationitemdelegate.h"
+#include "gui/common/UnseenContactSmartlistview.h"
+#include "gui/UnseenContactItemdelegate.h"
 
 
 #define COLUMN_NAME   0
@@ -107,7 +107,7 @@ UnseenFriendSelectionWidget::UnseenFriendSelectionWidget(QWidget *parent)
     if (!ui->friendList->model()) {
         smartListModel_ = new UnseenContactSmartListModel("testing", this);
         ui->friendList->setModel(smartListModel_);
-        ui->friendList->setItemDelegate(new UnseenGxsConversationItemDelegate());
+        ui->friendList->setItemDelegate(new UnseenContactItemDelegate());
         ui->friendList->show();
     }
 
