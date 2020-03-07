@@ -281,6 +281,14 @@ public:
 
 	virtual bool setAsRegularContact(const RsGxsId& id,bool is_a_contact) ;
 	virtual bool isARegularContact(const RsGxsId& id) ;
+
+    virtual bool setMyContact(const RsGxsMyContact & contact);
+    virtual bool isMyContact(const RsGxsMyContact& contact) ;
+    virtual bool updateMyContact(const RsGxsMyContact & contact);
+    virtual void getMyContacts(std::set<RsGxsMyContact>& contactList) ;
+    virtual bool removeMyContact(const RsGxsMyContact& contact);
+
+
 	virtual uint32_t nbRegularContacts() ;
 	virtual rstime_t getLastUsageTS(const RsGxsId &id) ;
 
@@ -583,7 +591,8 @@ private:
     std::map<RsGxsId,SerialisedIdentityStruct> mSerialisedIdentities ;
 
 	// keep a list of regular contacts. This is useful to sort IDs, and allow some services to priviledged ids only.
-	std::set<RsGxsId> mContacts;
+    std::set<RsGxsMyContact> mContacts;
+    std::map<RsGxsId,RsGxsIdLocalInfoItem> localContacts;
 	RsNetworkExchangeService* mNes;
 
 	/**************************

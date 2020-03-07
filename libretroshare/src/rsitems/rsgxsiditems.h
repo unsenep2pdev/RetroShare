@@ -66,6 +66,9 @@ public:
 
     // Avatar
     RsTlvImage mImage ;
+
+    //inviteURL=..., and other infos.
+    std::map<std::string,std::string> profileInfo;
 };
 class RsGxsIdLocalInfoItem : public RsGxsIdItem
 {
@@ -80,7 +83,8 @@ public:
 	virtual void serial_process(RsGenericSerializer::SerializeJob j,RsGenericSerializer::SerializeContext& ctx);
 
     std::map<RsGxsId,rstime_t> mTimeStamps ;
-    std::set<RsGxsId> mContacts ;
+    std::set<RsGxsMyContact> mContacts ;
+
 };
 
 #if 0

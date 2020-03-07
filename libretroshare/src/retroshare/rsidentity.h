@@ -136,6 +136,9 @@ struct RsGxsIdGroup : RsSerializable
     RsGxsImage mImage ;
     rstime_t mLastUsageTS ;
 
+    //inviteURL=..., and other infos.
+    std::map<std::string,std::string> profileInfo;
+
     // Not Serialised - for GUI's benefit.
     bool mPgpKnown;
     bool mIsAContact;	// change that into flags one day
@@ -150,6 +153,53 @@ struct RsGxsIdGroup : RsSerializable
 std::ostream &operator<<(std::ostream &out, const RsGxsIdGroup &group);
 
 // DATA TYPE FOR EXTERNAL INTERFACE.
+class RsGxsMyContact: RsSerializable
+{
+    public:
+        enum STATUS {UNKNOWN,PENDING,REQUEST,APPROVED, TRUSTED, BANNED};
+        RsGxsId gxsId;
+        RsPgpId mPgpId;
+        RsPeerId  peerId;
+        std::string name;
+        STATUS status;
+
+        //CertURL:" "
+        //Devices:" "
+        //chatURL: " " //one2one gxsChat URL to this friend.
+        std::map<std::string,std::string> mContactInfo;
+
+        RsGxsMyContact(): status (UNKNOWN){};
+        RsGxsMyContact(RsGxsId nId):gxsId(nId), status(PENDING){};
+        RsGxsMyContact(RsGxsId nId, RsPgpId nPgpId, RsPeerId  nsslId, std::string newName, STATUS nstatus ):
+            gxsId(nId), mPgpId(nPgpId), peerId(nsslId), name(newName), status(nstatus){};
+
+        virtual void serial_process(RsGenericSerializer::SerializeJob j,RsGenericSerializer::SerializeContext& ctx);
+        virtual void clear();
+
+        void operator=(const RsGxsMyContact &contact){
+            name    = contact.name;
+            gxsId   = contact.gxsId;
+            peerId  = contact.peerId;
+            mPgpId  = contact.mPgpId;
+            status  = contact.status;
+            mContactInfo=contact.mContactInfo;
+        }
+        bool operator==(const RsGxsMyContact& comp ) const
+        {
+            return gxsId== comp.gxsId ;
+        }
+        bool operator()(const RsGxsMyContact& b) const
+        {
+            return gxsId < b.gxsId;
+        }
+
+        bool operator<(const RsGxsMyContact b) const
+        {
+            return gxsId < b.gxsId;
+        }
+
+};
+//making this object sortable and can insert into std::set<RsGxsMyContact>
 
 class RsRecognTag
 {
@@ -319,6 +369,8 @@ struct RsIdentityDetails : RsSerializable
 
 	std::map<RsIdentityUsage,rstime_t> mUseCases;
 
+    std::map<std::string,std::string> mProfileInfo;
+
 	/// @see RsSerializable
 	virtual void serial_process(RsGenericSerializer::SerializeJob j,
 	                            RsGenericSerializer::SerializeContext& ctx)
@@ -331,6 +383,7 @@ struct RsIdentityDetails : RsSerializable
         RS_SERIAL_PROCESS(mAvatar);
 		RS_SERIAL_PROCESS(mLastUsageTS);
 		RS_SERIAL_PROCESS(mUseCases);
+        RS_SERIAL_PROCESS(mProfileInfo);
 	}
 };
 
@@ -377,7 +430,14 @@ struct RsIdentity : RsGxsIfaceHelper
 
     virtual bool setAsRegularContact(const RsGxsId& id,bool is_a_contact) = 0 ;
     virtual bool isARegularContact(const RsGxsId& id) = 0 ;
-	virtual uint32_t nbRegularContacts() =0;
+    virtual uint32_t nbRegularContacts() =0;
+
+    //unseen way to manage contacts on rsIdentity service.
+    virtual bool setMyContact(const RsGxsMyContact & contact)=0;
+    virtual bool isMyContact(const RsGxsMyContact& contact) =0;
+    virtual bool updateMyContact(const RsGxsMyContact & contact) =0;
+    virtual bool removeMyContact(const RsGxsMyContact& contact) =0;
+    virtual void getMyContacts(std::set<RsGxsMyContact>& contactList) =0;
 
 	virtual bool serialiseIdentityToMemory( const RsGxsId& id,
 	                                        std::string& radix_string ) = 0;

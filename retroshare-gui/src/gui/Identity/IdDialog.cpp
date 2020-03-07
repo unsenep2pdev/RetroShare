@@ -180,7 +180,7 @@ IdDialog::IdDialog(QWidget *parent) :
 	ownItem->setData(RSID_COL_VOTES, Qt::DecorationRole,0xff);	// this is in order to prevent displaying a reputaiton icon next to these items.
 
 	allItem = new QTreeWidgetItem();
-	allItem->setText(0, tr("All"));
+    allItem->setText(0, tr("Network Contacts"));
 	allItem->setData(RSID_COL_VOTES, Qt::DecorationRole,0xff);
 
 	contactsItem = new QTreeWidgetItem();
@@ -278,7 +278,7 @@ IdDialog::IdDialog(QWidget *parent) :
 	ui->idTreeWidget->addContextMenuMenu(idTWHMenu);
 
 	QActionGroup *idTWHActionGroup = new QActionGroup(this);
-	QAction *idTWHAction = new QAction(QIcon(),tr("All"), this);
+    QAction *idTWHAction = new QAction(QIcon(),tr("Network Contacts"), this);
 	idTWHAction->setActionGroup(idTWHActionGroup);
 	idTWHAction->setCheckable(true);
 	idTWHAction->setChecked(true);
@@ -1727,7 +1727,7 @@ void IdDialog::insertIdList(uint32_t token)
 				ownItem->addChild(item);
 			else if(data.mIsAContact)
 				{
-				    // contactsItem->addChild(item);
+                    contactsItem->addChild(item);
 				}
 			else
 				allItem->addChild(item);
@@ -2783,20 +2783,20 @@ void IdDialog::showFriendList()
                    std::cerr << "Friend info: sslId: " << sslIds.front(); std::cerr << std::endl;
           }
           // don't accept anymore connection, remove from the view
-           std::cerr << "Friend info: gpgId: " << gpgId.toStdString(); std::cerr << std::endl;
-           std::cerr << "Friend info: peerId: " << peerId.toStdString(); std::cerr << std::endl;
+//           std::cerr << "Friend info: gpgId: " << gpgId.toStdString(); std::cerr << std::endl;
+//           std::cerr << "Friend info: peerId: " << peerId.toStdString(); std::cerr << std::endl;
 
-          std::cerr << "Friend info: RsPeerId: " << detail.id.toStdString() << " gpg_id: " << detail.gpg_id << " name: " << detail.name << " email: " << detail.email << " location: " << detail.location << " org: " << detail.org  ; std::cerr << std::endl;
-          std::cerr << "Friend info: issuer: " << detail.issuer << " fpr: " << detail.fpr << " authcode: " << detail.authcode ; std::cerr << std::endl;
-          std::cerr << "Friend info: ownsign: " << detail.ownsign << "hasSignedMe: " << detail.hasSignedMe << " accept_connection: " << detail.accept_connection ;std::cerr << std::endl;
-          std::cerr << "Friend info: service_perm_flags: " << detail.service_perm_flags << " state: " << detail.state << " actAsServer: " << detail.actAsServer ;std::cerr << std::endl;
-          std::cerr << "Friend info: connectAddr: " << detail.connectAddr << " connectPort: " << detail.connectPort << " isHiddenNode: " << detail.isHiddenNode ;std::cerr << std::endl;
-          std::cerr << "Friend info: hiddenNodeAddress: " << detail.hiddenNodeAddress << "hiddenNodePort: " << detail.hiddenNodePort << " hiddenType: " << detail.hiddenType ;std::cerr << std::endl;
+//          std::cerr << "Friend info: RsPeerId: " << detail.id.toStdString() << " gpg_id: " << detail.gpg_id << " name: " << detail.name << " email: " << detail.email << " location: " << detail.location << " org: " << detail.org  ; std::cerr << std::endl;
+//          std::cerr << "Friend info: issuer: " << detail.issuer << " fpr: " << detail.fpr << " authcode: " << detail.authcode ; std::cerr << std::endl;
+//          std::cerr << "Friend info: ownsign: " << detail.ownsign << "hasSignedMe: " << detail.hasSignedMe << " accept_connection: " << detail.accept_connection ;std::cerr << std::endl;
+//          std::cerr << "Friend info: service_perm_flags: " << detail.service_perm_flags << " state: " << detail.state << " actAsServer: " << detail.actAsServer ;std::cerr << std::endl;
+//          std::cerr << "Friend info: connectAddr: " << detail.connectAddr << " connectPort: " << detail.connectPort << " isHiddenNode: " << detail.isHiddenNode ;std::cerr << std::endl;
+//          std::cerr << "Friend info: hiddenNodeAddress: " << detail.hiddenNodeAddress << "hiddenNodePort: " << detail.hiddenNodePort << " hiddenType: " << detail.hiddenType ;std::cerr << std::endl;
 
-	  std::cerr << "Standard Node info: localAddr: " << detail.localAddr << " localPort: " << detail.localPort << " extAddr: " << detail.extAddr << " extPort: " << detail.extPort << "dyndns: " << detail.dyndns ; std::cerr << std::endl;
-	  std::cerr << "Friend info: netMode: " << detail.netMode << " vs_disc: " << detail.vs_disc << " vs_dht: " << detail.vs_dht ;std::cerr << std::endl;
-	  std::cerr << "Friend info: lastConnect: " << detail.lastConnect << " lastUsed: " << detail.lastUsed << " connectState: " << detail.connectState << " connectStateString:" << detail.connectStateString << " connectPeriod:" << detail.connectPeriod << " foundDHT: " << detail.foundDHT ;std::cerr << std::endl;
-	  std::cerr << "Friend info: wasDeniedConnection: " << detail.wasDeniedConnection << " deniedTS: " << detail.deniedTS << " linkType: " << detail.linkType ;std::cerr << std::endl;
+//	  std::cerr << "Standard Node info: localAddr: " << detail.localAddr << " localPort: " << detail.localPort << " extAddr: " << detail.extAddr << " extPort: " << detail.extPort << "dyndns: " << detail.dyndns ; std::cerr << std::endl;
+//	  std::cerr << "Friend info: netMode: " << detail.netMode << " vs_disc: " << detail.vs_disc << " vs_dht: " << detail.vs_dht ;std::cerr << std::endl;
+//	  std::cerr << "Friend info: lastConnect: " << detail.lastConnect << " lastUsed: " << detail.lastUsed << " connectState: " << detail.connectState << " connectStateString:" << detail.connectStateString << " connectPeriod:" << detail.connectPeriod << " foundDHT: " << detail.foundDHT ;std::cerr << std::endl;
+//	  std::cerr << "Friend info: wasDeniedConnection: " << detail.wasDeniedConnection << " deniedTS: " << detail.deniedTS << " linkType: " << detail.linkType ;std::cerr << std::endl;
 
 	  // create gpg item and add it to tree
 

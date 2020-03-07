@@ -55,6 +55,7 @@ void RsGxsIdGroupItem::clear()
 
     mRecognTags.clear();
     mImage.TlvClear();
+    profileInfo.clear();
 }
 void RsGxsIdLocalInfoItem::serial_process(RsGenericSerializer::SerializeJob j,RsGenericSerializer::SerializeContext& ctx)
 {
@@ -62,6 +63,19 @@ void RsGxsIdLocalInfoItem::serial_process(RsGenericSerializer::SerializeJob j,Rs
     RsTypeSerializer::serial_process(j,ctx,mContacts,"mContacts") ;
 }
 
+void RsGxsMyContact::clear()
+{
+    mContactInfo.clear() ;
+}
+void RsGxsMyContact::serial_process(RsGenericSerializer::SerializeJob j,RsGenericSerializer::SerializeContext& ctx){
+
+    RsTypeSerializer::serial_process(j,ctx,name,"name") ;
+    RsTypeSerializer::serial_process(j,ctx,gxsId,"gsxId") ;
+    RsTypeSerializer::serial_process(j,ctx,mPgpId,"mPgpId") ;
+    RsTypeSerializer::serial_process(j,ctx,peerId,"sslId") ;
+    RsTypeSerializer::serial_process(j,ctx,status,"status") ;
+    RsTypeSerializer::serial_process<std::string,std::string>(j,ctx,mContactInfo,"mContactInfo");
+}
 void RsGxsIdGroupItem::serial_process(RsGenericSerializer::SerializeJob j,RsGenericSerializer::SerializeContext& ctx)
 {
     RsTypeSerializer::serial_process(j,ctx,mPgpIdHash,"mPgpIdHash") ;
@@ -77,6 +91,8 @@ void RsGxsIdGroupItem::serial_process(RsGenericSerializer::SerializeJob j,RsGene
         return ;
 
     RsTypeSerializer::serial_process<RsTlvItem>(j,ctx,mImage,"mImage") ;
+    RsTypeSerializer::serial_process<std::string,std::string>(j,ctx,profileInfo,"profileInfo") ;
+
 }
 
 bool RsGxsIdGroupItem::fromGxsIdGroup(RsGxsIdGroup &group, bool moveImage)
@@ -86,6 +102,7 @@ bool RsGxsIdGroupItem::fromGxsIdGroup(RsGxsIdGroup &group, bool moveImage)
         mPgpIdHash = group.mPgpIdHash;
         mPgpIdSign = group.mPgpIdSign;
         mRecognTags = group.mRecognTags;
+        profileInfo = group.profileInfo;
 
         if (moveImage)
         {
@@ -105,6 +122,7 @@ bool RsGxsIdGroupItem::toGxsIdGroup(RsGxsIdGroup &group, bool moveImage)
         group.mPgpIdHash = mPgpIdHash;
         group.mPgpIdSign = mPgpIdSign;
         group.mRecognTags = mRecognTags;
+        group.profileInfo = profileInfo;
 
         if (moveImage)
         {

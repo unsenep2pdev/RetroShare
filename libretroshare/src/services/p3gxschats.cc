@@ -44,7 +44,7 @@
 #include "retroshare/rspeers.h"
 #include "rsitems/rsnxsitems.h"
 
-#define GXSCHATS_DEBUG 1
+//#define GXSCHATS_DEBUG 1
 
 
 

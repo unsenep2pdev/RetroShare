@@ -50,6 +50,7 @@
  * #define DEBUG_OPINION 1
  * #define GXSID_GEN_DUMMY_DATA	1
  ****/
+#define DEBUG_IDS	1
 
 #define ID_REQUEST_LIST		    0x0001
 #define ID_REQUEST_IDENTITY	    0x0002
@@ -233,16 +234,24 @@ uint32_t p3IdService::nbRegularContacts()
 bool p3IdService::isARegularContact(const RsGxsId& id)
 {
     RsStackMutex stack(mIdMtx);
-    return mContacts.find(id) != mContacts.end() ;
+    return mContacts.find(RsGxsMyContact(id)) != mContacts.end() ;
 }
 
 bool p3IdService::setAsRegularContact(const RsGxsId& id,bool b)
 {
-    std::set<RsGxsId>::iterator it = mContacts.find(id) ;
+    std::set<RsGxsMyContact>::iterator it = mContacts.find(RsGxsMyContact(id)) ;
     
     if(b && (it == mContacts.end()))
     {
-        mContacts.insert(id) ;
+        RsGxsMyContact newContact(id);
+        RsIdentityDetails details;
+        if(getIdDetails(id, details)){
+            newContact.status = RsGxsMyContact::PENDING;  //waiting for approval.
+            newContact.mPgpId = details.mPgpId;
+            newContact.name = details.mNickname;
+            newContact.mContactInfo = details.mProfileInfo; //if u want to take the friend profile store local.
+        }
+        mContacts.insert(newContact) ;
         slowIndicateConfigChanged() ;
     }
     
@@ -253,6 +262,55 @@ bool p3IdService::setAsRegularContact(const RsGxsId& id,bool b)
     }
     
     return true ;
+}
+
+bool p3IdService::isMyContact(const RsGxsMyContact& id)
+{
+    RsStackMutex stack(mIdMtx);
+    return mContacts.find(id) != mContacts.end() ;
+}
+
+bool p3IdService::setMyContact(const RsGxsMyContact& contact)
+{
+    std::set<RsGxsMyContact>::iterator it = mContacts.find(contact) ;
+    if(it == mContacts.end())
+    {
+        mContacts.insert(contact) ;
+        slowIndicateConfigChanged() ;
+        return true;
+    }
+
+    return false ;
+}
+bool p3IdService::removeMyContact(const RsGxsMyContact& contact){
+
+    std::set<RsGxsMyContact>::iterator it = mContacts.find(contact) ;
+    if(it != mContacts.end())
+    {
+        mContacts.erase(it) ;
+        slowIndicateConfigChanged() ;
+        return true;
+    }
+    return false;
+}
+
+
+bool p3IdService::updateMyContact(const RsGxsMyContact & contact){
+
+    std::set<RsGxsMyContact>::iterator it = mContacts.find(contact) ;
+    if(it != mContacts.end())
+    {
+        mContacts.erase(it) ;  //remove this contact..
+        //add its the new one.
+        mContacts.insert(contact) ;
+        slowIndicateConfigChanged() ;
+        return true;
+    }
+    return false;
+}
+
+void p3IdService::getMyContacts(std::set<RsGxsMyContact>& contactList) {
+    contactList = mContacts;
 }
 
 void p3IdService::slowIndicateConfigChanged()
@@ -653,7 +711,7 @@ bool p3IdService::getIdDetails(const RsGxsId &id, RsIdentityDetails &details)
             // This step is needed, because p3GxsReputation does not know all identities, and might not have any data for
             // the ones in the contact list. So we change them on demand.
 
-            if(mContacts.find(id) != mContacts.end() && rsReputations->nodeAutoPositiveOpinionForContacts())
+            if(mContacts.find(RsGxsMyContact(id)) != mContacts.end() && rsReputations->nodeAutoPositiveOpinionForContacts())
                 rsReputations->setOwnOpinion(id,RsReputations::OPINION_POSITIVE) ;
 
             details = data.details;
@@ -797,6 +855,9 @@ bool p3IdService::createIdentity(uint32_t& token, RsIdentityParameters &params)
     id.mMeta.mGroupName = params.nickname;
     id.mMeta.mCircleType = GXS_CIRCLE_TYPE_PUBLIC ;
     id.mImage = params.mImage;
+
+    std::string shareInviteUrl= rsPeers->GetRetroshareInvite();
+    id.profileInfo["shareInviteUrl"]=shareInviteUrl;
 
     if (params.isPgpLinked)
     {
@@ -1635,6 +1696,8 @@ bool p3IdService::getGroupData(const uint32_t &token, std::vector<RsGxsIdGroup> 
                 std::cerr << std::endl;
                 item->print(std::cerr);
                 std::cerr << std::endl;
+                std::cerr <<"GroupID: "<< item->meta.mGroupId << std::endl;
+                std::cerr <<"GroupName: "<< item->meta.mGroupName << std::endl;
 #endif // DEBUG_IDS
                 RsGxsIdGroup group ;
                 item->toGxsIdGroup(group,false) ;
@@ -1669,7 +1732,7 @@ bool p3IdService::getGroupData(const uint32_t &token, std::vector<RsGxsIdGroup> 
 						std::cerr << "p3IdService::getGroupData() " << group.mMeta.mGroupId << " (" << group.mMeta.mGroupName << ") : Failed to decode, or no ServiceString \"" << group.mMeta.mServiceString << "\"" << std::endl;
                 }
 
-                group.mIsAContact =  (mContacts.find(RsGxsId(group.mMeta.mGroupId)) != mContacts.end());
+                group.mIsAContact =  (mContacts.find(RsGxsMyContact(RsGxsId(group.mMeta.mGroupId))) != mContacts.end());
 
                 groups.push_back(group);
                 delete(item);
@@ -2206,6 +2269,7 @@ void RsGxsIdCache::init(const RsGxsIdGroupItem *item, const RsTlvPublicRSAKey& i
     // Fill in Details.
     details.mNickname = item->meta.mGroupName;
     details.mId = RsGxsId(item->meta.mGroupId);
+    details.mProfileInfo = item->profileInfo;
 
 #ifdef DEBUG_IDS
     std::cerr << "RsGxsIdCache::RsGxsIdCache() for: " << details.mId;
@@ -2511,7 +2575,7 @@ bool p3IdService::cache_store(const RsGxsIdGroupItem *item)
     // Create Cache Data.
     RsGxsIdCache keycache(item, pubkey, fullkey,tagList);
 
-    if(mContacts.find(id) != mContacts.end())
+    if(mContacts.find(RsGxsMyContact(id)) != mContacts.end())
         keycache.details.mFlags |= RS_IDENTITY_FLAGS_IS_A_CONTACT;
 
     mKeyCache.store(id, keycache);
@@ -4539,6 +4603,7 @@ void RsGxsIdGroup::serial_process(
 	RS_SERIAL_PROCESS(mIsAContact);
 	RS_SERIAL_PROCESS(mPgpId);
 	RS_SERIAL_PROCESS(mReputation);
+    RsTypeSerializer::serial_process<std::string,std::string>(j,ctx,profileInfo,"profileInfo");
 }
 
 RsIdentityUsage::RsIdentityUsage(
