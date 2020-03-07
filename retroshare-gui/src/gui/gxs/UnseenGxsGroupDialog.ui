@@ -178,7 +178,7 @@
         </item>
        </layout>
       </widget>
-      <widget class="FriendSelectionWidget" name="keyShareList" native="true">
+      <widget class="UnseenFriendSelectionWidget" name="keyShareList" native="true">
        <property name="geometry">
         <rect>
          <x>370</x>
@@ -473,9 +473,9 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>FriendSelectionWidget</class>
+   <class>UnseenFriendSelectionWidget</class>
    <extends>QWidget</extends>
-   <header>gui/common/FriendSelectionWidget.h</header>
+   <header>gui/common/UnseenFriendSelectionWidget.h</header>
    <container>1</container>
   </customwidget>
   <customwidget>
