@@ -143,7 +143,7 @@ public:
 private:
 	void newGroup();
     //void init(const std::set<RsPeerId>& friends_list, const std::set<RsPgpId>& peer_list2);
-    void init(const std::set<RsPgpId>& peer_list2, const std::set<RsPeerId>& peer_list);
+    void init(const std::set<RsPgpId>& peer_list2, const std::set<RsPeerId>& peer_list, const std::set<RsGxsId>& peer_list3);
 	void initMode();
 
 	// Functions that can be overloaded for specific stuff.
@@ -267,6 +267,9 @@ private:
     std::set<RsPeerId> mShareFriends;
     std::set<RsPgpId> mShareGpgIds;
     RsGxsChatGroup::ChatType chatType;
+    uint32_t circleType; //groupchat and channel: public = GXS_CIRCLE_TYPE_PUBLIC            = 0x0001 ;
+                         //                       private = GXS_CIRCLE_TYPE_YOUR_FRIENDS_ONLY = 0x0003 ;
+
 
 protected:
 	/** Qt Designer generated object */

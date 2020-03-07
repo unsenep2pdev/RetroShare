@@ -1524,6 +1524,8 @@ bool IdDialog::fillIdListItem(const RsGxsIdGroup& data, QTreeWidgetItem *&item, 
         item = new TreeWidgetItem();
         
 
+    std::cerr << "IdDialog: fillIdListItem: is this nickname: " <<  data.mMeta.mGroupName;
+    std::cerr << std::endl;
     item->setText(RSID_COL_NICKNAME, QString::fromUtf8(data.mMeta.mGroupName.c_str()).left(RSID_MAXIMUM_NICKNAME_SIZE));
     item->setText(RSID_COL_KEYID, QString::fromStdString(data.mMeta.mGroupId.toStdString()));
     
