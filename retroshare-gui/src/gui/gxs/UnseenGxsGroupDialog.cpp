@@ -56,7 +56,8 @@ UnseenGxsGroupDialog::UnseenGxsGroupDialog(TokenQueue *tokenExternalQueue, uint3
 
     std::set<RsPeerId> friends;
     std::set<RsPgpId> pgpFriends;
-    init(pgpFriends, friends);
+    std::set<RsGxsId> gxsFriends;
+    init(pgpFriends, friends, gxsFriends);
 }
 
 UnseenGxsGroupDialog::UnseenGxsGroupDialog(TokenQueue *tokenExternalQueue, RsTokenService *tokenService, Mode mode, RsGxsGroupId groupId, uint32_t enableFlags, uint32_t defaultFlags, QWidget *parent)
@@ -71,7 +72,8 @@ UnseenGxsGroupDialog::UnseenGxsGroupDialog(TokenQueue *tokenExternalQueue, RsTok
 
     std::set<RsPeerId> friends;
     std::set<RsPgpId> pgpFriends;
-    init(pgpFriends, friends);
+    std::set<RsGxsId> gxsFriends;
+    init(pgpFriends, friends, gxsFriends);
 }
 
 UnseenGxsGroupDialog::~UnseenGxsGroupDialog()
@@ -82,7 +84,7 @@ UnseenGxsGroupDialog::~UnseenGxsGroupDialog()
 	}
 }
 
-void UnseenGxsGroupDialog::init(const std::set<RsPgpId>& peer_list2, const std::set<RsPeerId>& peer_list)
+void UnseenGxsGroupDialog::init(const std::set<RsPgpId>& peer_list2, const std::set<RsPeerId>& peer_list, const std::set<RsGxsId>& peer_list3)
 {
 	// connect up the buttons.
 	connect(ui.buttonBox, SIGNAL(accepted()), this, SLOT(submitGroup()));
@@ -97,11 +99,16 @@ void UnseenGxsGroupDialog::init(const std::set<RsPgpId>& peer_list2, const std::
 
     /* initialize key share list */
     ui.keyShareList->setHeaderText(tr("Contacts:"));
-    ui.keyShareList->setModus(FriendSelectionWidget::MODUS_CHECK);
-    ui.keyShareList->setShowType(FriendSelectionWidget::SHOW_GROUP | FriendSelectionWidget::SHOW_SSL | FriendSelectionWidget::SHOW_GPG);
+
+
+    //ui.keyShareList->setModus(FriendSelectionWidget::MODUS_CHECK);
+    ui.keyShareList->setModus(UnseenFriendSelectionWidget::MODUS_CHECK);
+    ui.keyShareList->setShowType(UnseenFriendSelectionWidget::SHOW_GPG);
     ui.keyShareList->start();
-    ui.keyShareList->setSelectedIds<RsPeerId,FriendSelectionWidget::IDTYPE_SSL>(peer_list, false);
-    ui.keyShareList->setSelectedIds<RsPgpId,FriendSelectionWidget::IDTYPE_GPG>(peer_list2, false);
+
+    ui.keyShareList->setSelectedIds<RsGxsId,UnseenFriendSelectionWidget::IDTYPE_GXS>(peer_list3, false);
+    ui.keyShareList->setSelectedIds<RsPeerId,UnseenFriendSelectionWidget::IDTYPE_SSL>(peer_list, false);
+    ui.keyShareList->setSelectedIds<RsPgpId,UnseenFriendSelectionWidget::IDTYPE_GPG>(peer_list2, false);
 
 	initMode();
 	Settings->loadWidgetInformation(this);
@@ -493,9 +500,11 @@ void UnseenGxsGroupDialog::createGroup()
     }
 
     std::set<RsPgpId> gpgIds;
-    ui.keyShareList->selectedIds<RsPeerId,FriendSelectionWidget::IDTYPE_SSL>(mShareFriends, false);
-    ui.keyShareList->selectedIds<RsPgpId,FriendSelectionWidget::IDTYPE_GPG>(gpgIds, false);
+    std::set<RsGxsId>  gxsFriends;
+    ui.keyShareList->selectedIds<RsPeerId,UnseenFriendSelectionWidget::IDTYPE_SSL>(mShareFriends, false);
+    ui.keyShareList->selectedIds<RsPgpId,UnseenFriendSelectionWidget::IDTYPE_GPG>(gpgIds, false);
 
+    ui.keyShareList->selectedIds<RsGxsId, UnseenFriendSelectionWidget::IDTYPE_GXS>(gxsFriends, false);
     //ui.keyShareList->selectedIds<RsPeerId,FriendSelectionWidget::IDTYPE_SSL>(mShareFriends, false);
 
 	/* Check name */
@@ -658,6 +667,7 @@ void UnseenGxsGroupDialog::setDefaultOptions()
         ui.label->setVisible(false);
         ui.groupName->setVisible(false);
         ui.channelType->setVisible(false);
+        ui.groupTypeComboBox->setVisible(false);
         if (mode() ==  MODE_EDIT)
         {
             ui.typeGroup->setDisabled(true);
@@ -689,6 +699,7 @@ void UnseenGxsGroupDialog::setDefaultOptions()
         ui.label_2->setText("Select the friends with which you want to make channel: ");
         ui.label->setVisible(true);
         ui.groupName->setVisible(true);
+        ui.groupTypeComboBox->setVisible(false);
         ui.channelType->setVisible(true);
         ui.channelType->setCurrentIndex(0);
         if (circleType == GXS_CIRCLE_TYPE_YOUR_FRIENDS_ONLY)

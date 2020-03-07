@@ -19,6 +19,34 @@ libresapihttpserver {
 
 !include("../../libretroshare/src/use_libretroshare.pri"):error("Including")
 
+FORMS   += TorControl/TorControlWindow.ui \
+    gui/gxs/UnseenGxsGroupFrameDialog.ui \
+    gui/gxschats/UnseenGxsChatLobbyDialog.ui \
+    gui/gxs/UnseenGxsGroupDialog.ui \
+    gui/common/UnseenFriendSelectionWidget.ui
+SOURCES += TorControl/TorControlWindow.cpp \
+    gui/gxs/UnseenGxsGroupFrameDialog.cpp \
+    gui/gxschats/UnseenGxsSmartlistmodel.cpp \
+    gui/gxschats/UnseenGxsSmartlistview.cpp \
+    gui/UnseenGxsConversationitemdelegate.cpp \
+    gui/gxschats/UnseenGxsChatLobbyDialog.cpp \
+    gui/gxschats/UnseenGxsChatGroupDialog.cpp \
+    gui/gxs/UnseenGxsGroupDialog.cpp \
+    gui/common/UnseenFriendSelectionWidget.cpp \
+    gui/common/UnseenContactSmartlistview.cpp \
+    gui/common/UnseenContactSmartlistmodel.cpp
+HEADERS += TorControl/TorControlWindow.h \
+    gui/gxs/UnseenGxsGroupFrameDialog.h \
+    gui/gxschats/UnseenGxsSmartlistmodel.h \
+    gui/gxschats/UnseenGxsSmartlistview.h \
+    gui/UnseenGxsConversationitemdelegate.h \
+    gui/gxschats/UnseenGxsChatLobbyDialog.h \
+    gui/gxschats/UnseenGxsChatGroupDialog.h \
+    gui/gxs/UnseenGxsGroupDialog.h \
+    gui/common/UnseenFriendSelectionWidget.h \
+    gui/common/UnseenContactSmartlistview.h \
+    gui/common/UnseenContactSmartlistmodel.h
+
 #QMAKE_CFLAGS += -fmudflap 
 #LIBS *= /usr/lib/gcc/x86_64-linux-gnu/4.4/libmudflap.a /usr/lib/gcc/x86_64-linux-gnu/4.4/libmudflapth.a
 

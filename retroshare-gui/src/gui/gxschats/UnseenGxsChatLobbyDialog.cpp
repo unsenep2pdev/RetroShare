@@ -263,7 +263,7 @@ void UnseenGxsChatLobbyDialog::inviteFriends()
 {
     std::cerr << "Inviting friends" << std::endl;
 
-    std::set<RsPeerId> ids = FriendSelectionDialog::selectFriends_SSL(NULL,tr("Invite friends"),tr("Select friends to invite:")) ;
+    std::set<RsPeerId> ids = FriendSelectionDialog::selectFriends_SSL(NULL,tr("Invite friends"),tr("Select friends to invite:"), FriendSelectionWidget::MODUS_CHECK, FriendSelectionWidget::SHOW_SSL) ;
 
     std::cerr << "Inviting these friends:" << std::endl;
 
