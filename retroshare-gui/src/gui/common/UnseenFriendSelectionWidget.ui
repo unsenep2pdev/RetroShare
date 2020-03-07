@@ -31,7 +31,7 @@
     </layout>
    </item>
    <item>
-    <widget class="RSTreeWidget" name="friendList">
+    <widget class="UnseenContactSmartListView" name="friendList">
      <property name="minimumSize">
       <size>
        <width>20</width>
@@ -69,9 +69,9 @@
    <header location="global">gui/common/LineEditClear.h</header>
   </customwidget>
   <customwidget>
-   <class>RSTreeWidget</class>
+   <class>UnseenContactSmartListView</class>
    <extends>QTreeWidget</extends>
-   <header>gui/common/RSTreeWidget.h</header>
+   <header>gui/common/UnseenContactSmartListView.h</header>
   </customwidget>
  </customwidgets>
  <resources/>
