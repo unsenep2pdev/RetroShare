@@ -24,26 +24,10 @@ FORMS   += TorControl/TorControlWindow.ui \
     gui/gxschats/UnseenGxsChatLobbyDialog.ui \
     gui/gxs/UnseenGxsGroupDialog.ui \
     gui/common/UnseenFriendSelectionWidget.ui
-SOURCES += TorControl/TorControlWindow.cpp \
-    gui/gxs/UnseenGxsGroupFrameDialog.cpp \
-    gui/gxschats/UnseenGxsSmartlistmodel.cpp \
-    gui/gxschats/UnseenGxsSmartlistview.cpp \
-    gui/UnseenGxsConversationitemdelegate.cpp \
-    gui/gxschats/UnseenGxsChatLobbyDialog.cpp \
-    gui/gxschats/UnseenGxsChatGroupDialog.cpp \
-    gui/gxs/UnseenGxsGroupDialog.cpp \
-    gui/common/UnseenFriendSelectionWidget.cpp \
+SOURCES += gui/common/UnseenFriendSelectionWidget.cpp \
     gui/common/UnseenContactSmartlistview.cpp \
     gui/common/UnseenContactSmartlistmodel.cpp
-HEADERS += TorControl/TorControlWindow.h \
-    gui/gxs/UnseenGxsGroupFrameDialog.h \
-    gui/gxschats/UnseenGxsSmartlistmodel.h \
-    gui/gxschats/UnseenGxsSmartlistview.h \
-    gui/UnseenGxsConversationitemdelegate.h \
-    gui/gxschats/UnseenGxsChatLobbyDialog.h \
-    gui/gxschats/UnseenGxsChatGroupDialog.h \
-    gui/gxs/UnseenGxsGroupDialog.h \
-    gui/common/UnseenFriendSelectionWidget.h \
+HEADERS += gui/common/UnseenFriendSelectionWidget.h \
     gui/common/UnseenContactSmartlistview.h \
     gui/common/UnseenContactSmartlistmodel.h
 
