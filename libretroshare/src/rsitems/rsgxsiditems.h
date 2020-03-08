@@ -32,6 +32,9 @@
 
 //const uint8_t RS_PKT_SUBTYPE_GXSID_GROUP_ITEM_deprecated   = 0x02;
 
+enum VERSION {V69,V70,V71};  //release versions of unseenp2p
+static VERSION current_version=V69;
+
 const uint8_t RS_PKT_SUBTYPE_GXSID_GROUP_ITEM      = 0x02;
 const uint8_t RS_PKT_SUBTYPE_GXSID_OPINION_ITEM    = 0x03;
 const uint8_t RS_PKT_SUBTYPE_GXSID_COMMENT_ITEM    = 0x04;
@@ -70,6 +73,7 @@ public:
     //inviteURL=..., and other infos.
     std::map<std::string,std::string> profileInfo;
 };
+
 class RsGxsIdLocalInfoItem : public RsGxsIdItem
 {
 

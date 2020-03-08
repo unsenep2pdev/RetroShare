@@ -91,8 +91,11 @@ void RsGxsIdGroupItem::serial_process(RsGenericSerializer::SerializeJob j,RsGene
         return ;
 
     RsTypeSerializer::serial_process<RsTlvItem>(j,ctx,mImage,"mImage") ;
-    RsTypeSerializer::serial_process<std::string,std::string>(j,ctx,profileInfo,"profileInfo") ;
 
+    //backward compatiable support if Unseen version v0.7.0 then we add this into serailization.
+    if(current_version==V70){
+        RsTypeSerializer::serial_process<std::string,std::string>(j,ctx,profileInfo,"profileInfo") ;
+    }
 }
 
 bool RsGxsIdGroupItem::fromGxsIdGroup(RsGxsIdGroup &group, bool moveImage)
