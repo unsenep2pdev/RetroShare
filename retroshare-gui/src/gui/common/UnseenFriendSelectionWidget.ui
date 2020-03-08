@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>UnseenFriendSelectionWidget</class>
+ <widget class="QWidget" name="UnseenFriendSelectionWidget">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>446</width>
+    <height>320</height>
+   </rect>
+  </property>
+  <layout class="QVBoxLayout" name="FriendSelectionWidgetVLayout">
+   <property name="leftMargin">
+    <number>0</number>
+   </property>
+   <property name="topMargin">
+    <number>0</number>
+   </property>
+   <property name="rightMargin">
+    <number>0</number>
+   </property>
+   <property name="bottomMargin">
+    <number>0</number>
+   </property>
+   <item>
+    <layout class="QHBoxLayout" name="filterHLayout">
+     <item>
+      <widget class="LineEditClear" name="filterLineEdit"/>
+     </item>
+    </layout>
+   </item>
+   <item>
+
+  <widget class="UnseenContactSmartListView" name="friendList">
+  <property name="minimumSize">
+      <size>
+       <width>20</width>
+       <height>0</height>
+      </size>
+     </property>
+     <property name="contextMenuPolicy">
+      <enum>Qt::CustomContextMenu</enum>
+     </property>
+     <property name="editTriggers">
+      <set>QAbstractItemView::NoEditTriggers</set>
+     </property>
+     <property name="sortingEnabled">
+      <bool>true</bool>
+     </property>
+     <property name="allColumnsShowFocus">
+      <bool>true</bool>
+     </property>
+     <property name="expandsOnDoubleClick">
+      <bool>false</bool>
+     </property>
+     <column>
+      <property name="text">
+       <string/>
+      </property>
+     </column>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>LineEditClear</class>
+   <extends>QLineEdit</extends>
+   <header location="global">gui/common/LineEditClear.h</header>
+  </customwidget>
+  <customwidget>
+ <class>UnseenContactSmartListView</class>
+   <extends>QTreeWidget</extends>
+   <header>gui/common/UnseenContactSmartListView.h</header>
+ </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>

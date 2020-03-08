@@ -359,6 +359,9 @@ public:
     virtual bool retrieveDistantGroup(const RsGxsGroupId& group_id,RsGxsChatGroup& distant_group)=0;
 
     //////////////////////////////////////////////////////////////////////////////
+
+
+    virtual void publishNotifyMessage(const RsGxsGroupId &grpId,std::pair<std::string,std::string> &command) = 0;
 };
 
 

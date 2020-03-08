@@ -598,7 +598,7 @@ void ChatLobbyWidget::setCurrentOne2OneChatPage(PopupChatDialog *d)
 
 void ChatLobbyWidget::updateDisplay()
 {
-    openLastChatWindow();
+    //openLastChatWindow();
 
 #ifdef CHAT_LOBBY_GUI_DEBUG
     std::cerr << "Show all group chats !" << std::endl;

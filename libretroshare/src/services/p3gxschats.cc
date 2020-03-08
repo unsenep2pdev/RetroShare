@@ -1662,7 +1662,7 @@ void p3GxsChats::receiveNewChatMesesage(std::vector<GxsNxsChatMsgItem*>& message
 }
 void p3GxsChats::receiveNewChatGroup(std::vector<GxsNxsChatGroupItem*>& groups){
 #ifdef GXSCHATS_DEBUG
-    std::cerr << "p3GxsChats::receiveNewChatGroup()" << std::endl;
+    std::cerr << "p3GxsChats::fsreceiveNewChatGroup()" << std::endl;
 #endif
 }
 
