@@ -40,7 +40,7 @@
 
 #include <QMessageBox>
 //unseenp2p
-#include "gui/common/UnseenContactSmartlistview.h"
+#include "gui/common/UnseenContactSmartListView.h"
 #include "gui/UnseenContactItemdelegate.h"
 
 
@@ -293,7 +293,7 @@ void UnseenFriendSelectionWidget::loadRequest(const TokenQueue */*queue*/, const
 	for(uint32_t i=0;i<datavector.size();++i)
 	{
 		gxsIds.push_back(datavector[i].mMeta.mGroupId) ;
-		//std::cerr << "  got ID = " << datavector[i].mMeta.mGroupId << std::endl;
+        std::cerr << "UnseenFriendSelectionWidget got datavector ID = " << datavector[i].mMeta.mGroupId << std::endl;
 	}
 
     //unseenp2p - save the gxsIds to the smartlistmodel

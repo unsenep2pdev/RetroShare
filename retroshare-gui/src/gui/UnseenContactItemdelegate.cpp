@@ -29,8 +29,6 @@ typedef QVector<unsigned int>                                       VectorUInt  
 // Client
 #include "gui/common/UnseenContactSmartlistmodel.h"
 #include "ringthemeutils.h"
-//#include "utils.h"
-//#include "lrcinstance.h"
 
 #include <ciso646>
 
