@@ -851,6 +851,7 @@ bool p3IdService::createIdentity(uint32_t& token, RsIdentityParameters &params)
 {
 
     RsGxsIdGroup id;
+    id.version = V70; //new version.
 
     id.mMeta.mGroupName = params.nickname;
     id.mMeta.mCircleType = GXS_CIRCLE_TYPE_PUBLIC ;
@@ -1694,7 +1695,7 @@ bool p3IdService::getGroupData(const uint32_t &token, std::vector<RsGxsIdGroup> 
 #ifdef DEBUG_IDS
                 std::cerr << "p3IdService::getGroupData() Item is:";
                 std::cerr << std::endl;
-                item->print(std::cerr);
+                //item->print(std::cerr);
                 std::cerr << std::endl;
                 std::cerr <<"GroupID: "<< item->meta.mGroupId << std::endl;
                 std::cerr <<"GroupName: "<< item->meta.mGroupName << std::endl;
@@ -1779,8 +1780,10 @@ bool 	p3IdService::createGroup(uint32_t& token, RsGxsIdGroup &group)
 {
     RsGxsIdGroupItem* item = new RsGxsIdGroupItem();
 
-    item->meta = group.mMeta;
-    item->mImage.binData.setBinData(group.mImage.mData, group.mImage.mSize);
+    item->fromGxsIdGroup(group,true);
+
+    //item->meta = group.mMeta;
+    //item->mImage.binData.setBinData(group.mImage.mData, group.mImage.mSize);
 
     RsGenExchange::publishGroup(token, item);
     return true;

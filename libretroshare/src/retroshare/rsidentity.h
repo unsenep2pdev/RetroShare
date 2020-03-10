@@ -41,6 +41,9 @@
 struct RsIdentity;
 extern RsIdentity *rsIdentity;
 
+//release versions of unseenp2p for backward compatibility
+const enum VERSION { V69, V70, V71};
+static VERSION current_version = V69;
 
 // GroupFlags: Only one so far:
 
@@ -105,7 +108,7 @@ struct GxsReputation : RsSerializable
 struct RsGxsIdGroup : RsSerializable
 {
 	RsGxsIdGroup() :
-	    mLastUsageTS(0), mPgpKnown(false), mIsAContact(false) {}
+        mLastUsageTS(0), mPgpKnown(false), mIsAContact(false), version(current_version) {}
 	~RsGxsIdGroup() {}
 
 	RsGroupMetaData mMeta;
@@ -137,6 +140,7 @@ struct RsGxsIdGroup : RsSerializable
     rstime_t mLastUsageTS ;
 
     //inviteURL=..., and other infos.
+    //version V70 and above will support this.
     std::map<std::string,std::string> profileInfo;
 
     // Not Serialised - for GUI's benefit.
@@ -144,6 +148,9 @@ struct RsGxsIdGroup : RsSerializable
     bool mIsAContact;	// change that into flags one day
     RsPgpId mPgpId;
     GxsReputation mReputation;
+
+    //adding version to backward compatibility.
+    VERSION version;
 
 	/// @see RsSerializable
 	void serial_process( RsGenericSerializer::SerializeJob j,

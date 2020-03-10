@@ -27,13 +27,16 @@
 #include "rsitems/rsserviceids.h"
 #include "serialiser/rsserial.h"
 
+#include "serialiser/rsserializer.h"
+#include "serialiser/rstypeserializer.h"
+#include "util/rsprint.h"
+
 #include "rsgxsitems.h"
 #include "retroshare/rsidentity.h"
 
 //const uint8_t RS_PKT_SUBTYPE_GXSID_GROUP_ITEM_deprecated   = 0x02;
 
-enum VERSION {V69,V70,V71};  //release versions of unseenp2p
-static VERSION current_version=V69;
+
 
 const uint8_t RS_PKT_SUBTYPE_GXSID_GROUP_ITEM      = 0x02;
 const uint8_t RS_PKT_SUBTYPE_GXSID_OPINION_ITEM    = 0x03;
@@ -50,7 +53,7 @@ class RsGxsIdGroupItem : public RsGxsIdItem
 {
 public:
 
-    RsGxsIdGroupItem():  RsGxsIdItem(RS_PKT_SUBTYPE_GXSID_GROUP_ITEM) {}
+    RsGxsIdGroupItem(): version(current_version), RsGxsIdItem(RS_PKT_SUBTYPE_GXSID_GROUP_ITEM) {}
     virtual ~RsGxsIdGroupItem() {}
 
 	virtual void serial_process(RsGenericSerializer::SerializeJob j,RsGenericSerializer::SerializeContext& ctx);
@@ -72,6 +75,7 @@ public:
 
     //inviteURL=..., and other infos.
     std::map<std::string,std::string> profileInfo;
+    VERSION version;
 };
 
 class RsGxsIdLocalInfoItem : public RsGxsIdItem
@@ -79,7 +83,7 @@ class RsGxsIdLocalInfoItem : public RsGxsIdItem
 
 public:
 
-    RsGxsIdLocalInfoItem():  RsGxsIdItem(RS_PKT_SUBTYPE_GXSID_LOCAL_INFO_ITEM) {}
+    RsGxsIdLocalInfoItem(): version(current_version), RsGxsIdItem(RS_PKT_SUBTYPE_GXSID_LOCAL_INFO_ITEM) {}
     virtual ~RsGxsIdLocalInfoItem() {}
 
     virtual void clear();
@@ -88,7 +92,7 @@ public:
 
     std::map<RsGxsId,rstime_t> mTimeStamps ;
     std::set<RsGxsMyContact> mContacts ;
-
+    VERSION version;
 };
 
 #if 0
@@ -131,6 +135,8 @@ public:
     virtual     ~RsGxsIdSerialiser() {}
 
     virtual RsItem *create_item(uint16_t service_id,uint8_t item_subtype) const ;
+
+    RsItem *deserialise(void *data, uint32_t *size);
 };
 
 #endif /* RS_GXS_IDENTITY_ITEMS_H */

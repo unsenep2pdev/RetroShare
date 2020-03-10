@@ -1705,6 +1705,7 @@ void IdDialog::insertIdList(uint32_t token)
 		ids_set.erase(it);	// erase, so it is not considered to be a new item
 	}
 
+    int count =0;
 	/* Insert new items */
 	for (std::map<RsGxsGroupId,RsGxsIdGroup>::const_iterator vit = ids_set.begin(); vit != ids_set.end(); ++vit)
 	{
@@ -1712,7 +1713,7 @@ void IdDialog::insertIdList(uint32_t token)
 
 	    item = NULL;
 	    //meiyousixin - remove our own items - no need at this time.
-	    //ui->idTreeWidget->insertTopLevelItem(0, ownItem);
+        ui->idTreeWidget->insertTopLevelItem(0, ownItem);
 	    ui->idTreeWidget->insertTopLevelItem(0, allItem);
 	    ui->idTreeWidget->insertTopLevelItem(0, contactsItem );  
 
@@ -1727,20 +1728,22 @@ void IdDialog::insertIdList(uint32_t token)
 		{
 			if(data.mMeta.mSubscribeFlags & GXS_SERV::GROUP_SUBSCRIBE_ADMIN)
 				ownItem->addChild(item);
-			else if(data.mIsAContact)
-				{
-                    contactsItem->addChild(item);
-				}
-			else
-				allItem->addChild(item);
-		}
 
-	}
+            if(data.mIsAContact)
+                contactsItem->addChild(item);
+
+            allItem->addChild(item);
+            count++;
+            std::cerr << "Contact Info: " << item->text(RSID_COL_NICKNAME).toStdString() << " index: " << count <<std::endl;
+        }
+
+    }
 
 	//meiyousixin - show again the friend list here
-	showFriendList();
+    //showFriendList();
 	/* count items */
-	int itemCount = contactsItem->childCount() + allItem->childCount() + ownItem->childCount();
+    //int itemCount = contactsItem->childCount() + allItem->childCount() + ownItem->childCount();
+    int itemCount = contactsItem->childCount() ;
 	ui->label_count->setText( "(" + QString::number( itemCount ) + ")" );
 
 	navigate(RsGxsId(oldCurrentId));
@@ -2348,7 +2351,7 @@ void IdDialog::loadRequest(const TokenQueue * queue, const TokenRequest &req)
 
 	    case IDDIALOG_REFRESH:
 		    // replaced by RsGxsUpdateBroadcastPage
-		    //			updateDisplay(true);
+            updateDisplay(true);
 		    break;
 	    default:
 		    std::cerr << "IdDialog::loadRequest() ERROR";
