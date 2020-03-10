@@ -42,7 +42,7 @@ struct RsIdentity;
 extern RsIdentity *rsIdentity;
 
 //release versions of unseenp2p for backward compatibility
-const enum VERSION { V69, V70, V71};
+enum VERSION { V69, V70, V71};
 static VERSION current_version = V69;
 
 // GroupFlags: Only one so far:

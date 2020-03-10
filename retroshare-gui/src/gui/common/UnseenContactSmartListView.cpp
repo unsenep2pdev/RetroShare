@@ -19,7 +19,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  **************************************************************************/
 
-#include "UnseenContactSmartlistview.h"
+#include "UnseenContactSmartListView.h"
 
 #include <QScrollBar>
 #include <QMouseEvent>

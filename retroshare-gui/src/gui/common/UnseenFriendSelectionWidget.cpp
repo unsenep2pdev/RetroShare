@@ -40,7 +40,7 @@
 
 #include <QMessageBox>
 //unseenp2p
-#include "gui/common/UnseenContactSmartlistview.h"
+#include "gui/common/UnseenContactSmartListView.h"
 #include "gui/UnseenContactItemdelegate.h"
 
 

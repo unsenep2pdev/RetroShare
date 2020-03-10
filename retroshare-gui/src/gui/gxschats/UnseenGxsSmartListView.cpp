@@ -19,7 +19,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  **************************************************************************/
 
-#include "UnseenGxsSmartlistview.h"
+#include "UnseenGxsSmartListView.h"
 
 #include <QScrollBar>
 #include <QMouseEvent>

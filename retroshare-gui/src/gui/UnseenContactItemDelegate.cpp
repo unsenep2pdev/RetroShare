@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  **************************************************************************/
 
-#include "UnseenContactItemdelegate.h"
+#include "UnseenContactItemDelegate.h"
 
 #include <QApplication>
 #include <QPainter>
@@ -27,7 +27,7 @@
 
 typedef QVector<unsigned int>                                       VectorUInt                    ;
 // Client
-#include "gui/common/UnseenContactSmartlistmodel.h"
+#include "gui/common/UnseenContactSmartListModel.h"
 #include "ringthemeutils.h"
 //#include "utils.h"
 //#include "lrcinstance.h"

@@ -28,7 +28,7 @@
 
 #include <gui/gxs/RsGxsUpdateBroadcastPage.h>
 #include "util/TokenQueue.h"
-#include "gui/common/UnseenContactSmartlistmodel.h"
+#include "gui/common/UnseenContactSmartListModel.h"
 #include "gui/common/RSTreeWidgetItem.h"
 
 //unseenp2p
