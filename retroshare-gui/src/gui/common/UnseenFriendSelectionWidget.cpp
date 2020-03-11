@@ -120,11 +120,10 @@ UnseenFriendSelectionWidget::UnseenFriendSelectionWidget(QWidget *parent)
     ui->friendList->setContextMenuPolicy(Qt::CustomContextMenu) ;
     ui->friendList->header()->hide();
 
-
 	connect(ui->friendList, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(contextMenuRequested(QPoint)));
-	connect(ui->friendList, SIGNAL(itemDoubleClicked(QTreeWidgetItem*,int)), this, SLOT(itemDoubleClicked(QTreeWidgetItem*,int)));
-	connect(ui->friendList, SIGNAL(itemChanged(QTreeWidgetItem*,int)), this, SLOT(itemChanged(QTreeWidgetItem*,int)));
-	connect(ui->friendList, SIGNAL(itemSelectionChanged()), this, SIGNAL(itemSelectionChanged()));
+//	connect(ui->friendList, SIGNAL(itemDoubleClicked(QTreeWidgetItem*,int)), this, SLOT(itemDoubleClicked(QTreeWidgetItem*,int)));
+//	connect(ui->friendList, SIGNAL(itemChanged(QTreeWidgetItem*,int)), this, SLOT(itemChanged(QTreeWidgetItem*,int)));
+//	connect(ui->friendList, SIGNAL(itemSelectionChanged()), this, SIGNAL(itemSelectionChanged()));
 	connect(ui->filterLineEdit, SIGNAL(textChanged(QString)), this, SLOT(filterItems(QString)));
 
 	connect(NotifyQt::getInstance(), SIGNAL(groupsChanged(int)), this, SLOT(groupsChanged(int)));
@@ -143,11 +142,6 @@ UnseenFriendSelectionWidget::UnseenFriendSelectionWidget(QWidget *parent)
     // old GUI
     //ui->friendList->addContextMenuAction(mActionFilterConnected);
 
-	/* initialize list */
-//	ui->friendList->setColumnCount(COLUMN_COUNT);
-//	ui->friendList->headerItem()->setText(COLUMN_NAME, tr("Name"));
-//	ui->friendList->setFilterReasonRole(ROLE_FILTER_REASON);
-
 	/* sort list by name ascending */
     //ui->friendList->sortItems(COLUMN_NAME, Qt::AscendingOrder);
 	sortByState(false);
@@ -157,6 +151,8 @@ UnseenFriendSelectionWidget::UnseenFriendSelectionWidget(QWidget *parent)
 
 	/* Refresh style to have the correct text color */
 	Rshare::refreshStyleSheet(this, false);
+
+    updateDisplay(true);
 }
 
 UnseenFriendSelectionWidget::~UnseenFriendSelectionWidget()
@@ -176,12 +172,6 @@ void UnseenFriendSelectionWidget::changeEvent(QEvent *e)
 		// remove compiler warnings
 		break;
 	}
-}
-
-void UnseenFriendSelectionWidget::setHeaderText(const QString &text)
-{
-    // old GUI
-    //ui->friendList->headerItem()->setText(COLUMN_NAME, text);
 }
 
 void UnseenFriendSelectionWidget::setModus(Modus modus)
@@ -213,7 +203,6 @@ int UnseenFriendSelectionWidget::addColumn(const QString &title)
     // old GUI
 //	int column = ui->friendList->columnCount();
 //	ui->friendList->setColumnCount(column + 1);
-//	ui->friendList->headerItem()->setText(column, title);
     int column = 2;
     return column;
 }
@@ -301,6 +290,7 @@ void UnseenFriendSelectionWidget::loadRequest(const TokenQueue */*queue*/, const
 
     emit ui->friendList->model()->layoutChanged();
 
+    ui->friendList->update();
 
 	//std::cerr << "Got all " << datavector.size() << " ids from rsIdentity. Calling update of list." << std::endl;
 	fillList() ;
@@ -1286,18 +1276,51 @@ void UnseenFriendSelectionWidget::selectConversation(const QModelIndex& index)
         return ;
     }
 
-    QString name = QString::fromStdString(detail.mNickname.c_str());
-     QMessageBox::warning(this, "UnseenP2P", tr("You want to add ") + name + tr("to this group"), QMessageBox::Ok, QMessageBox::Ok);
-    //MessagesDialog:
+    //the first click on this item: need to add to the list,
+    //get the sslId from pgpId
+    RsPeerDetails details;
+    RsPeerId sslId;
+    if (rsPeers->getGPGDetails(detail.mPgpId, details))
+    {
+        std::list<RsPeerId> sslIds;
+        rsPeers->getAssociatedSSLIds(detail.mPgpId, sslIds);
+        if (sslIds.size() >= 1) {
+             sslId = sslIds.front();
+        }
+    }
+    RsGxsMyContact::STATUS status;
+    if (!sslId.isNull())
+    {
+        status = RsGxsMyContact::TRUSTED;
+    }
+    else status = RsGxsMyContact::UNKNOWN;
 
+    RsGxsMyContact contact(detail.mId, detail.mPgpId, sslId, detail.mNickname,status );
+    std::set<RsGxsMyContact>::iterator it = selectedList.find(contact) ;
+    if(it != selectedList.end())
+    {
+        selectedList.erase(contact);
+    }
+    else
+    {
+        selectedList.insert(contact);
+    }
 
-//    UnseenGroupItemInfo gxsGroupItem = list.at(index.row());
+    smartListModel_->setChoosenIdentities(selectedList);
 
-//    std::cerr << " gxsGroupItem info, name : " << gxsGroupItem.name.toStdString() << std::endl;
+    stringList.clear();
+    //create the string list and set on the search
+    for(std::set<RsGxsMyContact>::iterator it2 = selectedList.begin(); it2 != selectedList.end(); ++it2)
+    {
+       QString name = QString::fromStdString(it2->name);
+       //add the nickname on the search box and ";" to the list when user click on the item
+       stringList += name + ";";
+    }
+    ui->filterLineEdit->setText(stringList);
 
-//    mGroupId = RsGxsGroupId(gxsGroupItem.id.toStdString());
+    //Need to make the item selected/unselected when user click on the item
 
-//    showGxsGroupChatMVC(gxsChatId(mGroupId));
+    // QMessageBox::warning(this, "UnseenP2P", tr("You want to add ") + name + tr(" to this group"), QMessageBox::Ok, QMessageBox::Ok);
 
 }
 

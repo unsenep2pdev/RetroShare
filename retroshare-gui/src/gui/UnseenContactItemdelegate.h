@@ -21,6 +21,7 @@
 #include <QObject>
 #include <QItemDelegate>
 
+#include <algorithm>
 class QPainter;
 
 class UnseenContactItemDelegate : public QItemDelegate
@@ -61,6 +62,7 @@ private:
     constexpr static int fontSize_ = 14;
     constexpr static int infoTextWidth_ = 70; // 176;
 #endif
+
 
 
     QPixmap* searchIcon_;

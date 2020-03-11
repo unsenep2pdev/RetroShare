@@ -27,6 +27,7 @@
 #include <QItemDelegate>
 
 #include <ciso646>
+#include <iostream>
 
 UnseenContactSmartListView::UnseenContactSmartListView(QWidget *parent) :
     QTreeView(parent)
@@ -68,6 +69,7 @@ void UnseenContactSmartListView::mousePressEvent(QMouseEvent *event)
         //emit customContextMenuRequested(event->pos());
     }
     else {
+        std::cerr << "UnseenContactSmartListView::mousePressEvent called. Event: " << event << std::endl;
         QTreeView::mousePressEvent(event);
     }
 }
@@ -82,6 +84,7 @@ bool UnseenContactSmartListView::eventFilter(QObject* watched, QEvent* event)
         hoveredRow_ = QModelIndex();
         return true;
     }
+    std::cerr << "UnseenContactSmartListView::eventFilter called. Event: " << event <<" watched: " << watched << std::endl;
     return QObject::eventFilter(watched, event);
 }
 
@@ -93,5 +96,8 @@ void UnseenContactSmartListView::drawRow(QPainter* painter, const QStyleOptionVi
     {
         indexWidget(index)->setVisible(false);
     }
+
+    std::cerr << "UnseenContactSmartListView::drawRow(painter, option, index) called. painter: " << painter <<" ,option.state: " << option.state <<" ,index:" <<index.row() << std::endl;
     QTreeView::drawRow(painter, option, index);
+
 }

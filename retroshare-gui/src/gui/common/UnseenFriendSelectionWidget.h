@@ -30,6 +30,7 @@
 #include "util/TokenQueue.h"
 #include "gui/common/UnseenContactSmartListModel.h"
 #include "gui/common/RSTreeWidgetItem.h"
+#include "retroshare/rsidentity.h"
 
 //unseenp2p
 #include "util/TokenQueue.h"
@@ -84,7 +85,6 @@ public:
     explicit UnseenFriendSelectionWidget(QWidget *parent = 0);
     ~UnseenFriendSelectionWidget();
 
-	void setHeaderText(const QString &text);
 	void setModus(Modus modus);
 	void setShowType(ShowTypes types);
 	int addColumn(const QString &title);
@@ -213,6 +213,9 @@ private:
     RsGxsGroupId mId;
     RsGxsGroupId mIdToNavigate;
     int filter;
+
+    QString stringList;
+    std::set<RsGxsMyContact> selectedList;
 
 };
 

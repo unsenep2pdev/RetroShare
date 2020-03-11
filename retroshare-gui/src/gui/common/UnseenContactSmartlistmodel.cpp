@@ -155,6 +155,18 @@ QVariant UnseenContactSmartListModel::data(const QModelIndex &index, int role) c
         lastMsgStatus += getHumanReadableDuration(now - detail.mLastUsageTS) ;
 
 
+         QString isChoosenContact  = "";
+
+         RsGxsMyContact::STATUS status= RsGxsMyContact::TRUSTED;
+         RsGxsMyContact contact(detail.mId, detail.mPgpId, RsPeerId(), detail.mNickname,status );
+
+         //RsGxsMyContact thisContact(detail.mId, detail.mPgpId, NULL, detail.mNickname,);
+         if(selectedList.find(contact)!= selectedList.end())
+            isChoosenContact = QString("•");
+
+         // isChoosenContact = QString("√");
+
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////// BEGIN TO CHOOSE value after PREPARING ALLs.                          ////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -186,10 +198,9 @@ QVariant UnseenContactSmartListModel::data(const QModelIndex &index, int role) c
                 return QVariant(0);
             case Role::LastInteractionDate:
             {
-                return QVariant("");
+                return QVariant(isChoosenContact);
             }
             case Role::LastInteraction:
-                //show last seen
                 return QVariant("");
             case Role::LastInteractionType:
                 return QVariant(0);
@@ -243,6 +254,11 @@ void UnseenContactSmartListModel::setAccount(const std::string& accId)
 void UnseenContactSmartListModel::setAllIdentites(std::vector<RsGxsGroupId> allList)
 {
     allIdentities = allList;
+}
+
+void UnseenContactSmartListModel::setChoosenIdentities(std::set<RsGxsMyContact> allList)
+{
+    selectedList = allList;
 }
 
 std::vector<RsGxsGroupId> UnseenContactSmartListModel::getAllIdentities()

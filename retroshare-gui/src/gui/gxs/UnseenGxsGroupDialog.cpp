@@ -97,10 +97,6 @@ void UnseenGxsGroupDialog::init(const std::set<RsPgpId>& peer_list2, const std::
     connect(ui.typeGroup, SIGNAL(clicked()), this , SLOT(setDefaultOptions()));
     connect(ui.typeChannel, SIGNAL(clicked()), this , SLOT(setDefaultOptions()));
 
-    /* initialize key share list */
-    ui.keyShareList->setHeaderText(tr("Contacts:"));
-
-
     //ui.keyShareList->setModus(FriendSelectionWidget::MODUS_CHECK);
     ui.keyShareList->setModus(UnseenFriendSelectionWidget::MODUS_CHECK);
     ui.keyShareList->setShowType(UnseenFriendSelectionWidget::SHOW_GPG);
@@ -111,6 +107,9 @@ void UnseenGxsGroupDialog::init(const std::set<RsPgpId>& peer_list2, const std::
     ui.keyShareList->setSelectedIds<RsPgpId,UnseenFriendSelectionWidget::IDTYPE_GPG>(peer_list2, false);
 
 	initMode();
+
+    ui.keyShareList->update();
+
 	Settings->loadWidgetInformation(this);
 }
 
