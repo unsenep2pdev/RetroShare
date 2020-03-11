@@ -449,6 +449,7 @@ void ChatWidget::init(const gxsChatId &chat_id, const QString &title)
     RsPeerId ownId = rsPeers->getOwnId();
     setName(QString::fromUtf8(rsPeers->getPeerName(ownId).c_str()));
 
+    chatStyle.setStyleFromSettings(ChatStyle::TYPE_PUBLIC);
 //    currentColor.setNamedColor(PeerSettings->getPrivateChatColor(chatId));
 //    currentFont.fromString(PeerSettings->getPrivateChatFont(chatId));
 
