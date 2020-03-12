@@ -93,6 +93,14 @@ void LineEditClear::setPlaceholderText(const QString &text)
 	setToolTip(text);
 }
 
+void LineEditClear::disableTooltip(bool isDisable)
+{
+    if (isDisable)
+    {
+        mClearButton->setToolTip("");
+    }
+}
+
 //#if QT_VERSION < 0x040700
 #if 0//PlaceHolder text only shown when not have focus in Qt4
 void LineEditClear::focusInEvent(QFocusEvent *event)

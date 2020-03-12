@@ -137,7 +137,7 @@ public:
 	// overloaded from TokenResponse
 	virtual void loadRequest(const TokenQueue *queue, const TokenRequest &req);
 
-    void getShareFriends(std::set<RsPeerId> &shareList);
+    void getShareFriends(std::set<RsGxsMyContact> &selectedList);
     RsGxsChatGroup::ChatType getChatType();
 
 private:
@@ -265,7 +265,7 @@ private:
 	uint32_t mDefaultsFlags;
 
     std::set<RsPeerId> mShareFriends;
-    std::set<RsPgpId> mShareGpgIds;
+    std::set<RsGxsMyContact> mSelectedList;
     RsGxsChatGroup::ChatType chatType;
     uint32_t circleType; //groupchat and channel: public = GXS_CIRCLE_TYPE_PUBLIC            = 0x0001 ;
                          //                       private = GXS_CIRCLE_TYPE_YOUR_FRIENDS_ONLY = 0x0003 ;

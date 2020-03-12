@@ -408,7 +408,7 @@ struct RsGroupInfo : RsSerializable
     uint32_t        flag;
 
     std::set<RsPgpId> peerIds;
-
+    std::set<RsGxsId> gxsIds;
 	/// @see RsSerializable
 	void serial_process(
 	        RsGenericSerializer::SerializeJob j,
@@ -419,6 +419,7 @@ struct RsGroupInfo : RsSerializable
 		RS_SERIAL_PROCESS(flag);
 		RS_SERIAL_PROCESS(peerIds);
         RS_SERIAL_PROCESS(type);
+        RS_SERIAL_PROCESS(gxsIds);
 	}
 };
 

@@ -1427,7 +1427,7 @@ bool p3Peers::assignPeerToGroup(const RsNodeGroupId &groupId, const RsPgpId& pee
 	std::list<RsPgpId> peerIds;
 	peerIds.push_back(peerId);
 
-	return assignPeersToGroup(groupId, peerIds, assign);
+    return assignPeersToGroup(groupId, peerIds, assign);
 }
 
 bool p3Peers::assignPeersToGroup(const RsNodeGroupId &groupId, const std::list<RsPgpId> &peerIds, bool assign)
@@ -1436,7 +1436,7 @@ bool p3Peers::assignPeersToGroup(const RsNodeGroupId &groupId, const std::list<R
         std::cerr << "p3Peers::assignPeersToGroup()" << std::endl;
 #endif
 
-	bool res = mPeerMgr->assignPeersToGroup(groupId, peerIds, assign);
+    bool res = mPeerMgr->assignPeersToGroup(groupId, peerIds, assign);
 	rsFiles->updateSinceGroupPermissionsChanged() ;
 
 	return res ;

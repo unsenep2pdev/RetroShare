@@ -126,6 +126,9 @@ public:
 
 
     virtual void updateDisplay(bool complete);
+
+    void setSelectedContacts(const std::set<RsGxsMyContact> list);
+    void getSelectedContacts(std::set<RsGxsMyContact> &list);
 protected:
 	void changeEvent(QEvent *e);
 
@@ -166,8 +169,6 @@ private:
 
     //New GUI
     void selectConversation(const QModelIndex& index);
-
-    void requestIdList();
 
 private:
 	bool mStarted;

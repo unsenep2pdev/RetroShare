@@ -1166,7 +1166,6 @@ bool p3PeerMgrIMPL::removeFriend(const RsPeerId &id, bool removePgpId)
 	}
 
 	/* remove id from all groups */
-
     assignPeersToGroup(RsNodeGroupId(), pgpid_toRemove, false);
 
 	IndicateConfigChanged(); /**** INDICATE MSG CONFIG CHANGED! *****/

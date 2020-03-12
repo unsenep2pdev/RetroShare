@@ -120,19 +120,20 @@ void UnseenGxsChatGroupDialog::prepareGxsChatGroup(RsGxsChatGroup &group, const 
 
     //unseenp2p - meiyousixin: try to get all member list from the Create Conversation Dialog
     std::set<RsPeerId> shareList;
-    this->getShareFriends(shareList);
+    std::set<RsGxsMyContact> selectedList;
+    this->getShareFriends(selectedList);
 
-    for(std::set<RsPeerId>::const_iterator it(shareList.begin());it!=shareList.end();++it)
+    //for(std::set<RsPeerId>::const_iterator it(shareList.begin());it!=shareList.end();++it)
+    for(std::set<RsGxsMyContact>::const_iterator it(selectedList.begin());it!=selectedList.end();++it)
     {
         GxsChatMember member;
-        RsPeerDetails detail;
-        if (rsPeers->getPeerDetails( *it, detail))
-        {
-            member.chatPeerId = (*it);
-            member.nickname = detail.name;
-            //member.chatGxsId = detail.
-            members.insert(member);
-        }
+
+        member.chatPeerId = (*it).peerId;
+        member.nickname = (*it).name;
+        member.chatGxsId = (*it).gxsId;
+
+        members.insert(member);
+
     }
     //End of get member list
     //adding itself to the group, otherwise, your friend won't have your information to response to.
