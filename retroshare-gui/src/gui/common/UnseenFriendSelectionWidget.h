@@ -124,11 +124,13 @@ public:
 	// Add QAction to context menu (action won't be deleted)
 	void addContextMenuAction(QAction *action);
 
+
+    virtual void updateDisplay(bool complete);
 protected:
 	void changeEvent(QEvent *e);
 
 	virtual void loadRequest(const TokenQueue *queue,const TokenRequest& req);
-	virtual void updateDisplay(bool complete);
+
 
 signals:
 	void itemAdded(int idType, const QString &id, QTreeWidgetItem *item);

@@ -120,10 +120,14 @@ UnseenFriendSelectionWidget::UnseenFriendSelectionWidget(QWidget *parent)
     ui->friendList->setContextMenuPolicy(Qt::CustomContextMenu) ;
     ui->friendList->header()->hide();
 
+    emit ui->friendList->model()->layoutChanged();
+    ui->friendList->show();
+
+    parent->update();
+    parent->activateWindow();
+    ui->friendList->show();
+
 	connect(ui->friendList, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(contextMenuRequested(QPoint)));
-//	connect(ui->friendList, SIGNAL(itemDoubleClicked(QTreeWidgetItem*,int)), this, SLOT(itemDoubleClicked(QTreeWidgetItem*,int)));
-//	connect(ui->friendList, SIGNAL(itemChanged(QTreeWidgetItem*,int)), this, SLOT(itemChanged(QTreeWidgetItem*,int)));
-//	connect(ui->friendList, SIGNAL(itemSelectionChanged()), this, SIGNAL(itemSelectionChanged()));
 	connect(ui->filterLineEdit, SIGNAL(textChanged(QString)), this, SLOT(filterItems(QString)));
 
 	connect(NotifyQt::getInstance(), SIGNAL(groupsChanged(int)), this, SLOT(groupsChanged(int)));
@@ -210,7 +214,7 @@ int UnseenFriendSelectionWidget::addColumn(const QString &title)
 void UnseenFriendSelectionWidget::start()
 {
 	mStarted = true;
-    //secured_fillList();
+    secured_fillList();
 
     updateDisplay(true);
     // old GUI
@@ -287,10 +291,10 @@ void UnseenFriendSelectionWidget::loadRequest(const TokenQueue */*queue*/, const
 
     //unseenp2p - save the gxsIds to the smartlistmodel
     smartListModel_->setAllIdentites(gxsIds);
-
     emit ui->friendList->model()->layoutChanged();
 
-    ui->friendList->update();
+
+    ui->friendList->show();
 
 	//std::cerr << "Got all " << datavector.size() << " ids from rsIdentity. Calling update of list." << std::endl;
 	fillList() ;
@@ -709,7 +713,7 @@ void UnseenFriendSelectionWidget::requestGXSIdList()
 	if (!mIdQueue)
 		return;
 
-	//mStateHelper->setLoading(IDDIALOG_IDLIST, true);
+    //mStateHelper->setLoading(IDDIALOG_IDLIST, true);
 	//mStateHelper->setLoading(IDDIALOG_IDDETAILS, true);
 	//mStateHelper->setLoading(IDDIALOG_REPLIST, true);
 
@@ -1054,65 +1058,29 @@ std::string UnseenFriendSelectionWidget::selectedId(IdType &idType)
 
 void UnseenFriendSelectionWidget::selectedIds(IdType idType, std::set<std::string> &ids, bool onlyDirectSelected)
 {
-    //OLD GUI
-//	QTreeWidgetItemIterator itemIterator(ui->friendList);
-//	QTreeWidgetItem *item;
-//	while ((item = *itemIterator) != NULL) {
-//		++itemIterator;
 
-//		std::string id;
+    if (idType == IDTYPE_GPG)
+    {
+        for(std::set<RsGxsMyContact>::iterator it2 = selectedList.begin(); it2 != selectedList.end(); ++it2)
+        {
+           ids.insert(it2->mPgpId.toStdString());
+        }
 
-//		switch (idTypeFromItem(item)) {
-//		case IDTYPE_NONE:
-//			break;
-//		case IDTYPE_GROUP:
-//			if (idType == IDTYPE_GROUP) {
-//				if (isSelected(mListModus, item)) {
-//					id = idFromItem(item);
-//				}
-//			}
-//			break;
-//		case IDTYPE_GPG:
-//        case IDTYPE_GXS:
-//            if (idType == IDTYPE_GPG || idType == IDTYPE_GXS)
-//            {
-//				if (isSelected(mListModus, item)) {
-//					id = idFromItem(item);
-//				} else {
-//					if (!onlyDirectSelected) {
-//						QTreeWidgetItem *itemParent = item;
-//						while ((itemParent = itemParent->parent()) != NULL) {
-//							if (isSelected(mListModus, itemParent)) {
-//								id = idFromItem(item);
-//								break;
-//							}
-//						}
-//					}
-//				}
-//			}
-//			break;
-//		case IDTYPE_SSL:
-//			if (idType == IDTYPE_SSL) {
-//				if (isSelected(mListModus, item)) {
-//					id = idFromItem(item);
-//				} else {
-//					if (!onlyDirectSelected) {
-//						QTreeWidgetItem *itemParent = item;
-//						while ((itemParent = itemParent->parent()) != NULL) {
-//							if (isSelected(mListModus, itemParent)) {
-//								id = idFromItem(item);
-//								break;
-//							}
-//						}
-//					}
-//				}
-//			}
-//			break;
-//		}
-//		if (!id.empty() && std::find(ids.begin(), ids.end(), id) == ids.end()) {
-//            ids.insert(id);
-//		}
-//	}
+    }
+    else if (idType == IDTYPE_GXS)
+    {
+        for(std::set<RsGxsMyContact>::iterator it2 = selectedList.begin(); it2 != selectedList.end(); ++it2)
+        {
+           ids.insert(it2->gxsId.toStdString());
+        }
+    }
+    else if (idType == IDTYPE_SSL)
+    {
+        for(std::set<RsGxsMyContact>::iterator it2 = selectedList.begin(); it2 != selectedList.end(); ++it2)
+        {
+           ids.insert(it2->peerId.toStdString());
+        }
+    }
 }
 
 void UnseenFriendSelectionWidget::deselectAll()

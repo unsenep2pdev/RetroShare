@@ -108,7 +108,7 @@ void UnseenGxsGroupDialog::init(const std::set<RsPgpId>& peer_list2, const std::
 
 	initMode();
 
-    ui.keyShareList->update();
+    ui.keyShareList->setFocus();
 
 	Settings->loadWidgetInformation(this);
 }
@@ -201,7 +201,7 @@ void UnseenGxsGroupDialog::initMode()
 void UnseenGxsGroupDialog::clearForm()
 {
 	ui.groupName->clear();
-    //ui.groupDesc->clear();
+
 	ui.groupName->setFocus();
 }
 
@@ -283,7 +283,7 @@ void UnseenGxsGroupDialog::setupVisibility()
     ui.distribGroupBox->setVisible(true);
     ui.typeGroup->setVisible(true);
     ui.label_2->setVisible(true);
-    ui.keyShareList->setVisible(true);
+    //ui.keyShareList->setVisible(true);
 
     ui.label->setVisible(true);
 
@@ -311,6 +311,8 @@ void UnseenGxsGroupDialog::newGroup()
 	setupVisibility();
 	setupReadonly();
 	clearForm();
+    ui.keyShareList->updateDisplay(true);
+    ui.keyShareList->start();
 }
 
 void UnseenGxsGroupDialog::updateFromExistingMeta(const QString &description)
@@ -574,7 +576,12 @@ void UnseenGxsGroupDialog::createGroup()
 
     uint32_t flags;
 
-    if (ui.typeGroup->isChecked())
+    if (ui.typeOne2One->isChecked())
+    {
+        flags = GXS_SERV::FLAG_PRIVACY_PUBLIC;
+        meta.mCircleType = GXS_CIRCLE_TYPE_YOUR_FRIENDS_ONLY;
+    }
+    else if (ui.typeGroup->isChecked())
     {
         flags = GXS_SERV::FLAG_PRIVACY_PUBLIC;
          if (ui.groupTypeComboBox->currentIndex() == 0)

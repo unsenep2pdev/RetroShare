@@ -51,67 +51,11 @@ UnseenContactItemDelegate::paint(QPainter* painter
     QStyleOptionViewItem opt(option);
     painter->setRenderHint(QPainter::Antialiasing, true);
 
-//    bool selected = false;
-//    if (option.state & QStyle::State_Selected) {
-//        selected = true;
-//        opt.state ^= QStyle::State_Selected;
-//    } else {
-//        highlightMap_[index.row()] = option.state & QStyle::State_Selected;
-//    }
-
-//    QColor presenceBorderColor = Qt::white;
-//    auto rowHighlight = highlightMap_.find(index.row());
-//    if (selected) {
-//        painter->fillRect(option.rect, RingTheme::smartlistSelection_);
-//        presenceBorderColor = RingTheme::smartlistSelection_;
-//    } else if (rowHighlight != highlightMap_.end() && (*rowHighlight).second) {
-//        painter->fillRect(option.rect, RingTheme::smartlistHighlight_);
-//        presenceBorderColor = RingTheme::smartlistHighlight_;
-//    }
-
-
-//            std::cerr << "option features changes:" << std::endl;
-//            std::cerr << "option.HasCheckIndicator: " << option.HasCheckIndicator << std::endl;
-//            std::cerr << "option.checkState: " << option.checkState << std::endl;
-//            std::cerr << "option.state: " << option.state << std::endl;
-//            std::cerr << "option.features: " << option.features << std::endl;
-//            std::cerr << "option.type: " << option.type << std::endl;
-//            std::cerr << "index.row(): " << index.row() << std::endl;
-
-//            std::cerr << "selected: " << selected << std::endl;
-
-
-//            QString uriStr = index.data(static_cast<int>(UnseenContactSmartListModel::Role::URI)).value<QString>();
-
-//            QRect rect_(opt.rect.left() - 2*dx_,opt.rect.top(), opt.rect.width() + 2*dx_, opt.rect.height());
-//            if (selected)
-//            {
-//                //painter->fillRect(option.rect, RingTheme::smartlistSelection_);
-//                painter->fillRect(rect_, RingTheme::smartlistSelection_);
-//            }
-
-
-//        //}
-
-
-//        QRect &rect = opt.rect;
-
-//        opt.decorationSize = QSize(sizeImage_, sizeImage_);
-//        opt.decorationPosition = QStyleOptionViewItem::Left;
-//        opt.decorationAlignment = Qt::AlignCenter;
-//        //QRect rectAvatar(dx_ + rect.left(), rect.top() + dy_, sizeImage_, sizeImage_);
-//        QRect rectAvatar(rect.left() - dx_, rect.top() + dy_, sizeImage_, sizeImage_);
-
     bool selected = false;
     if (option.state & QStyle::State_Selected) {
         selected = true;
         opt.state ^= QStyle::State_Selected;
     }
-//    else if (!isContextMenuOpen) {
-//        highlightMap_[index.row()] = option.state & QStyle::State_MouseOver;
-//    }
-
-    //QString uriStr = index.data(static_cast<int>(UnseenGxsSmartListModel::Role::URI)).value<QString>();
 
     QRect rect_(opt.rect.left() - 2*dx_,opt.rect.top(), opt.rect.width() + 2*dx_, opt.rect.height());
     auto rowHighlight = highlightMap_.find(index.row());
@@ -134,24 +78,7 @@ UnseenContactItemDelegate::paint(QPainter* painter
                    QPixmap::fromImage(index.data(Qt::DecorationRole).value<QImage>())
                    .scaled(sizeImage_, sizeImage_, Qt::KeepAspectRatio, Qt::SmoothTransformation));
 
-//    QFont font(painter->font());
-//    // Avatar drawing
-//        drawDecoration(painter, opt, rectAvatar,
-//                       QPixmap::fromImage(index.data(Qt::DecorationRole).value<QImage>())
-//                       .scaled(sizeImage_, sizeImage_, Qt::KeepAspectRatio, Qt::SmoothTransformation));
-
-
-        //QFont font(painter->font());
-
-
-        //unseenp2p - try to draw a line at bottom of every item, only when having data (using statusStr)
-    //    if (statusStr.length() > 0 && !selected)
-    //    {
-    //        QRect rect_line(opt.rect.left() + sizeImage_, opt.rect.top() + opt.rect.height(), opt.rect.width() + 2*dx_ - sizeImage_, 1);
-    //        painter->fillRect(rect_line, RingTheme::smartlistSelection_);
-    //    }
-
-        paintConversationItem(painter, option, rect, index,
+    paintConversationItem(painter, option, rect, index,
                           false);
 
 }
@@ -198,14 +125,6 @@ UnseenContactItemDelegate::paintConversationItem(QPainter* painter,
     auto bottomMargin = 8;
 
     int rect1Width;
-//    if (!isTemporary) {
-//        // ATTENTION from unseenp2p: this rect1Width need to be changed in future by another calculation
-//        // rect1Width is the width of the rectName1 (Display name or group name), so it can be calculated as: infoTextWidth
-//        // but not rect.width() - infoTextWidth_
-//        rect1Width = rect.width() - leftMargin - infoTextWidth_ - infoTextWidthModifier - 8;
-//    } else {
-//        rect1Width = rect.width() - leftMargin - rightMargin;
-//    }
     rect1Width = rect.width() - leftMargin - 4*rightMargin - dx_;
 
     QRect rectName1(rect.left() + leftMargin,
