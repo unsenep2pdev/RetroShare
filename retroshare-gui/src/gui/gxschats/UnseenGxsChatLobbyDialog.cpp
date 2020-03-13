@@ -672,9 +672,9 @@ void UnseenGxsChatLobbyDialog::updateParticipantsList()
                uint32_t token;
                rsGxsChats->updateGroup(token, thisGroup);
 
-               std::cerr << "   Participating friends: " << std::endl;
-               std::cerr << "   groupchat name: " << chatsInfo[0].mDescription<< std::endl;
-               std::cerr << "   Participating nick names (sslId): " << std::endl;
+//               std::cerr << "   Participating friends: " << std::endl;
+//               std::cerr << "   groupchat name: " << chatsInfo[0].mDescription<< std::endl;
+//               std::cerr << "   Participating nick names (sslId): " << std::endl;
 
 
                for (auto it2(thisGroup.members.begin()); it2 != thisGroup.members.end(); ++it2)

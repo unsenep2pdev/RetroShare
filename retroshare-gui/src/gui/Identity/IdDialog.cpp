@@ -1661,12 +1661,11 @@ void IdDialog::insertIdList(uint32_t token)
 		return;
 	}
     
-    	// turn that vector into a std::set, to avoid a linear search
-    
-    	std::map<RsGxsGroupId,RsGxsIdGroup> ids_set ;
-        
-        for(uint32_t i=0;i<datavector.size();++i)
-            ids_set[datavector[i].mMeta.mGroupId] = datavector[i] ;
+    // turn that vector into a std::set, to avoid a linear search
+    std::map<RsGxsGroupId,RsGxsIdGroup> ids_set ;
+
+    for(uint32_t i=0;i<datavector.size();++i)
+        ids_set[datavector[i].mMeta.mGroupId] = datavector[i] ;
 
 	mStateHelper->setActive(IDDIALOG_IDLIST, true);
 
@@ -1683,29 +1682,28 @@ void IdDialog::insertIdList(uint32_t token)
 		++itemIterator;
 		std::map<RsGxsGroupId,RsGxsIdGroup>::iterator it = ids_set.find(RsGxsGroupId(item->text(RSID_COL_KEYID).toStdString())) ;
 
-		if(it == ids_set.end())
-		{
-			if(item != allItem && item != contactsItem && item != ownItem)
-				delete(item);
-                        
-                        continue ;
-		} 
-                
-        	QTreeWidgetItem *parent_item = item->parent() ;
-                    
-                if(    (parent_item == allItem && it->second.mIsAContact) || (parent_item == contactsItem && !it->second.mIsAContact))
-                {
-                    delete item ;	// do not remove from the list, so that it is added again in the correct place.
-                    continue ;
-                }
-                
-		if (!fillIdListItem(it->second, item, ownPgpId, accept))
+        if(it == ids_set.end())
+        {
+            if(item != allItem && item != contactsItem && item != ownItem)
+                delete(item);
+
+            continue ;
+        }
+
+        QTreeWidgetItem *parent_item = item->parent() ;
+
+        if( (parent_item == allItem && it->second.mIsAContact) || (parent_item == contactsItem && !it->second.mIsAContact))
+        {
+            delete item ;	// do not remove from the list, so that it is added again in the correct place.
+            continue ;
+        }
+
+        if (!fillIdListItem(it->second, item, ownPgpId, accept))
 			delete(item);
             
 		ids_set.erase(it);	// erase, so it is not considered to be a new item
 	}
 
-    int count =0;
 	/* Insert new items */
 	for (std::map<RsGxsGroupId,RsGxsIdGroup>::const_iterator vit = ids_set.begin(); vit != ids_set.end(); ++vit)
 	{
@@ -1733,10 +1731,16 @@ void IdDialog::insertIdList(uint32_t token)
                 contactsItem->addChild(item);
 
             allItem->addChild(item);
-            count++;
-            std::cerr << "Contact Info: " << item->text(RSID_COL_NICKNAME).toStdString() << " index: " << count <<std::endl;
+
         }
 
+    }
+    //UnseenP2P ContactList approach.
+    std::set<RsGxsMyContact> contactList;
+    rsIdentity->getMyContacts(contactList);
+    for(auto it = contactList.begin(); it != contactList.end(); it++){
+         std::cerr <<"Name : "<< it->name << " and GxsId: " << it->gxsId << std::endl;
+         std::cerr <<"Status: " << it->status << " and PgPId: "<< std::endl;
     }
 
 	//meiyousixin - show again the friend list here

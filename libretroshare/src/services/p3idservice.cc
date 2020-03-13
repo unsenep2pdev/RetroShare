@@ -46,11 +46,13 @@
 
 /****
  * #define DEBUG_IDS	1
+ * #define DEBUG_DISTANT_CHAT 1
  * #define DEBUG_RECOGN	1
  * #define DEBUG_OPINION 1
  * #define GXSID_GEN_DUMMY_DATA	1
  ****/
 #define DEBUG_IDS	1
+#define DEBUG_DISTANT_CHAT 1
 
 #define ID_REQUEST_LIST		    0x0001
 #define ID_REQUEST_IDENTITY	    0x0002
@@ -160,7 +162,7 @@ p3IdService::p3IdService(
                      RS_SERVICE_GXS_TYPE_GXSID, idAuthenPolicy() ),
     RsIdentity(static_cast<RsGxsIface&>(*this)), GxsTokenQueue(this),
     RsTickEvent(), mKeyCache(GXSID_MAX_CACHE_SIZE, "GxsIdKeyCache"),
-    mIdMtx("p3IdService"), mNes(nes), mPgpUtils(pgpUtils)
+    mIdMtx("p3IdService"), mNes(nes), mPgpUtils(pgpUtils), mRsGxsMyChatMtx("P3IdService-DistantChat - mutex")
 {
 	mBgSchedule_Mode = 0;
     mBgSchedule_Active = false;
@@ -246,13 +248,18 @@ bool p3IdService::setAsRegularContact(const RsGxsId& id,bool b)
         RsGxsMyContact newContact(id);
         RsIdentityDetails details;
         if(getIdDetails(id, details)){
-            newContact.status = RsGxsMyContact::PENDING;  //waiting for approval.
+            newContact.status = RsGxsMyContact::REQUEST;  //waiting for approval.
             newContact.mPgpId = details.mPgpId;
             newContact.name = details.mNickname;
             newContact.mContactInfo = details.mProfileInfo; //if u want to take the friend profile store local.
         }
         mContacts.insert(newContact) ;
+
         slowIndicateConfigChanged() ;
+
+        //adding to request friend queue
+        contactRequestPending.insert(newContact);
+
     }
     
     if( (!b) &&(it != mContacts.end()))
@@ -588,6 +595,8 @@ void	p3IdService::service_tick()
         cleanUnusedKeys() ;
         mLastKeyCleaningTime = now ;
     }
+    //contact sending process.
+    processContactPendingRequest();
     return;
 }
 
@@ -4647,3 +4656,270 @@ RsIdentityUsage::RsIdentityUsage(
 
 RsIdentityUsage::RsIdentityUsage() :
     mServiceId(0), mUsageCode(UNKNOWN_USAGE), mAdditionalId(0) {}
+
+/******* Distant Chat Support for Invite/Request/Approve Friends ******************
+  ** Overload DistantChatService **
+*/
+void p3IdService::handleIncomingItem(RsItem *item){
+
+#ifdef DEBUG_DISTANT_CHAT
+    std::cerr << "p3IdService::handleIncomingItem() Item:" << (void*)item
+              << std::endl ;
+#endif
+    RsStackMutex stack(mRsGxsMyChatMtx);
+
+    // RsChatMsgItems needs dynamic_cast, since they have derived siblings.
+    RsChatMsgItem* ci = dynamic_cast<RsChatMsgItem*>(item);
+    DistantChatPeerInfo cinfo;
+    DistantChatPeerId distPeerId(ci->PeerId());
+
+    if(ci)
+    {
+        if(!DistantChatService::getDistantChatStatus(distPeerId,cinfo))
+            return;
+
+    }
+
+
+
+    //state machine of Request/Invite Friend
+    //state machine {Request, Pending, Approved, Reject, Acknowledge}
+    switch(item->PacketSubType())
+    {
+    case RS_PKT_SUBTYPE_GXSCHAT_REQUEST:{
+        //lock the cache to insert new record.
+        std::cerr <<"Received: REQUEST from="<<cinfo.to_id<< " to=" << cinfo.own_id<<" and tunnelID="<<distPeerId << std::endl;
+        auto found= mContacts.find(cinfo.to_id)  ;
+        if(found != mContacts.end()){
+            std::map<RsGxsMyContact,DistantChatPeerId>::iterator myIt = distantPendingConn.find(*found);
+            if (myIt == distantPendingConn.end())
+                distantPendingConn[*found]=DistantChatPeerId(ci->PeerId());
+
+            contactApprovalPending[*found]= std::make_pair(cinfo, ci);
+        }else{
+            RsGxsMyContact newContact(cinfo.to_id);
+            if(setAsRegularContact(cinfo.to_id, true))
+                distantPendingConn[newContact]=DistantChatPeerId(ci->PeerId());
+
+            contactApprovalPending[newContact]= std::make_pair(cinfo, ci);
+        }
+        //adding to processRequests
+        //if application layer accept and approved the request, will response with approved status.
+        break;
+    }
+    case RS_PKT_SUBTYPE_GXSCHAT_APPROVED:{
+        std::cerr <<"Received: APPROVE from="<<cinfo.to_id<< " to=" << cinfo.own_id<<" and tunnelID="<<distPeerId << std::endl;
+        auto found= mContacts.find(cinfo.to_id)  ;
+        if(found != mContacts.end()){
+            std::map<RsGxsMyContact,DistantChatPeerId>::iterator myIt = distantPendingConn.find(*found);
+            if (myIt == distantPendingConn.end())
+                distantPendingConn[*found]=DistantChatPeerId(ci->PeerId());
+
+            contactApprovalAcknowleged[*found]= std::make_pair(cinfo, ci);
+        }else{
+            RsGxsMyContact newContact(cinfo.to_id);
+            if(setAsRegularContact(cinfo.to_id, true))
+                distantPendingConn[newContact]=DistantChatPeerId(ci->PeerId());
+
+            contactApprovalAcknowleged[newContact]= std::make_pair(cinfo, ci);
+        }
+        break;
+    }
+    case RS_PKT_SUBTYPE_GXSCHAT_ACTKN: //acknowledgement after approved. Ready to close the distant peer connexion.
+        std::cerr <<"Received: ACTKN from="<<cinfo.to_id<< " to=" << cinfo.own_id<<" and tunnelID="<<distPeerId << std::endl;
+        break;
+    case RS_PKT_SUBTYPE_GXSCHAT_REJECT:
+        std::cerr <<"Received: REJECT from="<<cinfo.to_id<< " to=" << cinfo.own_id<<" and tunnelID="<<distPeerId << std::endl;
+        break;
+    default: { //connexion is available between source and distination
+        break;
+    }
+    }//end switch
+    delete item;
+}
+bool p3IdService::handleRecvChatMsgItem(RsChatMsgItem *& ci){
+
+}
+void p3IdService::triggerConfigSave(){
+
+}
+
+//Friend Request/Approve API
+bool p3IdService::acceptFriendContact(const RsGxsId &id) {
+
+    if(rsReputations->isIdentityBanned(id))
+        return false; //banned user try to connect to you.
+
+    //any negative rating user will not allow to distant add friend.
+    RsReputations::ReputationLevel levelInfo = rsReputations->overallReputationLevel(id);
+    if(levelInfo==RsReputations::REPUTATION_LOCALLY_POSITIVE ||
+            levelInfo==RsReputations::REPUTATION_UNKNOWN     ||
+            levelInfo==RsReputations::REPUTATION_REMOTELY_POSITIVE)
+        return false;
+
+    return true;
+}
+
+bool p3IdService::addFriendContact(RsGxsMyContact &contact){
+    DistantChatPeerId distPeerId;
+    std::map<RsGxsMyContact,DistantChatPeerId>::iterator myIt = distantPendingConn.find(contact);
+    if(myIt !=distantPendingConn.end()){
+        distPeerId = myIt->second;
+    }
+    else
+    {
+        std::list<RsGxsId> myGxsId;
+        getOwnIds(myGxsId); //first gxsId from the list.
+
+        uint32_t error_code;
+        if(! DistantChatService::initiateDistantChatConnexion(myGxsId.front(),contact.gxsId,distPeerId,error_code, false ))
+            return false; //fail to establish distant connection, perhaps the peer is offline.
+        {
+            //lock the cache to insert new record.
+            RsStackMutex stack(mRsGxsMyChatMtx);
+            distantPendingConn[contact]=distPeerId;
+        }
+    }
+    //sending request to the your peer.
+    DistantChatPeerInfo cinfo;
+    if(!getDistantChatStatus(distPeerId,cinfo) || cinfo.status !=RS_DISTANT_CHAT_STATUS_CAN_TALK ){
+        //status is not available.
+        return false;
+    }
+
+    //RsGxsTunnelService::RsGxsTunnelId tunnel_id = RsGxsTunnelService::RsGxsTunnelId(myConn);
+    // Make a self message to raise the chat window
+    RsChatMsgItem *item = new RsChatMsgItem;
+    item->message = "[Starting distant chat. Please wait for secure tunnel";
+    item->message += " to be established]";
+    item->chatFlags = RS_CHAT_FLAG_PRIVATE;
+    item->sendTime = time(NULL);
+    //item->PeerId(RsPeerId(tunnel_id));
+    item->PeerId(RsPeerId(distPeerId));
+    //handleRecvChatMsgItem(item);
+    DistantChatService::handleOutgoingItem(item);
+    delete item ;
+
+    return true;
+}
+bool p3IdService::addFriendContact(RsGxsId &id){
+    RsGxsMyContact contact(id);
+    return this->addFriendContact(contact);
+}
+bool p3IdService::approveFriendContact(RsGxsId &id, bool is_denied){
+    return true;
+}
+bool p3IdService::approveFriendContact(RsGxsMyContact &approvedContact, bool denied){
+    return true;
+}
+void p3IdService::processContactPendingRequest(){
+
+    //RsStackMutex stack(mRsGxsMyChatMtx);
+    if(contactRequestPending.empty())
+        return;
+
+#ifdef DEBUG_DISTANT_CHAT
+    std::cerr << "p3IdService::processContactPendingRequest(): Sending Requestor GxsId" <<std::endl ;
+#endif
+    std::string ownCert = rsPeers->GetRetroshareInvite();
+    std::list<RsGxsId> myGxsId;
+    getOwnIds(myGxsId); //first gxsId from the list.
+
+    for(auto it =contactRequestPending.begin(); it !=contactRequestPending.end(); it++ ){
+        RsGxsMyContact contact = *it;
+        DistantChatPeerId distPeerId;
+
+        std::map<RsGxsMyContact,DistantChatPeerId>::iterator myIt = distantPendingConn.find(contact);
+        if(myIt !=distantPendingConn.end()){
+            distPeerId = myIt->second;
+        }else{
+            uint32_t error_code;
+            RsGxsId from_gxsid = myGxsId.front();
+            RsGxsId to_gxsid = contact.gxsId;
+            std::cerr <<"From_gxsId:"<<from_gxsid <<" and to_gxsid="<<to_gxsid <<std::endl;
+            if(! DistantChatService::initiateDistantChatConnexion(to_gxsid,from_gxsid,distPeerId,error_code )){
+                std::cerr <<"Fail to establish tunneling: error_code="<<error_code<<std::endl;
+                continue; //fail to establish distant connection, perhaps the peer is offline.
+            }
+            distantPendingConn[contact]=distPeerId;
+        }
+        RsChatMsgItem *item=NULL;
+        //sending to GxsId Peer
+        if(contact.status==RsGxsMyContact::REQUEST){
+            std::cerr <<"Sending REQUEST: from="<<myGxsId.front()<<" and to="<<contact.gxsId << " , tunnelID="<<distPeerId<<std::endl;
+            item =  new RsChatMsgItem(RS_PKT_SUBTYPE_GXSCHAT_REQUEST);
+            item->chatFlags = RS_CHAT_FLAG_PRIVATE;
+            item->sendTime = time(NULL);
+            item->message = ownCert;
+            item->PeerId(RsPeerId(distPeerId));
+            //handleRecvChatMsgItem(item);
+        }else if(contact.status==RsGxsMyContact::ACK){
+            std::cerr <<"Sending ACK: from="<<myGxsId.front()<<" and to="<<contact.gxsId << " , tunnelID="<<distPeerId<<std::endl;
+            item =  new RsChatMsgItem(RS_PKT_SUBTYPE_GXSCHAT_ACTKN);
+            item->chatFlags = RS_CHAT_FLAG_PRIVATE;
+            item->sendTime = time(NULL);
+            item->message = "accepted";
+            item->PeerId(RsPeerId(distPeerId));
+        }else if(contact.status==RsGxsMyContact::APPROVE){
+            std::cerr <<"Sending Approve: from="<<myGxsId.front()<<" and to="<<contact.gxsId << " , tunnelID="<<distPeerId<<std::endl;
+            item =  new RsChatMsgItem(RS_PKT_SUBTYPE_GXSCHAT_APPROVED);
+            item->chatFlags = RS_CHAT_FLAG_PRIVATE;
+            item->sendTime = time(NULL);
+            item->message = ownCert;
+            item->PeerId(RsPeerId(distPeerId));
+        }else if(contact.status==RsGxsMyContact::BANNED){
+            item =  new RsChatMsgItem(RS_PKT_SUBTYPE_GXSCHAT_REJECT);
+            item->chatFlags = RS_CHAT_FLAG_PRIVATE;
+            item->sendTime = time(NULL);
+            item->message = "Reject";
+            item->PeerId(RsPeerId(distPeerId));
+        }
+
+        if(item !=NULL)
+            DistantChatService::handleOutgoingItem(item);
+
+
+    }
+    contactRequestPending.clear(); //empty the queue
+}
+void p3IdService::processContactPendingApproval(){
+    RsStackMutex stack(mRsGxsMyChatMtx);
+    if(contactApprovalPending.empty())
+        return;
+
+#ifdef DEBUG_DISTANT_CHAT
+    std::cerr << "p3IdService::processContactPendingApproval() Item:" <<std::endl ;
+#endif
+    /** Update the Status of Contact and Notify the MyContacts status = confirm|approved
+      ** sending back the sender with Acknowledgement message.
+    */
+
+    ContactInfo::iterator it;
+    for(it =contactApprovalPending.begin(); it !=contactApprovalPending.end(); it++ ){
+        RsGxsMyContact contact = it->first;
+        DistantChatPeerInfo distPeerInfo = it->second.first;
+        RsChatMsgItem *item = it->second.second;
+
+        //validate incoming message is a ssl certificate.
+        std::string cert = item->message;
+        RsPeerId sslId;
+        RsPgpId pgpId;
+        std::string errorString;
+
+        if( rsPeers->loadCertificateFromString(cert, sslId, pgpId, errorString)){
+            //valid certificate send by requestor.
+            //adding to RsMyContactList and waiting for approval.
+            contact.status = RsGxsMyContact::PENDING;
+            contact.mPgpId = pgpId;
+            contact.peerId = sslId;
+            contact.mContactInfo["cert_url"]=cert;
+            this->setMyContact(contact);
+            //need to send notification to GUI to change state of contact status.
+            //response your own certifcate to the requestor as the acknowledgement.
+            contactApprovalAcknowleged[contact] = it->second;
+        }
+
+    }
+    contactApprovalPending.clear();
+
+}

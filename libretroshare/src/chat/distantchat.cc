@@ -44,7 +44,7 @@
 #include "retroshare/rsids.h"
 #include "distantchat.h"
 
-//#define DEBUG_DISTANT_CHAT
+#define DEBUG_DISTANT_CHAT
 
 #ifdef DEBUG_DISTANT_CHAT
 
@@ -143,7 +143,7 @@ bool DistantChatService::acceptDataFromPeer(const RsGxsId& gxs_id,const RsGxsTun
         return true ;
     
     if(mDistantChatPermissions & RS_DISTANT_CHAT_CONTACT_PERMISSION_FLAG_FILTER_NON_CONTACTS)
-        res = (rsIdentity!=NULL) && rsIdentity->isARegularContact(gxs_id) ;
+        res = (rsIdentity!=NULL) && (rsIdentity->isARegularContact(gxs_id) || rsIdentity->acceptFriendContact(gxs_id));
     
     if(mDistantChatPermissions & RS_DISTANT_CHAT_CONTACT_PERMISSION_FLAG_FILTER_EVERYBODY)
         res = false ;

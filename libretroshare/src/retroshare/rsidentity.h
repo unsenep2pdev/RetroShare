@@ -31,6 +31,7 @@
 #include "retroshare/rsgxsifacehelper.h"
 #include "retroshare/rsreputations.h"
 #include "retroshare/rsids.h"
+//#include <retroshare/rsmsgs.h>
 #include "serialiser/rstlvimage.h"
 #include "retroshare/rsgxscommon.h"
 #include "serialiser/rsserializable.h"
@@ -163,7 +164,16 @@ std::ostream &operator<<(std::ostream &out, const RsGxsIdGroup &group);
 class RsGxsMyContact: RsSerializable
 {
     public:
-        enum STATUS {UNKNOWN,PENDING,REQUEST,APPROVED, TRUSTED, BANNED};
+        enum STATUS {UNKNOWN,PENDING,PENDING_REQ, PENDING_ACCEPT, REQUEST,ACCEPT, APPROVE, TRUSTED, BANNED, ACK};
+        /*  PENDING=NOT READY, PENDING_REQ=ALREADY SENT REQUEST, PENDING_ACCEPT=ALREADY RECEIVE REQ
+         *  ACCEPT=  APPROVE already add Friend.
+         *  BANNED = REJECT TO BE FRIEND
+         *  TRUST  = CONNECTION ESTABLISHED
+         *  Example: A add B:  A Add Contact step: Pending, Send Request/ack: PENDING_REQ,
+         *                 B: PENDING_ACCEPT, B's Approved/Accept, Sending Approved to A.
+         *                 A: Validate B's Cert and Accept. A send ACK to B.
+         *                 A connects to B: Online,  A->Trust, B->Trust.
+        **/
         RsGxsId gxsId;
         RsPgpId mPgpId;
         RsPeerId  peerId;
@@ -445,6 +455,15 @@ struct RsIdentity : RsGxsIfaceHelper
     virtual bool updateMyContact(const RsGxsMyContact & contact) =0;
     virtual bool removeMyContact(const RsGxsMyContact& contact) =0;
     virtual void getMyContacts(std::set<RsGxsMyContact>& contactList) =0;
+
+    virtual bool acceptFriendContact(const RsGxsId &id) =0;
+    virtual bool addFriendContact(RsGxsMyContact &contact)=0;
+    virtual bool addFriendContact(RsGxsId &id)=0;
+    virtual bool approveFriendContact(RsGxsId &id, bool denied=false)=0;
+    virtual bool approveFriendContact(RsGxsMyContact &contact, bool denied=false)=0;
+    virtual void processContactPendingRequest()=0;
+    virtual void processContactPendingApproval()=0;
+
 
 	virtual bool serialiseIdentityToMemory( const RsGxsId& id,
 	                                        std::string& radix_string ) = 0;

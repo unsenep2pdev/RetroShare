@@ -82,8 +82,14 @@ const uint8_t RS_PKT_SUBTYPE_CHAT_LOBBY_INFO              = 0x1D ; //meiyousixin
 const uint8_t RS_PKT_SUBTYPE_GXSCHAT_ACCEPT                 = 0x30 ; //unseenp2pdev - for lobby Inviation/Accept
 const uint8_t RS_PKT_SUBTYPE_GXSCHAT_INVITE                 = 0x31 ; //unseenp2pdev - for lobby Inviation/Accept
 const uint8_t RS_PKT_SUBTYPE_GXSCHAT_MSG                    = 0x32 ; //unseenp2pdev - gxschat message
-const uint8_t RS_PKT_SUBTYPE_GXSCHAT_PUBLISH_KEY      = 0x33 ; //unseenp2pdev - gxschat shared publish key
+const uint8_t RS_PKT_SUBTYPE_GXSCHAT_PUBLISH_KEY            = 0x33 ; //unseenp2pdev - gxschat shared publish key
 const uint8_t RS_PKT_SUBTYPE_GXSCHAT_GROUP                  = 0x34 ; //unseenp2pdev - gxschat shared publish key
+
+const uint8_t RS_PKT_SUBTYPE_GXSCHAT_REQUEST                = 0x35 ; //unseenp2pdev - for lobby Inviation/Accept
+const uint8_t RS_PKT_SUBTYPE_GXSCHAT_APPROVED               = 0x36 ; //unseenp2pdev - for lobby Inviation/Accept
+const uint8_t RS_PKT_SUBTYPE_GXSCHAT_REJECT                 = 0x37 ; //unseenp2pdev - for lobby Inviation/Accept
+const uint8_t RS_PKT_SUBTYPE_GXSCHAT_ACTKN                  = 0x38 ; //unseenp2pdev - for lobby Inviation/Accept
+
 
 RS_DEPRECATED_FOR(RS_PKT_SUBTYPE_CHAT_LOBBY_INVITE) \
 const uint8_t RS_PKT_SUBTYPE_CHAT_LOBBY_INVITE_DEPRECATED = 0x1A ;	// to be removed (deprecated since May 2017)

@@ -41,6 +41,10 @@
 
 #include "rsitems/rsgxsrecognitems.h"
 
+#include "chat/distantchat.h"
+#include "chat/rschatitems.h"
+
+
 class PgpAuxUtils;
 
 /* 
@@ -218,7 +222,7 @@ struct SerialisedIdentityStruct
 // Not sure exactly what should be inherited here?
 // Chris - please correct as necessary.
 
-class p3IdService: public RsGxsIdExchange, public RsIdentity,  public GxsTokenQueue, public RsTickEvent, public p3Config
+class p3IdService: public RsGxsIdExchange, public RsIdentity,  public GxsTokenQueue, public RsTickEvent, public DistantChatService, public p3Config
 {
 public:
 	p3IdService(RsGeneralDataService* gds, RsNetworkExchangeService* nes, PgpAuxUtils *pgpUtils);
@@ -282,12 +286,26 @@ public:
 	virtual bool setAsRegularContact(const RsGxsId& id,bool is_a_contact) ;
 	virtual bool isARegularContact(const RsGxsId& id) ;
 
+    //unseen my contacts design & architect data structure
     virtual bool setMyContact(const RsGxsMyContact & contact);
     virtual bool isMyContact(const RsGxsMyContact& contact) ;
     virtual bool updateMyContact(const RsGxsMyContact & contact);
     virtual void getMyContacts(std::set<RsGxsMyContact>& contactList) ;
     virtual bool removeMyContact(const RsGxsMyContact& contact);
 
+    //unseen distant chat service for extend real-time invite/requestfriend/approved/acknowledgement.
+    // derived in DistantChatService, so as to pass down some info
+    virtual void handleIncomingItem(RsItem *);
+    virtual bool handleRecvChatMsgItem(RsChatMsgItem *& ci);
+    virtual void triggerConfigSave();
+
+    virtual bool acceptFriendContact(const RsGxsId &id) ;
+    virtual bool addFriendContact(RsGxsMyContact &contact);
+    virtual bool addFriendContact(RsGxsId &id);
+    virtual bool approveFriendContact(RsGxsId &id, bool denied=false);
+    virtual bool approveFriendContact(RsGxsMyContact &contact, bool denied=false);
+    virtual void processContactPendingRequest();
+    virtual void processContactPendingApproval();
 
 	virtual uint32_t nbRegularContacts() ;
 	virtual rstime_t getLastUsageTS(const RsGxsId &id) ;
@@ -607,6 +625,22 @@ private:
 
 	bool mOwnIdsLoaded ;
     uint32_t mMaxKeepKeysBanned ;
+
+    /***************Unseen Add Friend Service*********
+     * DistantChatService ***
+     * Processing all pending request friends.**
+     * Processing all pending approval friends.  **
+     * Publishing Invite/Add friend through distant chat friend. **
+     */
+    typedef std::map<RsGxsMyContact, std::pair<DistantChatPeerInfo,RsChatMsgItem*> > ContactInfo;
+    std::map<RsGxsMyContact, DistantChatPeerId> distantPendingConn;
+    std::set<RsGxsMyContact> contactRequestPending; //invite or adding contact
+    ContactInfo contactApprovalPending; //waiting to approve on adding contact request
+    ContactInfo contactApprovalAcknowleged;
+
+    RsMutex mRsGxsMyChatMtx ;
+
+
 };
 
 #endif // P3_IDENTITY_SERVICE_HEADER
