@@ -173,6 +173,7 @@ void UnseenGxsGroupDialog::initMode()
 		{
             ui.stackedWidget->setCurrentIndex(0);
 			ui.buttonBox->setStandardButtons(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
+
 			newGroup();
 		}
 		break;
@@ -190,12 +191,58 @@ void UnseenGxsGroupDialog::initMode()
 		case MODE_EDIT:
 		{
             ui.stackedWidget->setCurrentIndex(0);
-            ui.buttonBox->setStandardButtons(QDialogButtonBox::Apply | QDialogButtonBox::Cancel);
-            //ui.buttonBox->button(QDialogButtonBox::Ok)->setText(tr("Submit Group Changes"));
+            //ui.buttonBox->setStandardButtons(QDialogButtonBox::Cancel | QDialogButtonBox::Apply);
+
+            connect(ui.buttonBox, SIGNAL(accepted()), this, SLOT(editAndUpdateGroup()));
 			requestGroup(mGrpMeta.mGroupId);
 		}
 		break;
 	}
+}
+
+void UnseenGxsGroupDialog::editAndUpdateGroup()
+{
+    //Need to compare the member list/ group name before and after click on the Apply button
+    //if there is different, so need to update the group
+
+    std::set<GxsChatMember> newMemberList;
+    ui.keyShareList->getSelectedContacts(newMemberList);
+    QString newName = ui.groupName->text();
+    if (newName != oldGroupName || newMemberList != oldMemberList)
+    {
+
+        std::list<RsGxsGroupId> groupChatId;
+        groupChatId.push_back(mGrpMeta.mGroupId);
+        std::vector<RsGxsChatGroup> chatsInfo;
+        if (rsGxsChats->getChatsInfo(groupChatId, chatsInfo))
+        {
+
+            if (chatsInfo.size() > 0)
+            {
+                if (newName != oldGroupName)
+                {
+                    std::cerr << " The new group name changed to: " << newName.toStdString() << std::endl;
+                    chatsInfo[0].mDescription = newName.toStdString();
+                }
+                if (newMemberList != oldMemberList)
+                {
+                    std::cerr << " The member list changed: " << std::endl;
+                    chatsInfo[0].members = newMemberList;
+                }
+
+                uint32_t token;
+                rsGxsChats->updateGroup(token, chatsInfo[0]);
+            }
+        }
+
+    }
+    else
+    {
+        std::cerr << " There is no change with the group "  << std::endl;
+    }
+
+    close();
+
 }
 
 void UnseenGxsGroupDialog::clearForm()
@@ -505,9 +552,7 @@ void UnseenGxsGroupDialog::createGroup()
     std::set<RsGxsId>  gxsFriends;
     ui.keyShareList->selectedIds<RsPeerId,UnseenFriendSelectionWidget::IDTYPE_SSL>(mShareFriends, false);
     ui.keyShareList->selectedIds<RsPgpId,UnseenFriendSelectionWidget::IDTYPE_GPG>(gpgIds, false);
-
     ui.keyShareList->selectedIds<RsGxsId, UnseenFriendSelectionWidget::IDTYPE_GXS>(gxsFriends, false);
-
     ui.keyShareList->getSelectedContacts(mSelectedList);
 
     //ui.keyShareList->selectedIds<RsPeerId,FriendSelectionWidget::IDTYPE_SSL>(mShareFriends, false);
@@ -703,41 +748,31 @@ void UnseenGxsGroupDialog::setDefaultOptions()
             ui.groupTypeComboBox->setDisabled(true);
 
             //need to check the selected contacts in the groupchat, and the inbox string list
-            // at first get all the member in the list, then create set of RsGxsMyContact and set it to the UnseenFriendSelectWIdget
+            // at first get all the member in the list, remove myself and set it to the UnseenFriendSelectWIdget
             std::list<RsGxsGroupId> groupChatId;
             groupChatId.push_back(mGrpMeta.mGroupId);
             std::vector<RsGxsChatGroup> chatsInfo;
             if (rsGxsChats->getChatsInfo(groupChatId, chatsInfo))
             {
+
                 if (chatsInfo.size() > 0)
                 {
-                    std::set<RsGxsMyContact> memberList;
+                    oldGroupName = QString::fromStdString(chatsInfo[0].mDescription);
+                    std::set<GxsChatMember> memberList;
                     memberList.clear();
-                    RsGxsMyContact member;
                     for (auto it(chatsInfo[0].members.begin()); it != chatsInfo[0].members.end(); ++it)
                     {
-
-                        //std::cerr << "The group member: " << (*it).nickname << " gxsId: " << (*it).chatGxsId.toStdString() << " pgpId: " << (*it).chatGxsId.toStdString() << " sslId: " << (*it).chatPeerId.toStdString() <<std::endl;
                         RsIdentityDetails detail;
                         if (rsIdentity->getIdDetails((*it).chatGxsId, detail))
                         {
                             //do not add myself into the contact list
                             if (detail.mPgpId == rsPeers->getGPGOwnId() ) continue;
                         }
-                        RsGxsMyContact::STATUS status;
-                        if (!(*it).chatPeerId.isNull())
-                        {
-                            status = RsGxsMyContact::TRUSTED;
-                        }
-                        else status = RsGxsMyContact::UNKNOWN;
-                        RsGxsMyContact contact((*it).chatGxsId, detail.mPgpId, (*it).chatPeerId, (*it).nickname,status );
-                        member= contact;
-
-                        memberList.insert(member);
+                        memberList.insert((*it));
                     }
-                    std::cerr << "The member list number is: " << memberList.size() << std::endl;
-                    ui.keyShareList->setSelectedContacts(memberList);
 
+                    oldMemberList = memberList;
+                    ui.keyShareList->setSelectedContacts(memberList);
                 }
              }
 
@@ -935,7 +970,7 @@ void UnseenGxsGroupDialog::loadRequest(const TokenQueue *queue, const TokenReque
 	}
 }
 
-void UnseenGxsGroupDialog::getShareFriends(std::set<RsGxsMyContact> &selectedList)
+void UnseenGxsGroupDialog::getShareFriends(std::set<GxsChatMember> &selectedList)
 {
     selectedList = mSelectedList;
 

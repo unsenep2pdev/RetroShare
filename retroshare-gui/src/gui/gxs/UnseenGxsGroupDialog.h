@@ -137,7 +137,7 @@ public:
 	// overloaded from TokenResponse
 	virtual void loadRequest(const TokenQueue *queue, const TokenRequest &req);
 
-    void getShareFriends(std::set<RsGxsMyContact> &selectedList);
+    void getShareFriends(std::set<GxsChatMember> &selectedList);
     RsGxsChatGroup::ChatType getChatType();
 
 private:
@@ -151,6 +151,7 @@ private:
 protected slots:
 	void submitGroup();
 	void addGroupLogo();
+    void editAndUpdateGroup();
 
 protected:
 	virtual void showEvent(QShowEvent*);
@@ -264,8 +265,11 @@ private:
 	uint32_t mReadonlyFlags;
 	uint32_t mDefaultsFlags;
 
+    QString oldGroupName;
+    std::set<GxsChatMember> oldMemberList;
+
     std::set<RsPeerId> mShareFriends;
-    std::set<RsGxsMyContact> mSelectedList;
+    std::set<GxsChatMember> mSelectedList;
     RsGxsChatGroup::ChatType chatType;
     uint32_t circleType; //groupchat and channel: public = GXS_CIRCLE_TYPE_PUBLIC            = 0x0001 ;
                          //                       private = GXS_CIRCLE_TYPE_YOUR_FRIENDS_ONLY = 0x0003 ;

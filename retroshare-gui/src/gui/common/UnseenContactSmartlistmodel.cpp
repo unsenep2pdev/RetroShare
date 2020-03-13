@@ -30,7 +30,7 @@
 
 //#include "gui/models/conversationmodel.h"
 #include "retroshare/rsgxsflags.h"
-
+#include "retroshare/rspeers.h"
 #include "util/HandleRichText.h"
 
 
@@ -137,28 +137,37 @@ QVariant UnseenContactSmartListModel::data(const QModelIndex &index, int role) c
         QIcon identicon = icons.front() ;
 
         QString name = QString::fromUtf8(detail.mNickname.c_str());
-
-        //gxsItem->setText(COLUMN_NAME, name + " ("+QString::fromStdString( (*gxsIt).toStdString() )+")");
-
-        //STATUS FOR CONTACT
-
         QString presenceForChat = "no-status"; //for groupchat
-
         QImage avatar = identicon.pixmap(identicon.actualSize(QSize(32, 32))).toImage();
-
-
-
         QString lastMsgStatus  = "last seen ";
         rstime_t lastseen = detail.mLastUsageTS;
 
         time_t now = time(NULL) ;
         lastMsgStatus += getHumanReadableDuration(now - detail.mLastUsageTS) ;
-
-
          QString isChoosenContact  = "";
 
-         RsGxsMyContact::STATUS status= RsGxsMyContact::TRUSTED;
-         RsGxsMyContact contact(detail.mId, detail.mPgpId, RsPeerId(), detail.mNickname,status );
+         RsPeerDetails details;
+         RsPeerId sslId;
+         if (rsPeers->getGPGDetails(detail.mPgpId, details))
+         {
+             std::list<RsPeerId> sslIds;
+             rsPeers->getAssociatedSSLIds(detail.mPgpId, sslIds);
+             if (sslIds.size() >= 1) {
+                  sslId = sslIds.front();
+             }
+         }
+         RsGxsMyContact::STATUS status;
+         if (!sslId.isNull())
+         {
+             status = RsGxsMyContact::TRUSTED;
+         }
+         else status = RsGxsMyContact::UNKNOWN;
+
+         GxsChatMember contact;
+         contact.chatGxsId = detail.mId;
+         contact.chatPeerId = sslId;
+         contact.nickname = detail.mNickname;
+         contact.status = status;
 
          //RsGxsMyContact thisContact(detail.mId, detail.mPgpId, NULL, detail.mNickname,);
          if(selectedList.find(contact)!= selectedList.end())
@@ -256,7 +265,7 @@ void UnseenContactSmartListModel::setAllIdentites(std::vector<RsGxsGroupId> allL
     allIdentities = allList;
 }
 
-void UnseenContactSmartListModel::setChoosenIdentities(std::set<RsGxsMyContact> allList)
+void UnseenContactSmartListModel::setChoosenIdentities(std::set<GxsChatMember> allList)
 {
     selectedList = allList;
 }

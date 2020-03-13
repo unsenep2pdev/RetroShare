@@ -5,7 +5,7 @@
 
 #include <retroshare/rsgxsifacehelper.h>
 
-//#define DEBUG_GXS_BROADCAST 1
+#define DEBUG_GXS_BROADCAST 1
 
 // previously gxs allowed only one event consumer to poll for changes
 // this required a single broadcast instance per service

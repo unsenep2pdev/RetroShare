@@ -31,6 +31,7 @@
 #include "gui/common/UnseenContactSmartListModel.h"
 #include "gui/common/RSTreeWidgetItem.h"
 #include "retroshare/rsidentity.h"
+#include "retroshare/rsgxschats.h"
 
 //unseenp2p
 #include "util/TokenQueue.h"
@@ -127,8 +128,9 @@ public:
 
     virtual void updateDisplay(bool complete);
 
-    void setSelectedContacts(const std::set<RsGxsMyContact> list);
-    void getSelectedContacts(std::set<RsGxsMyContact> &list);
+    void setSelectedContacts(const std::set<GxsChatMember> list);
+    void getSelectedContacts(std::set<GxsChatMember> &list);
+
 protected:
 	void changeEvent(QEvent *e);
 
@@ -169,6 +171,8 @@ private:
 
     //New GUI
     void selectConversation(const QModelIndex& index);
+
+    void updateLineEditFromList();
 
 private:
 	bool mStarted;
@@ -218,7 +222,7 @@ private:
     int filter;
 
     QString stringList;
-    std::set<RsGxsMyContact> selectedList;
+    std::set<GxsChatMember> selectedList;
 
 };
 

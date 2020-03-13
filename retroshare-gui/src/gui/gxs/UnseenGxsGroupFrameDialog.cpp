@@ -1101,7 +1101,7 @@ void UnseenGxsGroupFrameDialog::insertGroupsData(const std::map<RsGxsGroupId,RsG
     std::cerr << " Show all Gxs Group Chat : " << std::endl;
     for (std::vector<UnseenGroupItemInfo>::iterator it2 = allGxsGroupList.begin(); it2!= allGxsGroupList.end(); ++it2)
     {
-        std::cerr << " GxsChat Id: " << (*it2).id.toStdString() << (*it2).name.toStdString() << std::endl;
+        std::cerr << " GxsChat Id: " << (*it2).id.toStdString() << " : " << (*it2).name.toStdString() << std::endl;
     }
 #endif
 

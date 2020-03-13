@@ -24,6 +24,7 @@
 //unseenp2p
 #include <gui/gxs/RsGxsUpdateBroadcastPage.h>
 #include "retroshare/rsidentity.h"
+#include "retroshare/rsgxschats.h"
 
 class UnseenContactSmartListModel : public QAbstractItemModel
 {
@@ -64,11 +65,11 @@ public:
 
     void setAllIdentites(std::vector<RsGxsGroupId> allList);
     std::vector<RsGxsGroupId> getAllIdentities();
-    void setChoosenIdentities(std::set<RsGxsMyContact> allList);
+    void setChoosenIdentities(std::set<GxsChatMember> allList);
 
 private:
     std::string accId_;
     bool contactList_;
     std::vector<RsGxsGroupId> allIdentities;
-    std::set<RsGxsMyContact> selectedList;
+    std::set<GxsChatMember> selectedList;
 };

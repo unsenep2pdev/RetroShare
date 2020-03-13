@@ -966,24 +966,27 @@ void UnseenFriendSelectionWidget::selectedIds(IdType idType, std::set<std::strin
 
     if (idType == IDTYPE_GPG)
     {
-        for(std::set<RsGxsMyContact>::iterator it2 = selectedList.begin(); it2 != selectedList.end(); ++it2)
+        for(std::set<GxsChatMember>::iterator it2 = selectedList.begin(); it2 != selectedList.end(); ++it2)
         {
-           ids.insert(it2->mPgpId.toStdString());
+           RsIdentityDetails detail;
+           if (rsIdentity->getIdDetails(it2->chatGxsId,detail))
+           {
+                ids.insert(detail.mPgpId.toStdString());
+           }
         }
-
     }
     else if (idType == IDTYPE_GXS)
     {
-        for(std::set<RsGxsMyContact>::iterator it2 = selectedList.begin(); it2 != selectedList.end(); ++it2)
+        for(std::set<GxsChatMember>::iterator it2 = selectedList.begin(); it2 != selectedList.end(); ++it2)
         {
-           ids.insert(it2->gxsId.toStdString());
+           ids.insert(it2->chatGxsId.toStdString());
         }
     }
     else if (idType == IDTYPE_SSL)
     {
-        for(std::set<RsGxsMyContact>::iterator it2 = selectedList.begin(); it2 != selectedList.end(); ++it2)
+        for(std::set<GxsChatMember>::iterator it2 = selectedList.begin(); it2 != selectedList.end(); ++it2)
         {
-           ids.insert(it2->peerId.toStdString());
+           ids.insert(it2->chatPeerId.toStdString());
         }
     }
 }
@@ -1001,73 +1004,46 @@ void UnseenFriendSelectionWidget::selectAll()
 }
 
 //for NEW GUI
-void UnseenFriendSelectionWidget::setSelectedContacts(const std::set<RsGxsMyContact> list)
+void UnseenFriendSelectionWidget::setSelectedContacts(const std::set<GxsChatMember> list)
 {
     selectedList = list;
     smartListModel_->setChoosenIdentities(selectedList);
     emit ui->friendList->model()->layoutChanged();
+    updateLineEditFromList();
 }
 
-void UnseenFriendSelectionWidget::getSelectedContacts(std::set<RsGxsMyContact> &list)
+void UnseenFriendSelectionWidget::getSelectedContacts(std::set<GxsChatMember> &list)
 {
-    list = selectedList;
+    for(std::set<GxsChatMember>::iterator it2 = selectedList.begin(); it2 != selectedList.end(); ++it2)
+    {
+       list.insert(*it2);
+    }
+    //list = selectedList;
+}
+
+void UnseenFriendSelectionWidget::updateLineEditFromList()
+{
+    //create the string list and set on the search
+    stringList.clear();
+    for(std::set<GxsChatMember>::iterator it2 = selectedList.begin(); it2 != selectedList.end(); ++it2)
+    {
+       QString name = QString::fromStdString(it2->nickname);
+       //add the nickname on the search box and ";" to the list when user click on the item
+       stringList += name + ";";
+    }
+    ui->filterLineEdit->setText(stringList);
 }
 
 void UnseenFriendSelectionWidget::setSelectedIds(IdType idType, const std::set<std::string> &ids, bool add)
 {
-//	QTreeWidgetItemIterator itemIterator(ui->friendList);
-//	QTreeWidgetItem *item;
-//	while ((item = *itemIterator) != NULL) {
-//		++itemIterator;
-
-//		std::string id = idFromItem(item);
-//		IdType itemType = idTypeFromItem(item);
-
-//		switch (itemType) {
-//		case IDTYPE_NONE:
-//			break;
-//		case IDTYPE_GROUP:
-//		case IDTYPE_GPG:
-//		case IDTYPE_SSL:
-//        case IDTYPE_GXS:
-//            if (idType == itemType) {
-//                if (ids.find(id) != ids.end()) {
-//					setSelected(mListModus, item, true);
-//					break;
-//				}
-//			}
-//			if (!add) {
-//				setSelected(mListModus, item, false);
-//			}
-//			break;
-//		}
-//	}
 }
 
 void UnseenFriendSelectionWidget::itemsFromId(IdType idType, const std::string &id, QList<QTreeWidgetItem*> &items)
 {
-//	QTreeWidgetItemIterator itemIterator(ui->friendList);
-//	QTreeWidgetItem *item;
-//	while ((item = *itemIterator) != NULL) {
-//		++itemIterator;
-
-//		if (idType == idTypeFromItem(item) && idFromItem(item) == id) {
-//			items.push_back(item);
-//		}
-//	}
 }
 
 void UnseenFriendSelectionWidget::items(QList<QTreeWidgetItem*> &_items, IdType idType)
 {
-//	QTreeWidgetItemIterator itemIterator(ui->friendList);
-//	QTreeWidgetItem *item;
-//	while ((item = *itemIterator) != NULL) {
-//		++itemIterator;
-
-//		if (idType == IDTYPE_NONE || idType == idTypeFromItem(item)) {
-//			_items.push_back(item);
-//		}
-//	}
 }
 
 UnseenFriendSelectionWidget::IdType UnseenFriendSelectionWidget::idTypeFromItem(QTreeWidgetItem *item)
@@ -1181,8 +1157,12 @@ void UnseenFriendSelectionWidget::selectConversation(const QModelIndex& index)
     }
     else status = RsGxsMyContact::UNKNOWN;
 
-    RsGxsMyContact contact(detail.mId, detail.mPgpId, sslId, detail.mNickname,status );
-    std::set<RsGxsMyContact>::iterator it = selectedList.find(contact) ;
+    GxsChatMember contact;
+    contact.chatGxsId = detail.mId;
+    contact.chatPeerId= sslId;
+    contact.nickname = detail.mNickname;
+    contact.status = status;
+    std::set<GxsChatMember>::iterator it = selectedList.find(contact) ;
     if(it != selectedList.end())
     {
         selectedList.erase(contact);
@@ -1193,21 +1173,7 @@ void UnseenFriendSelectionWidget::selectConversation(const QModelIndex& index)
     }
 
     smartListModel_->setChoosenIdentities(selectedList);
-
-    stringList.clear();
-    //create the string list and set on the search
-    for(std::set<RsGxsMyContact>::iterator it2 = selectedList.begin(); it2 != selectedList.end(); ++it2)
-    {
-       QString name = QString::fromStdString(it2->name);
-       //add the nickname on the search box and ";" to the list when user click on the item
-       stringList += name + ";";
-    }
-    ui->filterLineEdit->setText(stringList);
-
-    //Need to make the item selected/unselected when user click on the item
-
-    // QMessageBox::warning(this, "UnseenP2P", tr("You want to add ") + name + tr(" to this group"), QMessageBox::Ok, QMessageBox::Ok);
-
+    updateLineEditFromList();
 }
 
 //QString UnseenFriendSelectionWidget::itemIdAt(QPoint &point)
