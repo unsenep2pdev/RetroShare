@@ -23,6 +23,7 @@
 #include <QAbstractItemModel>
 #include <QDateTime>
 #include <QIcon>
+#include "retroshare/rsgxschats.h"
 
 class UnseenGroupItemInfo
 {
@@ -45,6 +46,8 @@ public:
     quint32  max_visible_posts ;
     long long lastMsgDatetime;  //unseenp2p: for sorting: lastpost --> QDateTime::currentDateTime().toTime_t()
     QString authorOfLastMsg;    //unseenp2p: for show on the gxs conversation list
+    std::set<GxsChatMember> members; //unseenp2p
+    RsGxsChatGroup::ChatType type;  //unseenp2p
 };
 
 class UnseenGxsSmartListModel : public QAbstractItemModel

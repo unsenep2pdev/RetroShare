@@ -958,6 +958,41 @@ void UnseenGxsGroupFrameDialog::groupInfoToUnseenGroupItemInfo(const RsGroupMeta
     }
 }
 
+void UnseenGxsGroupFrameDialog::groupInfoToUnseenGroupItemInfo2(const RsGxsChatGroup &groupInfo, UnseenGroupItemInfo &groupItemInfo, const RsUserdata */*userdata*/)
+{
+    groupItemInfo.id = QString::fromStdString(groupInfo.mMeta.mGroupId.toStdString());
+    groupItemInfo.name = QString::fromUtf8(groupInfo.mMeta.mGroupName.c_str());
+    groupItemInfo.popularity = groupInfo.mMeta.mPop;
+    groupItemInfo.lastpost = QDateTime::fromTime_t(groupInfo.mMeta.mLastPost);
+    groupItemInfo.subscribeFlags = groupInfo.mMeta.mSubscribeFlags;
+    groupItemInfo.publishKey = IS_GROUP_PUBLISHER(groupInfo.mMeta.mSubscribeFlags) ;
+    groupItemInfo.adminKey = IS_GROUP_ADMIN(groupInfo.mMeta.mSubscribeFlags) ;
+    groupItemInfo.max_visible_posts = groupInfo.mMeta.mVisibleMsgCount ;
+
+    //unseenp2p
+    groupItemInfo.lastMsgDatetime = groupInfo.mMeta.mLastPost;
+    RsIdentityDetails details ;
+    if (rsIdentity->getIdDetails(groupInfo.mMeta.mAuthorId,details) )
+    {
+        groupItemInfo.authorOfLastMsg = QString::fromUtf8(details.mNickname.c_str());
+    }
+    else groupItemInfo.authorOfLastMsg= "";
+
+    groupItemInfo.members = groupInfo.members;
+    groupItemInfo.type = groupInfo.type;
+
+#if TOGXS
+    if (groupInfo.mGroupFlags & RS_DISTRIB_AUTHEN_REQ) {
+        groupItemInfo.name += " (" + tr("AUTHD") + ")";
+        groupItemInfo.icon = QIcon(IMAGE_GROUPAUTHD);
+    }
+    else
+#endif
+    {
+        groupItemInfo.icon = QIcon(icon(ICON_DEFAULT));
+    }
+}
+
 void UnseenGxsGroupFrameDialog::addChatPage(UnseenGxsChatLobbyDialog *d)
 {
 
@@ -1115,6 +1150,56 @@ void UnseenGxsGroupFrameDialog::insertGroupsData(const std::map<RsGxsGroupId,RsG
     //updateMessageSummaryList(RsGxsGroupId());
 }
 
+void UnseenGxsGroupFrameDialog::insertGroupsData2(const std::map<RsGxsGroupId,RsGxsChatGroup> &groupList, const RsUserdata *userdata)
+{
+    if (!mInitialized) {
+        return;
+    }
+
+    mInFill = true;
+
+    QList<UnseenGroupItemInfo> adminList;
+    QList<UnseenGroupItemInfo> subList;
+    std::vector<UnseenGroupItemInfo> allGxsGroupList; //allGxsGroupList = adminList + subList
+
+    for (auto it = groupList.begin(); it != groupList.end(); ++it) {
+        /* sort it into Publish (Own), Subscribed, Popular and Other */
+        uint32_t flags = it->second.mMeta.mSubscribeFlags;
+
+        UnseenGroupItemInfo groupItemInfo;
+        groupInfoToUnseenGroupItemInfo2(it->second, groupItemInfo, userdata);
+
+        if (IS_GROUP_SUBSCRIBED(flags))
+        {
+            if (IS_GROUP_ADMIN(flags))
+            {
+                adminList.push_back(groupItemInfo);
+            }
+            else
+            {
+                /* subscribed group */
+                subList.push_back(groupItemInfo);
+            }
+            allGxsGroupList.push_back(groupItemInfo);
+        }
+
+    }
+    // We can update to MVC GUI here from the all list
+    // How to use the SmartListView + SmartListModel to show here? Need to use another MVC ?!
+    // Here only take the first 2 list: admin list + subscribed list only, because the popular list is still not subscribe anyway
+    smartListModel_->setGxsGroupList(allGxsGroupList);
+    emit ui->unseenGroupTreeWidget->model()->layoutChanged();
+
+#ifdef DEBUG_GROUPFRAMEDIALOG
+    std::cerr << " Show all Gxs Group Chat : " << std::endl;
+    for (std::vector<UnseenGroupItemInfo>::iterator it2 = allGxsGroupList.begin(); it2!= allGxsGroupList.end(); ++it2)
+    {
+        std::cerr << " GxsChat Id: " << (*it2).id.toStdString() << " : " << (*it2).name.toStdString() << std::endl;
+    }
+#endif
+
+}
+
 void UnseenGxsGroupFrameDialog::updateMessageSummaryList(RsGxsGroupId groupId)
 {
 	if (!mInitialized) {
@@ -1168,6 +1253,13 @@ void UnseenGxsGroupFrameDialog::loadGroupSummaryToken(const uint32_t &token, std
 	/* Default implementation for request type GXS_REQUEST_TYPE_GROUP_META */
 	mInterface->getGroupSummary(token, groupInfo);
 }
+//unseenp2p
+void UnseenGxsGroupFrameDialog::loadGroupSummaryToken2(const uint32_t &token, std::list<RsGxsChatGroup> &groupInfo, RsUserdata *&/*userdata*/)
+{
+    /* Default implementation for request type GXS_REQUEST_TYPE_GROUP_META */
+    //mInterface->getGroupSummary(token, groupInfo);
+    return;
+}
 
 void UnseenGxsGroupFrameDialog::loadGroupSummary(const uint32_t &token)
 {
@@ -1176,15 +1268,23 @@ void UnseenGxsGroupFrameDialog::loadGroupSummary(const uint32_t &token)
 	std::cerr << std::endl;
 #endif
 
-	std::list<RsGroupMetaData> groupInfo;
+    //std::list<RsGroupMetaData> groupInfo;
+    std::list<RsGxsChatGroup> groupInfo2;
+
 	RsUserdata *userdata = NULL;
-	loadGroupSummaryToken(token, groupInfo, userdata);
+    //loadGroupSummaryToken(token, groupInfo, userdata);
+    loadGroupSummaryToken2(token, groupInfo2, userdata);
 
 	mCachedGroupMetas.clear();
-    for(auto it(groupInfo.begin());it!=groupInfo.end();++it)
-        mCachedGroupMetas[(*it).mGroupId] = *it;
+    mCachedChatGroupData.clear();
+    //for(auto it(groupInfo.begin());it!=groupInfo.end();++it)
+    //  mCachedGroupMetas[(*it).mGroupId] = *it;
+    for(auto it(groupInfo2.begin());it!=groupInfo2.end();++it)
+        mCachedChatGroupData[(*it).mMeta.mGroupId] = *it;
 
-	insertGroupsData(mCachedGroupMetas, userdata);
+
+    //insertGroupsData(mCachedGroupMetas, userdata);
+    insertGroupsData2(mCachedChatGroupData, userdata);
     updateSearchResults();
 
 	mStateHelper->setLoading(TOKEN_TYPE_GROUP_SUMMARY, false);

@@ -222,7 +222,8 @@ void UnseenGxsGroupDialog::editAndUpdateGroup()
                 if (newName != oldGroupName)
                 {
                     std::cerr << " The new group name changed to: " << newName.toStdString() << std::endl;
-                    chatsInfo[0].mDescription = newName.toStdString();
+                    chatsInfo[0].mMeta.mGroupName =  chatsInfo[0].mDescription = newName.toStdString();
+
                 }
                 if (newMemberList != oldMemberList)
                 {
@@ -364,11 +365,11 @@ void UnseenGxsGroupDialog::newGroup()
 
 void UnseenGxsGroupDialog::updateFromExistingMeta(const QString &description)
 {
-    std::cerr << "void GxsGroupDialog::updateFromExistingMeta()";
+    std::cerr << "void UnseenGxsGroupDialog::updateFromExistingMeta()";
     std::cerr << std::endl;
 
     circleType = mGrpMeta.mCircleType;
-    std::cerr << "void GxsGroupDialog::updateFromExistingMeta() mGrpMeta.mCircleType: ";
+    std::cerr << "void UnseenGxsGroupDialog::updateFromExistingMeta() mGrpMeta.mCircleType: ";
     std::cerr << mGrpMeta.mCircleType << " Internal: " << mGrpMeta.mInternalCircle;
     std::cerr << " External: " << mGrpMeta.mCircleId;
     std::cerr << std::endl;
@@ -420,7 +421,7 @@ void UnseenGxsGroupDialog::updateFromExistingMeta(const QString &description)
 
 void UnseenGxsGroupDialog::submitGroup()
 {
-	std::cerr << "GxsGroupDialog::submitGroup()";
+    std::cerr << "UnseenGxsGroupDialog::submitGroup()";
 	std::cerr << std::endl;
 
 	/* switch depending on mode */
@@ -450,7 +451,7 @@ void UnseenGxsGroupDialog::submitGroup()
 
 void UnseenGxsGroupDialog::editGroup()
 {
-	std::cerr << "GxsGroupDialog::editGroup()" << std::endl;
+    std::cerr << "UnseenGxsGroupDialog::editGroup()" << std::endl;
 
 	RsGroupMetaData newMeta;
 	newMeta.mGroupId = mGrpMeta.mGroupId;
@@ -462,7 +463,7 @@ void UnseenGxsGroupDialog::editGroup()
 		return; //Don't add  a empty name!!
 	}
 
-	std::cerr << "GxsGroupDialog::editGroup() calling service_EditGroup";
+    std::cerr << "UnseenGxsGroupDialog::editGroup() calling service_EditGroup";
 	std::cerr << std::endl;
 
 	uint32_t token;
@@ -474,7 +475,7 @@ void UnseenGxsGroupDialog::editGroup()
 	}
 	else
 	{
-		std::cerr << "GxsGroupDialog::editGroup() ERROR";
+        std::cerr << "UnseenGxsGroupDialog::editGroup() ERROR";
 		std::cerr << std::endl;
 	}
 
@@ -483,7 +484,7 @@ void UnseenGxsGroupDialog::editGroup()
 
 bool UnseenGxsGroupDialog::prepareGroupMetaData(RsGroupMetaData &meta)
 {
-	std::cerr << "GxsGroupDialog::prepareGroupMetaData()";
+    std::cerr << "UnseenGxsGroupDialog::prepareGroupMetaData()";
 	std::cerr << std::endl;
 
     QString name;
@@ -507,7 +508,7 @@ bool UnseenGxsGroupDialog::prepareGroupMetaData(RsGroupMetaData &meta)
 
 
     if(chatType!= RsGxsChatGroup::ONE2ONE && name.isEmpty()) {
-		std::cerr << "GxsGroupDialog::prepareGroupMetaData()";
+        std::cerr << "UnseenGxsGroupDialog::prepareGroupMetaData()";
 		std::cerr << " Invalid GroupName";
 		std::cerr << std::endl;
 		return false;
@@ -518,7 +519,7 @@ bool UnseenGxsGroupDialog::prepareGroupMetaData(RsGroupMetaData &meta)
     meta.mSignFlags = getGroupSignFlags();
 
 
-	std::cerr << "void GxsGroupDialog::prepareGroupMetaData() meta.mCircleType: ";
+    std::cerr << "void UnseenGxsGroupDialog::prepareGroupMetaData() meta.mCircleType: ";
 	std::cerr << meta.mCircleType << " Internal: " << meta.mInternalCircle;
 	std::cerr << " External: " << meta.mCircleId;
 	std::cerr << std::endl;
@@ -528,7 +529,7 @@ bool UnseenGxsGroupDialog::prepareGroupMetaData(RsGroupMetaData &meta)
 
 void UnseenGxsGroupDialog::createGroup()
 {
-	std::cerr << "GxsGroupDialog::createGroup()";
+    std::cerr << "UnseenGxsGroupDialog::createGroup()";
 	std::cerr << std::endl;
     RsGroupInfo::GroupType groupType = RsGroupInfo::DEFAULTS;
 
@@ -815,7 +816,7 @@ bool UnseenGxsGroupDialog::setCircleParameters(RsGroupMetaData &meta)
 
 void UnseenGxsGroupDialog::cancelDialog()
 {
-	std::cerr << "GxsGroupDialog::cancelDialog() Should Close!";
+    std::cerr << "UnseenGxsGroupDialog::cancelDialog() Should Close!";
 	std::cerr << std::endl;
 
 	close();
@@ -929,7 +930,7 @@ void UnseenGxsGroupDialog::requestGroup(const RsGxsGroupId &groupId)
 	std::list<RsGxsGroupId> groupIds;
 	groupIds.push_back(groupId);
 
-	std::cerr << "GxsGroupDialog::requestGroup() Requesting Group Summary(" << groupId << ")";
+    std::cerr << "UnseenGxsGroupDialog::requestGroup() Requesting Group Summary(" << groupId << ")";
 	std::cerr << std::endl;
 
 	uint32_t token;
@@ -939,7 +940,7 @@ void UnseenGxsGroupDialog::requestGroup(const RsGxsGroupId &groupId)
 
 void UnseenGxsGroupDialog::loadGroup(uint32_t token)
 {
-	std::cerr << "GxsGroupDialog::loadGroup(" << token << ")";
+    std::cerr << "UnseenGxsGroupDialog::loadGroup(" << token << ")";
 	std::cerr << std::endl;
 
 	QString description;
@@ -951,7 +952,7 @@ void UnseenGxsGroupDialog::loadGroup(uint32_t token)
 
 void UnseenGxsGroupDialog::loadRequest(const TokenQueue *queue, const TokenRequest &req)
 {
-	std::cerr << "GxsGroupDialog::loadRequest() UserType: " << req.mUserType;
+    std::cerr << "UnseenGxsGroupDialog::loadRequest() UserType: " << req.mUserType;
 	std::cerr << std::endl;
 
 	if (queue == mInternalTokenQueue)
@@ -963,7 +964,7 @@ void UnseenGxsGroupDialog::loadRequest(const TokenQueue *queue, const TokenReque
 				loadGroup(req.mToken);
 				break;
 			default:
-				std::cerr << "GxsGroupDialog::loadGroup() UNKNOWN UserType ";
+                std::cerr << "UnseenGxsGroupDialog::loadGroup() UNKNOWN UserType ";
 				std::cerr << std::endl;
 				break;
 		}

@@ -120,6 +120,7 @@ protected:
 	virtual RetroShareLink::enumType getLinkType() = 0;
 	virtual GroupFrameSettings::Type groupFrameSettingsType() { return GroupFrameSettings::Nothing; }
 	virtual void groupInfoToGroupItemInfo(const RsGroupMetaData &groupInfo, GroupItemInfo &groupItemInfo, const RsUserdata *userdata);
+    void groupInfoToUnseenGroupItemInfo2(const RsGxsChatGroup &groupInfo, UnseenGroupItemInfo &groupItemInfo, const RsUserdata */*userdata*/);
     virtual void checkRequestGroup(const RsGxsGroupId& /* grpId */) {}	// overload this one in order to retrieve full group data when the group is browsed
 
 private slots:
@@ -191,11 +192,13 @@ private:
 
 	// New Request/Response Loading Functions.
 	void insertGroupsData(const std::map<RsGxsGroupId, RsGroupMetaData> &groupList, const RsUserdata *userdata);
+    void insertGroupsData2(const std::map<RsGxsGroupId,RsGxsChatGroup> &groupList, const RsUserdata *userdata);
 
-	void requestGroupSummary();
+    void requestGroupSummary();
 	void loadGroupSummary(const uint32_t &token);
 	virtual uint32_t requestGroupSummaryType() { return GXS_REQUEST_TYPE_GROUP_META; } // request only meta data
 	virtual void loadGroupSummaryToken(const uint32_t &token, std::list<RsGroupMetaData> &groupInfo, RsUserdata* &userdata); // use with requestGroupSummaryType
+    virtual void loadGroupSummaryToken2(const uint32_t &token, std::list<RsGxsChatGroup> &groupInfo, RsUserdata* &userdata); // use with requestGroupSummaryType
 
 	void requestGroupStatistics(const RsGxsGroupId &groupId);
 	void loadGroupStatistics(const uint32_t &token);
@@ -243,6 +246,7 @@ private:
     Ui::UnseenGxsGroupFrameDialog *ui;
 
 	std::map<RsGxsGroupId,RsGroupMetaData> mCachedGroupMetas;
+    std::map<RsGxsGroupId,RsGxsChatGroup> mCachedChatGroupData;
 
     std::map<uint32_t,QTreeWidgetItem*> mSearchGroupsItems ;
     std::map<uint32_t,std::set<RsGxsGroupId> > mKnownGroups;
