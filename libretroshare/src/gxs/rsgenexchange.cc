@@ -2350,7 +2350,7 @@ RsGenExchange::ServiceCreate_Return RsGenExchange::service_CreateGroup(RsGxsGrpI
 	return SERVICE_CREATE_SUCCESS;
 }
 
-RsGenExchange::ServiceCreate_Return RsGenExchange::service_PublishGroup(RsNxsGrp *grp){
+RsGenExchange::ServiceCreate_Return RsGenExchange::service_PublishGroup(RsNxsGrp *grp, bool update){
 #ifdef GEN_EXCH_DEBUG
     std::cerr << "RsGenExchange::service_PublishGroup(): Does nothing"
               << std::endl;
@@ -2713,14 +2713,18 @@ void RsGenExchange::publishGrps()
 						    computeHash(grp->grp, grp->metaData->mHash);
 						    grp->metaData->mRecvTS = time(NULL);
 
-						    if(ggps.mIsUpdate)
-							    mDataAccess->updateGroupData(grp);
-						    else
-							    mDataAccess->addGroupData(grp);
+                            ServiceCreate_Return grpRet;
 
+                            if(ggps.mIsUpdate){
+							    mDataAccess->updateGroupData(grp);
+                                grpRet= service_PublishGroup(grp,true);
+                            }
+                            else{
+							    mDataAccess->addGroupData(grp);
+                                grpRet= service_PublishGroup(grp,false);
+                            }
                             grp->metaData->keys.private_keys.clear() ;
 
-                            ServiceCreate_Return grpRet = service_PublishGroup(grp);
                             if (grpRet)
                                 delete grp ;
 

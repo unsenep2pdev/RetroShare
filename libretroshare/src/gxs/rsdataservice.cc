@@ -1013,6 +1013,8 @@ int RsDataService::updateGroup(const std::list<RsNxsGrp *> &grp)
         // if data is larger than max item size do not add
         if(!validSize(grpPtr)) continue;
 
+        //locked_clearGrpMetaCache(grpPtr->grpId);  //force to clear cache (unseen-dev team)
+
         /*!
          * STORE data, data len,
          * grpId, flags, publish time stamp, identity,

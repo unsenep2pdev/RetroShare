@@ -44,7 +44,7 @@
 #include "retroshare/rspeers.h"
 #include "rsitems/rsnxsitems.h"
 
-//#define GXSCHATS_DEBUG 1
+#define GXSCHATS_DEBUG 1
 
 
 
@@ -267,7 +267,7 @@ RsGenExchange::ServiceCreate_Return p3GxsChats::service_CreateGroup(RsGxsGrpItem
     return SERVICE_CREATE_SUCCESS;
 }
 
-RsGenExchange::ServiceCreate_Return p3GxsChats::service_PublishGroup(RsNxsGrp *grp){
+RsGenExchange::ServiceCreate_Return p3GxsChats::service_PublishGroup(RsNxsGrp *grp, bool update){
     if (ownChatId==NULL){ //initalized chatInfo
         initChatId();
     }
@@ -1620,6 +1620,15 @@ bool p3GxsChats::updateGroup(uint32_t &token, RsGxsChatGroup &group)
     grpItem->fromChatGroup(group, true);
 
     RsGenExchange::updateGroup(token, grpItem);
+
+#ifdef GXSCHATS_DEBUG
+        std::cerr <<"*****************p3GxsChats::updateGroup()**********"<<std::endl;
+        std::cerr <<"*****************GroupId:"<<group.mMeta.mGroupId<< "  and   group.type:"<<group.type<<std::endl;
+        std::cerr <<"*****************GroupMembers: *************"<<std::endl;
+        for(auto it=group.members.begin(); it !=group.members.end(); it++){
+            std::cerr << "chatPeerId:"<< it->chatPeerId<< "Username: "<<it->nickname<< std::endl;
+        }
+#endif
     return true;
 }
 

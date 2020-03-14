@@ -97,7 +97,7 @@ protected:
 
 
     virtual RsGenExchange::ServiceCreate_Return service_CreateGroup(RsGxsGrpItem* grpItem, RsTlvSecurityKeySet& keySet);
-    virtual RsGenExchange::ServiceCreate_Return service_PublishGroup(RsNxsGrp *grp);
+    virtual RsGenExchange::ServiceCreate_Return service_PublishGroup(RsNxsGrp *grp, bool update=false);
     virtual RsGenExchange::ServiceCreate_Return service_CreateMessage(RsNxsMsg* msg);
 
     virtual ServiceCreate_Return service_RecvBounceGroup(RsNxsGrp *grp, bool isNew);
