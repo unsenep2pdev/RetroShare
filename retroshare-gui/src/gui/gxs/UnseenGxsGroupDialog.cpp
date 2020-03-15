@@ -228,8 +228,14 @@ void UnseenGxsGroupDialog::editAndUpdateGroup()
                 if (newMemberList != oldMemberList)
                 {
                     std::cerr << " The member list changed: " << std::endl;
+
                     chatsInfo[0].members = newMemberList;
                 }
+                //for both case: even not change the member list, need to add the own member,
+                // because on the choosen list there is no own member
+                GxsChatMember chatId;
+                rsGxsChats->getOwnMember(chatId);
+                chatsInfo[0].members.insert(chatId);
 
                 uint32_t token;
                 rsGxsChats->updateGroup(token, chatsInfo[0]);

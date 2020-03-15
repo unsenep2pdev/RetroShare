@@ -305,6 +305,8 @@ void UnseenMemberTreeWidgetItem::setMember(const GxsChatMember member, int colum
     mRetryWhenFailed = retryWhenFailed;
     mColumn = column;
 
+    mId = member.chatGxsId;
+
     startProcess();
 }
 
@@ -317,7 +319,7 @@ bool UnseenMemberTreeWidgetItem::getMember(GxsChatMember &member)
 //do not use, just copy from GxsIdRSTreeWidgetItem
 void UnseenMemberTreeWidgetItem::setId(const RsGxsId &id, int column, bool retryWhenFailed)
 {
-    if (mIdFound && mColumn == column && mId == id && (mBannedState == rsReputations->isIdentityBanned(mId)))
+    if (mColumn == column && mId == id )
             return;
 
     mBannedState = rsReputations->isIdentityBanned(mId);

@@ -401,7 +401,8 @@ void UnseenGxsChatLobbyDialog::init(const gxsChatId &id, const QString &/*title*
 //        else
 //            rstime::rs_usleep(1000*300) ;
 
-    ui.chatWidget->setName(QString::fromUtf8(details.mNickname.c_str()));
+    if(rsIdentity->getIdDetails((RsGxsId)id.toGxsGroupId(),details))
+        ui.chatWidget->setName(QString::fromUtf8(details.mNickname.c_str()));
     //ui.chatWidget->addToolsAction(ui.actionChangeNickname);
     ui.chatWidget->setDefaultExtraFileFlags(RS_FILE_REQ_ANONYMOUS_ROUTING);
 
@@ -573,6 +574,11 @@ void UnseenGxsChatLobbyDialog::addChatMsg(const ChatMessage& msg)
     }
 }
 
+void UnseenGxsChatLobbyDialog::updateTitle(QString title)
+{
+     ui.chatWidget->setTitle(title);
+}
+
 /**
  * Regenerate the QTreeWidget participant list of a Chat Lobby
  *
@@ -621,11 +627,7 @@ void UnseenGxsChatLobbyDialog::updateParticipantsList()
                 {
                     isIdentical = true;
                 }
-                // if the member number in the new list is less than member number in the old list (it removed at least one member)
-                if (new_participating_friends.size() < old_participating_friends.size() )
-                {
-                    isIdentical = false;
-                }
+                else isIdentical = false;
 
                 // if 2 lists are the same, just return and do nothing
                 if (isIdentical)
@@ -669,13 +671,28 @@ void UnseenGxsChatLobbyDialog::updateParticipantsList()
                 }
                members_update2.insert(myown);
                thisGroup.members = members_update2;
-               uint32_t token;
-               rsGxsChats->updateGroup(token, thisGroup);
+               //Need to updateGroup here???, only the first time?
+//               uint32_t token;
+//               rsGxsChats->updateGroup(token, thisGroup);
 
                std::cerr << "   Participating friends: " << std::endl;
                std::cerr << "   groupchat name: " << chatsInfo[0].mDescription<< std::endl;
                std::cerr << "   Participating nick names (sslId): " << std::endl;
 
+
+               QList<QTreeWidgetItem*>  qlOldParticipants=ui.participantsList->findItems("*",Qt::MatchWildcard,COLUMN_ID);
+
+               std::set<RsGxsId> gxs_ids;
+               for (auto it2(thisGroup.members.begin()); it2 != thisGroup.members.end(); ++it2)
+                   gxs_ids.insert((*it2).chatGxsId);
+
+               foreach(QTreeWidgetItem *qtwiCur,qlOldParticipants)
+                   if(gxs_ids.find(RsGxsId((*qtwiCur).text(COLUMN_ID).toStdString())) == gxs_ids.end())
+                   {
+                       //Old Participant go out, remove it
+                       int index = ui.participantsList->indexOfTopLevelItem(qtwiCur);
+                       delete ui.participantsList->takeTopLevelItem(index);
+                   }
 
                for (auto it2(thisGroup.members.begin()); it2 != thisGroup.members.end(); ++it2)
                {
@@ -692,8 +709,9 @@ void UnseenGxsChatLobbyDialog::updateParticipantsList()
                        // TE: Add Wigdet to participantsList with Checkbox, to mute Participant
                        unsWidgetItem = new UnseenMemberTreeWidgetItem(mParticipantCompareRole,GxsIdDetails::ICON_TYPE_AVATAR);
                        unsWidgetItem->setMember((*it2), COLUMN_NAME, true) ;
+                       unsWidgetItem->setId((*it2).chatGxsId,COLUMN_NAME, true) ;
                        unsWidgetItem->setText(COLUMN_ACTIVITY,QString::number(time(NULL) - timeToInactivity));
-                       unsWidgetItem->setText(COLUMN_ID,QString::fromStdString(it2->chatPeerId.toStdString()));
+                       unsWidgetItem->setText(COLUMN_ID,QString::fromStdString(it2->chatGxsId.toStdString()));
 
                        ui.participantsList->addTopLevelItem(unsWidgetItem);
                        hasNewMemberJoin = true;
@@ -739,47 +757,8 @@ void UnseenGxsChatLobbyDialog::updateParticipantsList()
                    }
                }
             }
-
-
         }
-
-
     }
-
-
-
-
-////            if(isParticipantMuted(it2->first))
-////                widgetitem->setIcon(COLUMN_ICON, bullet_red_128);
-////            else if (tLastAct + timeToInactivity < now)
-////                widgetitem->setIcon(COLUMN_ICON, bullet_grey_128 );
-////            else
-////                widgetitem->setIcon(COLUMN_ICON, bullet_green_128);
-
-////            RsGxsId gxs_id;
-////            rsMsgs->getIdentityForChatLobby(lobbyId, gxs_id);
-
-////            if (RsGxsId(participant.toStdString()) == gxs_id)
-////                widgetitem->setIcon(COLUMN_ICON, bullet_green_128);
-
-//            widgetitem->updateBannedState();
-
-//            QTime qtLastAct=QTime(0,0,0).addSecs(now-tLastAct);
-////            widgetitem->setToolTip(COLUMN_ICON,tr("Right click to mute/unmute participants<br/>Double click to address this person<br/>")
-////                                   +tr("This participant is not active since:")
-////                                   +qtLastAct.toString()
-////                                   +tr(" seconds")
-////                                   );
-//        }
-
-//    }
-//    if (hasNewMemberJoin)
-//    {
-//        //rsMsgs->saveGroupChatInfo();
-//    }
-    //ui.participantsList->setSortingEnabled(true);
-    //sortParcipants();
-    //filterIds();
 }
 
 /**
@@ -822,21 +801,6 @@ void UnseenGxsChatLobbyDialog::participantsTreeWidgetDoubleClicked(QTreeWidgetIt
         getChatWidget()->pasteText("@" + RsHtml::plainText(item->text(COLUMN_NAME))) ;
         return ;
     }
-
-//	if (column == COLUMN_ICON) {
-//		return;
-//	}
-//
-//	QString nickname = item->text(COLUMN_NAME);
-//	if (isParticipantMuted(nickname)) {
-//		unMuteParticipant(nickname);
-//	} else {
-//		muteParticipant(nickname);
-//	}
-//
-//	mutedParticipants->removeDuplicates();
-//
-//	updateParticipantsList();
 }
 
 void UnseenGxsChatLobbyDialog::distantChatParticipant()

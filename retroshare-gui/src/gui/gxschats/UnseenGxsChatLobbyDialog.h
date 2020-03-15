@@ -82,6 +82,8 @@ public:
     //unseenp2p - add for gxs groupchat
     RsGxsGroupId groupId() const {return mGroupId; }
 
+    void updateTitle(QString title);
+
 private slots:
 	void participantsTreeWidgetCustomPopupMenu( QPoint point );
 	void textBrowserAskContextMenu(QMenu* contextMnu, QString anchorForPosition, const QPoint point);

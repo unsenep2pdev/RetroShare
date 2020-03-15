@@ -1195,8 +1195,25 @@ void UnseenGxsGroupFrameDialog::insertGroupsData2(const std::map<RsGxsGroupId,Rs
     for (std::vector<UnseenGroupItemInfo>::iterator it2 = allGxsGroupList.begin(); it2!= allGxsGroupList.end(); ++it2)
     {
         std::cerr << " GxsChat Id: " << (*it2).id.toStdString() << " : " << (*it2).name.toStdString() << std::endl;
+        std::set<GxsChatMember> list = (*it2).members;
+        for(std::set<GxsChatMember>::iterator it3=list.begin(); it3!= list.end(); ++it3)
+        {
+            std::cerr << " Member: " << (*it3).nickname << ", ";
+        }
+         std::cerr << std::endl;
     }
 #endif
+    //update the groupname and member list if the groupchat already opened: need to check the changes ?!!!
+    for (auto it = groupList.begin(); it != groupList.end(); ++it)
+    {
+       //need to check the changes ?!!!
+       if(_unseenGxsGroup_infos.find((*it).first) != _unseenGxsGroup_infos.end())
+        {
+           _unseenGxsGroup_infos[(*it).first].dialog->updateTitle(QString::fromStdString((*it).second.mMeta.mGroupName));
+           _unseenGxsGroup_infos[(*it).first].dialog->updateParticipantsList();
+       }
+    }
+
 
 }
 
@@ -1205,25 +1222,6 @@ void UnseenGxsGroupFrameDialog::updateMessageSummaryList(RsGxsGroupId groupId)
 	if (!mInitialized) {
 		return;
 	}
-
-//	if (groupId.isNull()) {
-//		QTreeWidgetItem *items[2] = { mYourGroups, mSubscribedGroups };
-//		for (int item = 0; item < 2; ++item) {
-//			int child;
-//			int childCount = items[item]->childCount();
-//			for (child = 0; child < childCount; ++child) {
-//				QTreeWidgetItem *childItem = items[item]->child(child);
-//                QString childId = ui->unseenGroupTreeWidget->itemId(childItem);
-//				if (childId.isEmpty()) {
-//					continue;
-//				}
-
-//				requestGroupStatistics(RsGxsGroupId(childId.toLatin1().constData()));
-//			}
-//		}
-//	} else {
-//		requestGroupStatistics(groupId);
-//	}
 }
 
 /*********************** **** **** **** ***********************/
