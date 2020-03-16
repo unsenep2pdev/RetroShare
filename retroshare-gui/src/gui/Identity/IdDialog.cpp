@@ -1471,7 +1471,6 @@ bool IdDialog::fillIdListItem(const RsGxsIdGroup& data, QTreeWidgetItem *&item, 
 	bool isLinkedToOwnNode = (data.mPgpKnown && (data.mPgpId == ownPgpId)) ;
 	bool isOwnId = (data.mMeta.mSubscribeFlags & GXS_SERV::GROUP_SUBSCRIBE_ADMIN);
 	RsIdentityDetails idd ;
-	std::cerr << "fillIdListItem: data.mMeta.mGroupId: " <<  data.mMeta.mGroupId; std::cerr << std::endl;
 	rsIdentity->getIdDetails(RsGxsId(data.mMeta.mGroupId),idd) ;
 
 	bool isBanned = idd.mReputation.mOverallReputationLevel == RsReputations::REPUTATION_LOCALLY_NEGATIVE;
@@ -1524,8 +1523,6 @@ bool IdDialog::fillIdListItem(const RsGxsIdGroup& data, QTreeWidgetItem *&item, 
         item = new TreeWidgetItem();
         
 
-    std::cerr << "IdDialog: fillIdListItem: is this nickname: " <<  data.mMeta.mGroupName;
-    std::cerr << std::endl;
     item->setText(RSID_COL_NICKNAME, QString::fromUtf8(data.mMeta.mGroupName.c_str()).left(RSID_MAXIMUM_NICKNAME_SIZE));
     item->setText(RSID_COL_KEYID, QString::fromStdString(data.mMeta.mGroupId.toStdString()));
     
@@ -1997,7 +1994,6 @@ void IdDialog::insertIdDetails(uint32_t token)
     // now fill in usage cases
 
 	RsIdentityDetails det ;
-	std::cerr << "inserIdDetails: data.mMeta.mGroupId: " <<  data.mMeta.mGroupId; std::cerr << std::endl;
 	rsIdentity->getIdDetails(RsGxsId(data.mMeta.mGroupId),det) ;
 
     QString usage_txt ;
@@ -2434,7 +2430,6 @@ void IdDialog::IdListCustomPopupMenu( QPoint )
 		RsGxsId keyId((*it)->text(RSID_COL_KEYID).toStdString());
 
 		RsIdentityDetails det ;
-		std::cerr << "IdListCustomPopupMenu: keyId: " <<  keyId; std::cerr << std::endl;
 		rsIdentity->getIdDetails(keyId,det) ;
 
 		switch(det.mReputation.mOwnOpinion)

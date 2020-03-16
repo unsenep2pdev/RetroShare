@@ -1588,6 +1588,7 @@ int RsServer::StartupRetroShare()
 	ftserver->connectToTurtleRouter(tr) ;
     ftserver->connectToFileDatabase(fdb) ;
     chatSrv->connectToGxsTunnelService(mGxsTunnels) ;
+    mGxsIdService->connectToGxsTunnelService(mGxsTunnels);
     gr->connectToTurtleRouter(tr) ;
 #ifdef ENABLE_GROUTER
 	msgSrv->connectToGlobalRouter(gr) ;
