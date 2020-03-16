@@ -998,14 +998,14 @@ void UnseenGxsGroupFrameDialog::addChatPage(UnseenGxsChatLobbyDialog *d)
 
     if(_unseenGxsGroup_infos.find(d->groupId()) == _unseenGxsGroup_infos.end())
     {
-        GXSGroupId groupId = d->groupId();
+        RsGxsGroupId groupId = d->groupId();
         ChatLobbyId id = d->id();
         ChatLobbyInfo linfo;
         ui->stackedWidget->addWidget(d) ;
 
         //TODO: logic of gxs group chat go here: connect GxsChat signals and slots, replace these ones
 
-//        connect(d,SIGNAL(lobbyLeave(ChatLobbyId)),this,SLOT(unsubscribeChatLobby(ChatLobbyId))) ;
+        connect(d,SIGNAL(gxsGroupLeave(RsGxsGroupId)),this,SLOT(unsubscribeGxsGroupChat(RsGxsGroupId))) ;
 //        connect(d,SIGNAL(typingEventReceived(ChatLobbyId)),this,SLOT(updateTypingStatus(ChatLobbyId))) ;
 //        connect(d,SIGNAL(messageReceived(bool,ChatLobbyId,QDateTime,QString,QString)),this,SLOT(updateMessageChanged(bool,ChatLobbyId,QDateTime,QString,QString))) ;
 //        connect(d,SIGNAL(peerJoined(ChatLobbyId)),this,SLOT(updatePeerEntering(ChatLobbyId))) ;
@@ -1649,5 +1649,73 @@ void UnseenGxsGroupFrameDialog::updateRecentTime(const gxsChatId & chatId, std::
 //        QModelIndex idx = ui->lobbyTreeWidget->model()->index(seletedrow, 0);
 //        ui->lobbyTreeWidget->selectionModel()->select(idx, QItemSelectionModel::Select);
 //        emit ui->lobbyTreeWidget->model()->layoutChanged();
+
+}
+
+void UnseenGxsGroupFrameDialog::unsubscribeGxsGroupChat(RsGxsGroupId id)
+{
+
+    // close the tab.
+    std::map<RsGxsGroupId,UnseenGxsChatLobbyInfoStruct>::iterator it = _unseenGxsGroup_infos.find(id) ;
+
+    if(it != _unseenGxsGroup_infos.end())
+    {
+//        if (myChatLobbyUserNotify){
+//            myChatLobbyUserNotify->chatLobbyCleared(id, "");
+//        }
+
+        ui->stackedWidget->removeWidget(it->second.dialog) ;
+        _unseenGxsGroup_infos.erase(it) ;
+    }
+    //remove item from conversations list, using the MVC now
+//    std::string uId = std::to_string(id);
+//    if (rsMsgs->isChatIdInConversationList(uId))
+//    {
+//        rsMsgs->removeContactOrGroupChatFromModelData(uId);
+//        emit ui->lobbyTreeWidget->model()->layoutChanged();
+//    }
+
+    // Unsubscribe the chat lobby
+    ChatDialog::closeChat(gxsChatId(id));
+    uint32_t token;
+    mInterface->subscribeToGroup(token, id, false);
+
+    //Re-select the chat item on the left, depend on the history of stackedWidget
+    //need to get the next dialog in the ui->stackedWidget
+    //PopupChatDialog *cldCW=NULL ;
+    UnseenGxsChatLobbyDialog *groupChatCW = NULL;
+    std::string chatIdStr;
+
+//        if (NULL != (groupChatCW = dynamic_cast<UnseenGxsChatLobbyDialog *>(ui->stackedWidget->currentWidget())))
+//        {
+//            //ChatId chatId = groupChatCW->id();
+//            chatIdStr = std::to_string(groupChatCW->id());
+//        }
+
+
+
+//    if (chatIdStr.length() > 0)
+//    {
+//        //check if this is the filtered search mode, just return to normal mode and select on the normal mode of conversation list
+//        if (rsMsgs->getConversationListMode() == CONVERSATION_MODE_WITH_SEARCH_FILTER)
+//        {
+//            if (!ui->filterLineEdit->text().isEmpty())
+//            {
+//                ui->filterLineEdit->setText("");
+//            }
+//        }
+
+//         //re-select the chat item again, at first find the index of the uId, then re-select
+//         int seletedrow = rsMsgs->getIndexFromUId(chatIdStr);
+//         if (seletedrow >= 0)
+//         {
+//             ui->lobbyTreeWidget->selectionModel()->clearSelection();
+//             QModelIndex idx = ui->lobbyTreeWidget->model()->index(seletedrow, 0);
+//             ui->lobbyTreeWidget->selectionModel()->select(idx, QItemSelectionModel::Select);
+//             //emit ui->lobbyTreeWidget->model()->layoutChanged();
+//         }
+
+//    }
+
 
 }

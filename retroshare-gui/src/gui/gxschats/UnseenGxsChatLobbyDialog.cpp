@@ -208,7 +208,7 @@ UnseenGxsChatLobbyDialog::UnseenGxsChatLobbyDialog( const RsGxsGroupId& id, QWid
     ui.splitter->setCollapsible(0, false);
     ui.splitter->setCollapsible(1, false);
 
-    connect(unsubscribeButton, SIGNAL(clicked()), this , SLOT(leaveLobby()));
+    connect(unsubscribeButton, SIGNAL(clicked()), this , SLOT(leaveGxsGroupChat()));
 
     getChatWidget()->addTitleBarWidget(unsubscribeButton) ;
 
@@ -254,10 +254,32 @@ UnseenGxsChatLobbyDialog::UnseenGxsChatLobbyDialog( const RsGxsGroupId& id, QWid
 
 }
 
-void UnseenGxsChatLobbyDialog::leaveLobby()
+void UnseenGxsChatLobbyDialog::leaveGxsGroupChat()
 {
     //TODO: change leave group with gxs groupchat
-    //emit lobbyLeave(id()) ;
+    //Need to update the group with gxsChat->updateGroup with new member list for other before unsubscribe
+    std::list<RsGxsGroupId> groupChatId;
+    groupChatId.push_back(mGroupId);
+    std::vector<RsGxsChatGroup> chatsInfo;
+    if (rsGxsChats->getChatsInfo(groupChatId, chatsInfo))
+    {
+        if (chatsInfo.size() > 0)
+        {
+            GxsChatMember myown;
+            std::list<RsGxsId> own_ids ;
+            rsIdentity->getOwnIds(own_ids) ;
+            if(!own_ids.empty())
+            {
+                myown.chatPeerId = rsPeers->getOwnId();
+                myown.chatGxsId = own_ids.front();
+            }
+            if(chatsInfo[0].members.find(myown)!= chatsInfo[0].members.end())
+                chatsInfo[0].members.erase(myown);
+            uint32_t token;
+            rsGxsChats->updateGroup(token, chatsInfo[0]);
+        }
+    }
+    emit gxsGroupLeave(groupId()) ;
 }
 void UnseenGxsChatLobbyDialog::inviteFriends()
 {
@@ -600,7 +622,7 @@ void UnseenGxsChatLobbyDialog::updateParticipantsList()
             RsGxsChatGroup thisGroup = chatsInfo[0];
             //at first we can add the own member to the groupData and sync for others
             std::set<GxsChatMember> members_update2;
-            GxsChatMember myown;
+
             std::set<GxsChatMember> new_participating_friends;
             new_participating_friends.clear();
             bool isIdentical = true;
@@ -627,9 +649,6 @@ void UnseenGxsChatLobbyDialog::updateParticipantsList()
 
                 //need to compare the new list and the old list, if there is only one different so need to update all again!
                 // if the 2 lists are identical, just return and do nothing. Need to check this option first!
-                //if the 2 old and new lists are not identical, need to get the removedMembers and JoinedMembers
-                std::set<GxsChatMember> removedMembers;
-                removedMembers.clear();
                 for (auto it(chatsInfo[0].members.begin()); it != chatsInfo[0].members.end(); ++it)
                 {
                     //at first get all new list, and check in the old one
@@ -681,6 +700,7 @@ void UnseenGxsChatLobbyDialog::updateParticipantsList()
 
             if (old_participating_friends.size() == 0 || !isIdentical)       // this mean this is the first time, need to do at first time
             {
+                GxsChatMember myown;
                 for (auto it(chatsInfo[0].members.begin()); it != chatsInfo[0].members.end(); ++it)
                 {
                     if (old_participating_friends.find((*it)) == old_participating_friends.end())
@@ -691,6 +711,7 @@ void UnseenGxsChatLobbyDialog::updateParticipantsList()
                     {
                         new_participating_friends.insert((*it));
                     }
+
 
                     //check own ssld
                     if (it->chatPeerId == rsPeers->getOwnId())

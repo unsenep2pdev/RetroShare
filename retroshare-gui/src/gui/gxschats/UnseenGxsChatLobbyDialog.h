@@ -88,11 +88,11 @@ private slots:
 	void participantsTreeWidgetCustomPopupMenu( QPoint point );
 	void textBrowserAskContextMenu(QMenu* contextMnu, QString anchorForPosition, const QPoint point);
 	void inviteFriends() ;
-	void leaveLobby() ;
+    void leaveGxsGroupChat() ;
 	void filterChanged(const QString &text);
     void showInPeopleTab();
 signals:
-	void lobbyLeave(ChatLobbyId) ;
+    void gxsGroupLeave(RsGxsGroupId) ;
 	void typingEventReceived(ChatLobbyId) ;
 	void messageReceived(bool incoming, ChatLobbyId lobby_id, QDateTime time, QString senderName, QString msg) ;
     //unseenp2p: for gxs groupchat

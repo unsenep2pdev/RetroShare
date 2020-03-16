@@ -165,6 +165,8 @@ private slots:
 
     void smartListSelectionChanged(const QItemSelection  &selected, const QItemSelection  &deselected);
     void updateRecentTime(const gxsChatId&, std::string, long long, std::string, bool);
+
+    void unsubscribeGxsGroupChat(RsGxsGroupId id);
 private:
 	virtual QString text(TextType type) = 0;
 	virtual QString icon(IconType type) = 0;
