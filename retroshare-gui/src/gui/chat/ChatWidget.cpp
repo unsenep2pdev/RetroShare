@@ -2210,3 +2210,8 @@ void ChatWidget::saveImage()
 	QTextCursor cursor = ui->textBrowser->cursorForPosition(point);
 	ImageUtil::extractImage(window(), cursor);
 }
+
+void ChatWidget::disableTextInbox()
+{
+   // ui->chatTextEdi
+}

@@ -601,33 +601,75 @@ void UnseenGxsChatLobbyDialog::updateParticipantsList()
             //at first we can add the own member to the groupData and sync for others
             std::set<GxsChatMember> members_update2;
             GxsChatMember myown;
-            std::set<RsPeerId> new_participating_friends ;
+            std::set<GxsChatMember> new_participating_friends;
+            new_participating_friends.clear();
             bool isIdentical = true;
             if (old_participating_friends.size() > 0) // that mean it already saved the member list at least one time
             {
+                //THIS FEATURE NEED TO BE WAITED FROM BACKEND
+                //at first check this user has in the member list or not, if you, that mean the admin already remove this user
+//                bool isAdminRemoveYou = true;
+//                for (auto it(chatsInfo[0].members.begin()); it != chatsInfo[0].members.end(); ++it)
+//                {
+//                    if ((*it).chatPeerId == rsPeers->getOwnId())
+//                    {
+//                        isAdminRemoveYou = false;
+//                        break;
+//                    }
+//                }
+//                if (isAdminRemoveYou)
+//                {
+//                    //warning about the admin remove you in the content, disable the inbox, user then remove the window himself
+//                    ui.chatWidget->addChatMsg(true, tr("Chat room management"), QDateTime::currentDateTime(), QDateTime::currentDateTime(), tr("The admin already remove you from this room."), ChatWidget::MSGTYPE_SYSTEM);
+//                    //ui.chatWidget-
+//                    return;
+//                }
 
                 //need to compare the new list and the old list, if there is only one different so need to update all again!
                 // if the 2 lists are identical, just return and do nothing. Need to check this option first!
+                //if the 2 old and new lists are not identical, need to get the removedMembers and JoinedMembers
+                std::set<GxsChatMember> removedMembers;
+                removedMembers.clear();
                 for (auto it(chatsInfo[0].members.begin()); it != chatsInfo[0].members.end(); ++it)
                 {
                     //at first get all new list, and check in the old one
-                    if (new_participating_friends.find((*it).chatPeerId) == new_participating_friends.end())
+                    if (new_participating_friends.find((*it)) == new_participating_friends.end())
                     {
-                        new_participating_friends.insert((*it).chatPeerId);
+                        new_participating_friends.insert((*it));
                         //only if check there is one new member that not exist in the old list
-                        if (old_participating_friends.find((*it).chatPeerId) == old_participating_friends.end())
+                        if (old_participating_friends.find((*it)) == old_participating_friends.end())
                         {
                             isIdentical = false;
-                            break;
+                            //update the system message about new users joining
+                            ui.chatWidget->addChatMsg(true, tr("Chat room management"), QDateTime::currentDateTime(), QDateTime::currentDateTime(), tr("%1 joined the room.").arg(RsHtml::plainText((*it).nickname)), ChatWidget::MSGTYPE_SYSTEM);
+
                         }
                     }
+
                 }
+
+                //The removed member will be in the old list, but not in the current (new) list:
+                for (auto it(old_participating_friends.begin()); it != old_participating_friends.end(); ++it)
+                {
+                     if (new_participating_friends.find((*it)) == new_participating_friends.end())
+                     {
+                         isIdentical = false;
+                         //update the system message about old users leave group
+                         ui.chatWidget->addChatMsg(true, tr("Chat room management"), QDateTime::currentDateTime(), QDateTime::currentDateTime(), tr("%1 leaved the room.").arg(RsHtml::plainText((*it).nickname)), ChatWidget::MSGTYPE_SYSTEM);
+                     }
+                }
+
 
                 if (new_participating_friends == old_participating_friends)
                 {
                     isIdentical = true;
                 }
-                else isIdentical = false;
+                else
+                {
+                    isIdentical = false;
+                    //Need to check which new users join, then show joining warnings in the chat content
+
+                }
 
                 // if 2 lists are the same, just return and do nothing
                 if (isIdentical)
@@ -641,13 +683,13 @@ void UnseenGxsChatLobbyDialog::updateParticipantsList()
             {
                 for (auto it(chatsInfo[0].members.begin()); it != chatsInfo[0].members.end(); ++it)
                 {
-                    if (old_participating_friends.find((*it).chatPeerId) == old_participating_friends.end())
+                    if (old_participating_friends.find((*it)) == old_participating_friends.end())
                     {
-                        old_participating_friends.insert((*it).chatPeerId);
+                        old_participating_friends.insert((*it));
                     }
-                    if (new_participating_friends.find((*it).chatPeerId) == new_participating_friends.end())
+                    if (new_participating_friends.find((*it)) == new_participating_friends.end())
                     {
-                        new_participating_friends.insert((*it).chatPeerId);
+                        new_participating_friends.insert((*it));
                     }
 
                     //check own ssld
@@ -671,9 +713,6 @@ void UnseenGxsChatLobbyDialog::updateParticipantsList()
                 }
                members_update2.insert(myown);
                thisGroup.members = members_update2;
-               //Need to updateGroup here???, only the first time?
-//               uint32_t token;
-//               rsGxsChats->updateGroup(token, thisGroup);
 
                std::cerr << "   Participating friends: " << std::endl;
                std::cerr << "   groupchat name: " << chatsInfo[0].mDescription<< std::endl;
@@ -696,6 +735,9 @@ void UnseenGxsChatLobbyDialog::updateParticipantsList()
 
                for (auto it2(thisGroup.members.begin()); it2 != thisGroup.members.end(); ++it2)
                {
+                   //do not show yourself and the empty member
+                   if ((*it2).nickname == "" || (*it2).chatPeerId == rsPeers->getOwnId()) continue;
+
                    std::cerr << " nick:  " <<(*it2).nickname << ", sslId:  " << (*it2).chatPeerId.toStdString() << ", gxsId:  " << (*it2).chatGxsId.toStdString() << std::endl;
                    QString participant = QString::fromUtf8( it2->chatGxsId.toStdString().c_str() );
 
@@ -756,6 +798,8 @@ void UnseenGxsChatLobbyDialog::updateParticipantsList()
                        unsWidgetItem->setIcon(COLUMN_ICON, bullet_unknown_128 );
                    }
                }
+
+            old_participating_friends = new_participating_friends;
             }
         }
     }

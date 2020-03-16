@@ -172,7 +172,7 @@ private:
 
     //unseenp2p - add for gxs groupchat
     //RsGxsGroupId  mGXSGroupId;
-    std::set<RsPeerId> old_participating_friends;
+    std::set<GxsChatMember> old_participating_friends;
 
     ////////////////////////////////////////////////////////////////////////////////////////////
     ///             THESE ARE FOR 4 CLASS THAT THIS CLASS NEED TO DO                ////////////
