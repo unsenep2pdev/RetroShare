@@ -60,7 +60,8 @@ public:
 		IDTYPE_GROUP,
 		IDTYPE_SSL,
 		IDTYPE_GPG,
-		IDTYPE_GXS
+        IDTYPE_GXS,
+        IDTYPE_GXS_CHAT_MEMBER
 	};
 
 	enum Modus
@@ -69,6 +70,13 @@ public:
 		MODUS_MULTI,
 		MODUS_CHECK
 	};
+
+    enum ShowFriendListMode
+    {
+        MODE_CREATE_GROUP,
+        MODE_EDIT_GROUP,
+        MODE_INVITE_FRIENDS
+    };
 
     enum ShowType {
         SHOW_NONE             = 0,
@@ -93,6 +101,7 @@ public:
 
 	bool isSortByState();
 	bool isFilterConnected();
+
 
 	int selectedItemCount();
 	std::string selectedId(IdType &idType);
@@ -128,8 +137,11 @@ public:
 
     virtual void updateDisplay(bool complete);
 
+    //úneenp2p
     void setSelectedContacts(const std::set<GxsChatMember> list);
     void getSelectedContacts(std::set<GxsChatMember> &list);
+    void setGxsGroupId(const RsGxsGroupId _groupChatId);
+    void setModeOfFriendList(ShowFriendListMode showMode);
 
 protected:
 	void changeEvent(QEvent *e);
@@ -191,7 +203,7 @@ private:
 
     Ui::UnseenFriendSelectionWidget *ui;
 
-	friend class FriendSelectionDialog ;
+    friend class UnseenFriendSelectionDialog ;
 
 	std::vector<RsGxsGroupId> gxsIds ;
 	TokenQueue *mIdQueue ;
@@ -221,9 +233,11 @@ private:
     RsGxsGroupId mIdToNavigate;
     int filter;
 
+    //unseenp2p
     QString stringList;
     std::set<GxsChatMember> selectedList;
-
+    RsGxsGroupId groupChatId;
+    ShowFriendListMode showMode;
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(UnseenFriendSelectionWidget::ShowTypes)

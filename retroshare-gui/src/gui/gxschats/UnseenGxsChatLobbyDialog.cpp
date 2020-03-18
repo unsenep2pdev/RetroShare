@@ -60,6 +60,7 @@
 #include "gui/gxs/RsGxsUpdateBroadcastBase.h"
 #include "gui/common/UIStateHelper.h"
 #include "gui/gxschats/CreateGxsChatMsg.h"
+#include "gui/common/UnseenFriendSelectionDialog.h"
 
 #define COLUMN_NAME      0
 #define COLUMN_ACTIVITY  1
@@ -266,13 +267,7 @@ void UnseenGxsChatLobbyDialog::leaveGxsGroupChat()
         if (chatsInfo.size() > 0)
         {
             GxsChatMember myown;
-            std::list<RsGxsId> own_ids ;
-            rsIdentity->getOwnIds(own_ids) ;
-            if(!own_ids.empty())
-            {
-                myown.chatPeerId = rsPeers->getOwnId();
-                myown.chatGxsId = own_ids.front();
-            }
+            rsGxsChats->getOwnMember(myown);
             if(chatsInfo[0].members.find(myown)!= chatsInfo[0].members.end())
                 chatsInfo[0].members.erase(myown);
             uint32_t token;
@@ -285,19 +280,32 @@ void UnseenGxsChatLobbyDialog::inviteFriends()
 {
     std::cerr << "Inviting friends" << std::endl;
 
-    std::set<RsPeerId> ids = FriendSelectionDialog::selectFriends_SSL(NULL,tr("Invite friends"),tr("Select friends to invite:"), FriendSelectionWidget::MODUS_CHECK, FriendSelectionWidget::SHOW_SSL) ;
+    std::set<GxsChatMember> invitedMemberList = UnseenFriendSelectionDialog::selectFriends_GxsChatMember(NULL,mGroupId, tr("Invite friends"),tr(""), UnseenFriendSelectionWidget::MODUS_CHECK,UnseenFriendSelectionWidget::SHOW_CONTACTS) ;
 
-    std::cerr << "Inviting these friends:" << std::endl;
+    //UnseenFriendSelectionDialog dialog(parent,"",UnseenFriendSelectionWidget::MODUS_CHECK,UnseenFriendSelectionWidget::SHOW_CONTACTS,UnseenFriendSelectionWidget::IDTYPE_SSL,psids) ;
 
-    if (!mChatId.isLobbyId())
-        return ;
-
-    for(std::set<RsPeerId>::const_iterator it(ids.begin());it!=ids.end();++it)
+    std::cerr << " All new invited friends: " << std::endl;
+    for(std::set<GxsChatMember>::iterator it = invitedMemberList.begin(); it != invitedMemberList.end(); ++it)
     {
-        std::cerr << "    " << *it  << std::endl;
+        std::cerr << " Member: " << (*it).nickname <<  std::endl;
+    }
 
-        //TODO: change invite member to group with gxs groupchat function
-        //rsMsgs->invitePeerToLobby(mChatId.toLobbyId(),*it) ;
+    //logic for member invite members:
+    std::list<RsGxsGroupId> groupChatId;
+    groupChatId.push_back(mGroupId);
+    std::vector<RsGxsChatGroup> chatsInfo;
+    if (rsGxsChats->getChatsInfo(groupChatId, chatsInfo))
+    {
+        if (chatsInfo.size() > 0)
+        {
+            for(std::set<GxsChatMember>::iterator it = invitedMemberList.begin(); it != invitedMemberList.end(); ++it)
+            {
+                if(chatsInfo[0].members.find(*it)== chatsInfo[0].members.end())
+                    chatsInfo[0].members.insert(*it);
+            }
+            uint32_t token;
+            rsGxsChats->updateGroup(token, chatsInfo[0]);
+        }
     }
 }
 

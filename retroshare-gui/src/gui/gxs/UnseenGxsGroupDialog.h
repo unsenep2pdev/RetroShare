@@ -143,7 +143,7 @@ public:
 private:
 	void newGroup();
     //void init(const std::set<RsPeerId>& friends_list, const std::set<RsPgpId>& peer_list2);
-    void init(const std::set<RsPgpId>& peer_list2, const std::set<RsPeerId>& peer_list, const std::set<RsGxsId>& peer_list3);
+    void init(UnseenFriendSelectionWidget::ShowFriendListMode _showMode, const std::set<RsPgpId>& peer_list2, const std::set<RsPeerId>& peer_list, const std::set<RsGxsId>& peer_list3);
 	void initMode();
 
 	// Functions that can be overloaded for specific stuff.

@@ -279,21 +279,54 @@ void UnseenFriendSelectionWidget::loadRequest(const TokenQueue */*queue*/, const
 
 	gxsIds.clear() ;
 
-	for(uint32_t i=0;i<datavector.size();++i)
-	{
-        //remove ourself gxsId when show contact list here
-        if (myGroupIdVector.find(datavector[i].mMeta.mGroupId) == myGroupIdVector.end())
-            gxsIds.push_back(datavector[i].mMeta.mGroupId) ;
-        else
-            std::cerr << "My RsGxsGroupId = " << datavector[i].mMeta.mGroupId << std::endl;
-        //std::cerr << "UnseenFriendSelectionWidget got datavector ID = " << datavector[i].mMeta.mGroupId << std::endl;
-	}
+    //here we can set the gxsIds with different options:
+    // 1 - all Identities: MODE_CREATE_GROUP, MODE_EDIT_GROUP (for Admin)
+    // 2 - only Identities without existing members: MODE_INVITE_FRIENDS
 
+    if (showMode == MODE_CREATE_GROUP || showMode == MODE_EDIT_GROUP)
+    {
+        //do not change the gxsIds
+        for(uint32_t i=0;i<datavector.size();++i)
+        {
+            //remove ourself gxsId when show contact list here
+            if (myGroupIdVector.find(datavector[i].mMeta.mGroupId) == myGroupIdVector.end())
+                gxsIds.push_back(datavector[i].mMeta.mGroupId) ;
+            else
+                std::cerr << "My RsGxsGroupId = " << datavector[i].mMeta.mGroupId << std::endl;
+        }
+    }
+    else if (showMode == MODE_INVITE_FRIENDS)
+    {
+        //change the gxsIds: remove all the existing members in the gxsIds
+        std::list<RsGxsGroupId> groupChatIdList;
+        groupChatIdList.push_back(groupChatId);
+        std::vector<RsGxsChatGroup> chatsInfo;
+        if (rsGxsChats->getChatsInfo(groupChatIdList, chatsInfo))
+        {
+            if (chatsInfo.size() > 0)
+            {
+                std::set<RsGxsGroupId> memberList;
+                memberList.clear();
+                for ( std::set<GxsChatMember>::iterator it =chatsInfo[0].members.begin(); it != chatsInfo[0].members.end(); ++it)
+                {
+                    memberList.insert((RsGxsGroupId)(*it).chatGxsId);
+                }
+                std::cerr << "Do not add member to the gxsIds, member list total: " << memberList.size() << std::endl;
+                for(uint32_t i=0;i<datavector.size();++i)
+                {
+                    //remove all existing member list in gxsId (that mean insert mGroupId to gxsIds only when
+                    // it  when it is not in the member list
+                    if (memberList.find(datavector[i].mMeta.mGroupId) == memberList.end() && myGroupIdVector.find(datavector[i].mMeta.mGroupId) == myGroupIdVector.end())
+                        gxsIds.push_back(datavector[i].mMeta.mGroupId);
+                }
+            }
+        }
+    }
     //unseenp2p - save the gxsIds to the smartlistmodel
     smartListModel_->setAllIdentites(gxsIds);
     emit ui->friendList->model()->layoutChanged();
-    ui->friendList->show();
 
+    ui->friendList->show();
 	//std::cerr << "Got all " << datavector.size() << " ids from rsIdentity. Calling update of list." << std::endl;
 	fillList() ;
 }
@@ -975,7 +1008,7 @@ void UnseenFriendSelectionWidget::selectedIds(IdType idType, std::set<std::strin
            }
         }
     }
-    else if (idType == IDTYPE_GXS)
+    else if (idType == IDTYPE_GXS || idType == IDTYPE_GXS_CHAT_MEMBER)
     {
         for(std::set<GxsChatMember>::iterator it2 = selectedList.begin(); it2 != selectedList.end(); ++it2)
         {
@@ -989,6 +1022,7 @@ void UnseenFriendSelectionWidget::selectedIds(IdType idType, std::set<std::strin
            ids.insert(it2->chatPeerId.toStdString());
         }
     }
+
 }
 
 void UnseenFriendSelectionWidget::deselectAll()
@@ -1019,6 +1053,16 @@ void UnseenFriendSelectionWidget::getSelectedContacts(std::set<GxsChatMember> &l
        list.insert(*it2);
     }
     //list = selectedList;
+}
+
+void UnseenFriendSelectionWidget::setGxsGroupId(const RsGxsGroupId _groupChatId)
+{
+    groupChatId = _groupChatId;
+}
+
+void UnseenFriendSelectionWidget::setModeOfFriendList(UnseenFriendSelectionWidget::ShowFriendListMode _showMode)
+{
+    showMode = _showMode;
 }
 
 void UnseenFriendSelectionWidget::updateLineEditFromList()

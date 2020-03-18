@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>446</width>
-    <height>320</height>
+    <width>450</width>
+    <height>613</height>
    </rect>
   </property>
   <layout class="QVBoxLayout" name="FriendSelectionWidgetVLayout">
@@ -32,7 +32,7 @@
    </item>
    <item>
     <widget class="UnseenContactSmartListView" name="friendList">
-      <property name="enabled">
+     <property name="enabled">
       <bool>true</bool>
      </property>
      <property name="sizePolicy">
@@ -44,15 +44,20 @@
      <property name="contextMenuPolicy">
       <enum>Qt::CustomContextMenu</enum>
      </property>
-     <property name="iconSize" stdset="0">
+     <property name="iconSize">
       <size>
        <width>19</width>
        <height>19</height>
       </size>
      </property>
-     <property name="allColumnsShowFocus" stdset="0">
+     <property name="allColumnsShowFocus">
       <bool>true</bool>
      </property>
+     <column>
+      <property name="text">
+       <string notr="true">1</string>
+      </property>
+     </column>
     </widget>
    </item>
   </layout>
