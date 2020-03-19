@@ -4938,6 +4938,26 @@ bool p3IdService::approveContact(RsGxsMyContact &contact, bool is_denied){
             || contact.status==RsGxsMyContact::PENDING_REQ)
         {
             contact.status = RsGxsMyContact::APPROVE;
+
+
+            std::string cert = contact.mContactInfo["cert_url"];
+            RsPeerId sslId;
+            RsPgpId pgpId;
+            std::string errorString;
+
+            if(! (rsPeers->loadCertificateFromString(cert, sslId, pgpId, errorString))){
+                return false; //not valid CERTIFICATE!
+            }
+
+            if(!rsPeers->acceptInvite(cert)){
+                return false;
+            }
+            contact.peerId = sslId;
+            auto it = contact.mContactInfo.find("cert_url");
+            if(it != contact.mContactInfo.end() ){
+                contact.mContactInfo.erase(it);
+            }
+
             mContacts.erase(contact);
             mContacts.insert(contact);
             contactRequestPending.insert(contact);
