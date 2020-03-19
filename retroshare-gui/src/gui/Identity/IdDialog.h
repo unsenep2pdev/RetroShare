@@ -121,6 +121,7 @@ private slots:
 	void openAddContactPage();
 	void openChatWindow(QTreeWidgetItem *item, int col);
 	void peerStatusChanged(const QString &peerId, int status);
+    void gxsContactStatusChanged(const QString &gxs_id, int status);
 private:
 	void processSettings(bool load);
 	QString createUsageString(const RsIdentityUsage& u) const;

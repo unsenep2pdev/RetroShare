@@ -423,6 +423,23 @@ void NotifyQt::notifyPeerStatusChangedSummary()
 	emit peerStatusChangedSummary();
 }
 
+void NotifyQt::notifyGxsContactStatusChanged(const std::string&  gxs_id,   uint32_t  status){
+    {
+        QMutexLocker m(&_mutex) ;
+        if(!_enabled)
+            return ;
+    }
+
+#ifdef NOTIFY_DEBUG
+    std::cerr << "Notifyqt:: notified that peer " << peer_id << " has changed the state to " << state << std::endl;
+#endif
+
+
+    emit gxsContactStatusChanged(QString::fromStdString(gxs_id), status);
+    std::cerr<<"NotifyQt::notifyGxsContactStatusChanged(gxsId):"<<gxs_id<<std::endl;
+
+}
+
 void NotifyQt::notifyGxsChange(const RsGxsChanges& changes)
 {
     {

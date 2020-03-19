@@ -164,7 +164,7 @@ std::ostream &operator<<(std::ostream &out, const RsGxsIdGroup &group);
 class RsGxsMyContact: RsSerializable
 {
     public:
-        enum STATUS {UNKNOWN,PENDING,PENDING_REQ, PENDING_ACCEPT, REQUEST,ACCEPT, APPROVE, TRUSTED, BANNED, ACK};
+        enum STATUS {UNKNOWN,PENDING,PENDING_REQ, PENDING_ACCEPT, REQUEST,ACCEPT, APPROVE, TRUSTED, BANNED, REJECT,ACK};
         /*  PENDING=NOT READY, PENDING_REQ=ALREADY SENT REQUEST, PENDING_ACCEPT=ALREADY RECEIVE REQ
          *  ACCEPT=  APPROVE already add Friend.
          *  BANNED = REJECT TO BE FRIEND
@@ -456,13 +456,11 @@ struct RsIdentity : RsGxsIfaceHelper
     virtual bool removeMyContact(const RsGxsMyContact& contact) =0;
     virtual void getMyContacts(std::set<RsGxsMyContact>& contactList) =0;
 
-    virtual bool acceptFriendContact(const RsGxsId &id) =0;
-    virtual bool addFriendContact(RsGxsMyContact &contact)=0;
-    virtual bool addFriendContact(RsGxsId &id)=0;
-    virtual bool approveFriendContact(RsGxsId &id, bool denied=false)=0;
-    virtual bool approveFriendContact(RsGxsMyContact &contact, bool denied=false)=0;
+    virtual bool validContact(const RsGxsId &id) =0;
+    virtual bool inviteContact(RsGxsId &id)=0;
+    virtual bool approveContact(RsGxsId &id, bool denied=false)=0;
+    virtual bool approveContact(RsGxsMyContact &contact, bool denied=false)=0;
     virtual void processContactPendingRequest()=0;
-    virtual void processContactPendingApproval()=0;
 
 
 	virtual bool serialiseIdentityToMemory( const RsGxsId& id,

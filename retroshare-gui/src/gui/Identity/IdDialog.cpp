@@ -261,7 +261,10 @@ IdDialog::IdDialog(QWidget *parent) :
 	connect(ui->addContactButton, SIGNAL(clicked()), this, SLOT(openAddContactPage()));
 
 	//28 sep 2018 - meiyousixin - check the peer status change to change status of peer on contact list
-	connect(NotifyQt::getInstance(), SIGNAL(peerStatusChanged(const QString&,int)), this, SLOT(peerStatusChanged(const QString&,int)));
+    connect(NotifyQt::getInstance(), SIGNAL(peerStatusChanged(const QString&,int)), this, SLOT(peerStatusChanged(const QString&,int)));
+
+    //unseenp2pdev - adding status update for gxscontact
+    connect(NotifyQt::getInstance(), SIGNAL(gxsContactStatusChanged(const QString&,int)), this, SLOT(gxsContactStatusChanged(const QString&,int)));
 
 	ui->avlabel_Circles->setPixmap(QPixmap(":/icons/png/circles.png"));
 
@@ -1735,10 +1738,12 @@ void IdDialog::insertIdList(uint32_t token)
     //UnseenP2P ContactList approach.
     std::set<RsGxsMyContact> contactList;
     rsIdentity->getMyContacts(contactList);
-    for(auto it = contactList.begin(); it != contactList.end(); it++){
-         std::cerr <<"Name : "<< it->name << " and GxsId: " << it->gxsId << std::endl;
-         std::cerr <<"Status: " << it->status << " and PgPId: "<< std::endl;
-    }
+
+//    std::cerr <<"IdDialog::insertIdList()"<<std::endl;
+//    for(auto it = contactList.begin(); it != contactList.end(); it++){
+//         std::cerr <<"Name : "<< it->name << " and GxsId: " << it->gxsId << std::endl;
+//         std::cerr <<"Status: " << it->status << " and PgPId: "<< std::endl;
+//    }
 
 	//meiyousixin - show again the friend list here
     //showFriendList();
@@ -2914,4 +2919,35 @@ void IdDialog::peerStatusChanged(const QString& peerId, int status)
 	}
 
    return;
+}
+
+void IdDialog::gxsContactStatusChanged(const QString &gxs_id, int status){
+
+    std::cerr <<"IdDialog::gxsContactStatusChanged(): notify rsGxsId:"<<gxs_id.toStdString()<<" and status: "<<status <<std::endl;
+
+    QTreeWidgetItemIterator itemIterator(ui->idTreeWidget);
+    QTreeWidgetItem *item = NULL;
+
+    while ((item = *itemIterator) != NULL)
+    {
+        ++itemIterator;
+        QTreeWidgetItem *parent_item = item->parent() ;
+
+        if  (parent_item == allItem )
+        {
+            continue;
+        }
+
+        std::string Id = item->text(RSID_COL_KEYID).toStdString();
+        if (gxs_id.toStdString() ==Id )
+        {
+            item->setIcon(RSID_COL_VOTES, QIcon(StatusDefs::imageStatus(status)));
+            //if (status == RS_STATUS_OFFLINE)
+            //item->setIcon(RSID_COL_VOTES, QIcon(IMAGE_UNKNOWN));
+            break;
+
+        }
+    }
+
+    return;
 }

@@ -379,13 +379,11 @@ public:
     void triggerConfigSave();
     void notifyStatusConnenxion(DistantChatPeerId distantPeerId,  uint32_t status );
 
-    virtual bool acceptFriendContact(const RsGxsId &id) ;
-    virtual bool addFriendContact(RsGxsMyContact &contact);
-    virtual bool addFriendContact(RsGxsId &id);
-    virtual bool approveFriendContact(RsGxsId &id, bool denied=false);
-    virtual bool approveFriendContact(RsGxsMyContact &contact, bool denied=false);
+    virtual bool validContact(const RsGxsId &id) ;
+    virtual bool inviteContact(RsGxsId &id);
+    virtual bool approveContact(RsGxsId &id, bool denied=false);
+    virtual bool approveContact(RsGxsMyContact &contact, bool denied=false);
     virtual void processContactPendingRequest();
-    virtual void processContactPendingApproval();
 
 
 	virtual uint32_t nbRegularContacts() ;
@@ -716,8 +714,6 @@ private:
     typedef std::map<RsGxsMyContact, std::pair<DistantChatPeerInfo,RsChatMsgItem*> > ContactInfo;
     std::map<RsGxsMyContact, DistantChatPeerId> distantPendingConn;
     std::set<RsGxsMyContact> contactRequestPending; //invite or adding contact
-    ContactInfo contactApprovalPending; //waiting to approve on adding contact request
-    ContactInfo contactApprovalAcknowleged;
 
     RsMutex mRsGxsMyChatMtx ;
 

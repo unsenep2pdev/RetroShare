@@ -265,6 +265,22 @@ void NewsFeed::updateDisplay()
 				if (flags & RS_FEED_TYPE_CHANNEL)
 					addFeedItemChannelMsg(fi);
 				break;
+            case RS_FEED_ITEM_IDENTITYCONTACT_UPDATE:
+                if (flags & RS_FEED_TYPE_IDENTITY)
+                    addFeedItemChatNew(fi);
+                break;
+            case RS_FEED_ITEM_IDENTITYCONTACT_ADD:
+                if (flags & RS_FEED_TYPE_IDENTITY)
+                    addFeedItemChatNew(fi);
+                break;
+            case RS_FEED_ITEM_IDENTITY_NEW:
+                if (flags & RS_FEED_TYPE_IDENTITY)
+                    addFeedItemChatNew(fi);
+                break;
+            case RS_FEED_ITEM_IDENTITY_MSG:
+                if (flags & RS_FEED_TYPE_IDENTITY)
+                    addFeedItemChatNew(fi);
+                break;
             case RS_FEED_ITEM_CHATS_NEW:
                 if (flags & RS_FEED_TYPE_GXSCHAT)
                     addFeedItemChatNew(fi);
