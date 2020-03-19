@@ -27,11 +27,13 @@ FORMS   += TorControl/TorControlWindow.ui \
 SOURCES += gui/common/UnseenFriendSelectionWidget.cpp \
     gui/common/UnseenContactSmartlistview.cpp \
     gui/common/UnseenContactSmartlistmodel.cpp \
-    gui/UnseenContactItemdelegate.cpp
+    gui/UnseenContactItemdelegate.cpp \
+    gui/common/UnseenFriendSelectionDialog.cpp
 HEADERS += gui/common/UnseenFriendSelectionWidget.h \
     gui/common/UnseenContactSmartlistview.h \
     gui/common/UnseenContactSmartlistmodel.h \
-    gui/UnseenContactItemdelegate.h
+    gui/UnseenContactItemdelegate.h \
+    gui/common/UnseenFriendSelectionDialog.h
 
 #QMAKE_CFLAGS += -fmudflap 
 #LIBS *= /usr/lib/gcc/x86_64-linux-gnu/4.4/libmudflap.a /usr/lib/gcc/x86_64-linux-gnu/4.4/libmudflapth.a

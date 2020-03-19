@@ -242,6 +242,17 @@ ChatDialog* ChatDialog::getExistingChat(gxsChatId id)
 	}
 }
 
+/*static*/ void ChatDialog::closeChat(const gxsChatId &chat_id)
+{
+    ChatDialog *chatDialog = getExistingChat(chat_id);
+
+    if (chatDialog) {
+        //delete chatDialog; // ChatDialog removes itself from the map
+        chatDialog->deleteLater();
+    }
+}
+
+
 /*static*/ void ChatDialog::chatMessageReceived(ChatMessage msg)
 {
     if(msg.chat_id.isBroadcast())

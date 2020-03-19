@@ -79,19 +79,19 @@ public:
 	explicit ChatWidget(QWidget *parent = 0);
 	~ChatWidget();
 
-        void init(const ChatId &chat_id, const QString &title);
-        //unseenp2p
-        void init(const gxsChatId &chat_id, const QString &title);
+    void init(const ChatId &chat_id, const QString &title);
+    //unseenp2p
+    void init(const gxsChatId &chat_id, const QString &title);
 
-        ChatId getChatId();
-        ChatType chatType();
+    ChatId getChatId();
+    ChatType chatType();
 
-        //unseenp2p
-        gxsChatId getGxsChatId();
+    //unseenp2p
+    gxsChatId getGxsChatId();
 
-        // allow/disallow sendng of messages
-        void blockSending(QString msg);
-        void unblockSending();
+    // allow/disallow sendng of messages
+    void blockSending(QString msg);
+    void unblockSending();
 
 	bool hasNewMessages() { return newMessages; }
 	bool isTyping() { return typing; }
@@ -114,8 +114,6 @@ public:
 	int getPeerStatus() { return peerStatus; }
 	void setName(const QString &name);
     void setTitle(const QString &title);
-
-
 	bool setStyle();
 	const RSStyle *getStyle() { return &style; }
 
@@ -135,6 +133,8 @@ public:
 	void pasteText(const QString&);
 
 	const QList<ChatWidgetHolder*> &chatWidgetHolderList() { return mChatWidgetHolder; }
+
+    void disableTextInbox();
 
 public slots:
 	void updateStatus(const QString &peer_id, int status);

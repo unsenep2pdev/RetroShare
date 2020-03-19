@@ -304,8 +304,35 @@ void GxsChatDialog::toggleAutoDownload()
         std::cerr << std::endl;
     }
 }
+//use RsGxsChatGroup for unseenp2p
+void GxsChatDialog::loadGroupSummaryToken2(const uint32_t &token, std::list<RsGxsChatGroup> &groupInfo, RsUserdata *&userdata)
+{
+    std::vector<RsGxsChatGroup> groups;
+    rsGxsChats->getGroupData(token, groups);
+
+    /* Save groups to fill icons and description */
+    GxsChatGroupInfoData *gxschatData = new GxsChatGroupInfoData;
+    userdata = gxschatData;
+
+    std::vector<RsGxsChatGroup>::iterator groupIt;
+    for (groupIt = groups.begin(); groupIt != groups.end(); ++groupIt) {
+        RsGxsChatGroup &group = *groupIt;
+        groupInfo.push_back(group);
+
+        if (group.mImage.mData != NULL) {
+            QPixmap image;
+            image.loadFromData(group.mImage.mData, group.mImage.mSize, "PNG");
+            gxschatData->mIcon[group.mMeta.mGroupId] = image;
+        }
+
+        if (!group.mDescription.empty()) {
+            gxschatData->mDescription[group.mMeta.mGroupId] = QString::fromUtf8(group.mDescription.c_str());
+        }
+    }
+}
 
 void GxsChatDialog::loadGroupSummaryToken(const uint32_t &token, std::list<RsGroupMetaData> &groupInfo, RsUserdata *&userdata)
+
 {
     std::vector<RsGxsChatGroup> groups;
     rsGxsChats->getGroupData(token, groups);

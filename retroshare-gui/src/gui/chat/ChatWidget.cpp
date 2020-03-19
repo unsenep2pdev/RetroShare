@@ -443,6 +443,7 @@ void ChatWidget::init(const gxsChatId &chat_id, const QString &title)
     this->mGxsChatId = chat_id;
     this->title = title;
 
+    ui->statusLabel->hide();
     ui->titleLabel->setText(RsHtml::plainText(title));
     ui->chatTextEdit->setMaxBytes(this->maxMessageSize() - 200);
 
@@ -2208,4 +2209,9 @@ void ChatWidget::saveImage()
 	QPoint point = ui->actionSave_image->data().toPoint();
 	QTextCursor cursor = ui->textBrowser->cursorForPosition(point);
 	ImageUtil::extractImage(window(), cursor);
+}
+
+void ChatWidget::disableTextInbox()
+{
+   // ui->chatTextEdi
 }

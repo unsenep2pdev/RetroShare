@@ -82,15 +82,17 @@ public:
     //unseenp2p - add for gxs groupchat
     RsGxsGroupId groupId() const {return mGroupId; }
 
+    void updateTitle(QString title);
+
 private slots:
 	void participantsTreeWidgetCustomPopupMenu( QPoint point );
 	void textBrowserAskContextMenu(QMenu* contextMnu, QString anchorForPosition, const QPoint point);
 	void inviteFriends() ;
-	void leaveLobby() ;
+    void leaveGxsGroupChat() ;
 	void filterChanged(const QString &text);
     void showInPeopleTab();
 signals:
-	void lobbyLeave(ChatLobbyId) ;
+    void gxsGroupLeave(RsGxsGroupId) ;
 	void typingEventReceived(ChatLobbyId) ;
 	void messageReceived(bool incoming, ChatLobbyId lobby_id, QDateTime time, QString senderName, QString msg) ;
     //unseenp2p: for gxs groupchat
@@ -170,7 +172,7 @@ private:
 
     //unseenp2p - add for gxs groupchat
     //RsGxsGroupId  mGXSGroupId;
-    std::set<RsPeerId> old_participating_friends;
+    std::set<GxsChatMember> old_participating_friends;
 
     ////////////////////////////////////////////////////////////////////////////////////////////
     ///             THESE ARE FOR 4 CLASS THAT THIS CLASS NEED TO DO                ////////////
