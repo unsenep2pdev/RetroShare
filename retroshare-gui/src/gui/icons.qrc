@@ -243,5 +243,7 @@
         <file>icons/yandex.png</file>
         <file>icons/png/markdown-mark.png</file>
         <file>../rsMacIcon.icns</file>
+        <file>icons/png/memberslist.png</file>
+        <file>icons/png/memberslist2.png</file>
     </qresource>
 </RCC>
