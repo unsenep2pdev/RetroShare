@@ -2576,7 +2576,7 @@ bool RsGenExchange::checkKeys(const RsTlvSecurityKeySet& keySet)
 	}
 
 	// user must have both private and public parts of publish and admin keys
-        return adminFound && publishFound;
+        return adminFound || publishFound;
 }
 
 void RsGenExchange::publishGrps()
