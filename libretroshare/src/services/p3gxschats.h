@@ -97,11 +97,12 @@ protected:
 
 
     virtual RsGenExchange::ServiceCreate_Return service_CreateGroup(RsGxsGrpItem* grpItem, RsTlvSecurityKeySet& keySet);
+    virtual RsGenExchange::ServiceCreate_Return service_UpateGroup(RsGxsGrpItem* grpItem, const RsTlvSecurityKeySet& keySet);
     virtual RsGenExchange::ServiceCreate_Return service_PublishGroup(RsNxsGrp *grp, bool update=false);
     virtual RsGenExchange::ServiceCreate_Return service_CreateMessage(RsNxsMsg* msg);
 
-    virtual ServiceCreate_Return service_RecvBounceGroup(RsNxsGrp *grp, bool isNew);
-    virtual ServiceCreate_Return service_RecvBounceMessage(RsNxsMsg* msg, bool isNew);
+    virtual RsGenExchange::ServiceCreate_Return service_RecvBounceGroup(RsNxsGrp *grp, bool isNew);
+    virtual RsGenExchange::ServiceCreate_Return service_RecvBounceMessage(RsNxsMsg* msg, bool isNew);
 
 
     virtual void notifyReceivePublishKey(const RsGxsGroupId &grpId, const RsPeerId &peerid);

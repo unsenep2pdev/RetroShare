@@ -2350,6 +2350,16 @@ RsGenExchange::ServiceCreate_Return RsGenExchange::service_CreateGroup(RsGxsGrpI
 	return SERVICE_CREATE_SUCCESS;
 }
 
+RsGenExchange::ServiceCreate_Return RsGenExchange::service_UpateGroup(RsGxsGrpItem* /* grpItem */,
+        const RsTlvSecurityKeySet& /* keySet */)
+{
+#ifdef GEN_EXCH_DEBUG
+    std::cerr << "RsGenExchange::service_UpateGroup(): Does nothing"
+              << std::endl;
+#endif
+    return SERVICE_GXSCHATS_DEFAULT;
+}
+
 RsGenExchange::ServiceCreate_Return RsGenExchange::service_PublishGroup(RsNxsGrp *grp, bool update){
 #ifdef GEN_EXCH_DEBUG
     std::cerr << "RsGenExchange::service_PublishGroup(): Does nothing"
@@ -2421,7 +2431,7 @@ void RsGenExchange::processGroupUpdatePublish()
 		//gup.grpItem->meta = *meta;
         GxsGrpPendingSign ggps(gup.grpItem, gup.mToken);
 
-		if(checkKeys(meta->keys))
+        if(checkKeys(meta->keys)||service_UpateGroup(gup.grpItem,meta->keys)==SERVICE_GXSCHATS_UPDATE_SUCCESS)
 		{
 			ggps.mKeys = meta->keys;
             
@@ -2576,7 +2586,7 @@ bool RsGenExchange::checkKeys(const RsTlvSecurityKeySet& keySet)
 	}
 
 	// user must have both private and public parts of publish and admin keys
-        return adminFound || publishFound;
+        return adminFound && publishFound;
 }
 
 void RsGenExchange::publishGrps()

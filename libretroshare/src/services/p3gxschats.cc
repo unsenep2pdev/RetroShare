@@ -267,6 +267,46 @@ RsGenExchange::ServiceCreate_Return p3GxsChats::service_CreateGroup(RsGxsGrpItem
     return SERVICE_CREATE_SUCCESS;
 }
 
+RsGenExchange::ServiceCreate_Return p3GxsChats::service_UpateGroup(RsGxsGrpItem* grpItem, const RsTlvSecurityKeySet& keySet){
+#ifdef GXSCHATS_DEBUG
+    std::cerr <<"*****************p3GxsChats::service_UpateGroup()**********"<<std::endl;
+#endif
+
+    typedef std::map<RsGxsId, RsTlvPrivateRSAKey> keyMap;
+    const keyMap& allKeys = keySet.private_keys;
+    keyMap::const_iterator cit = allKeys.begin();
+
+    bool adminFound = false, publishFound = false;
+    for(; cit != allKeys.end(); ++cit)
+    {
+        const RsTlvPrivateRSAKey& key = cit->second;
+        if(key.keyFlags & RSTLV_KEY_TYPE_FULL)		// this one is not useful. Just a security.
+        {
+            if(key.keyFlags & RSTLV_KEY_DISTRIB_ADMIN)
+                adminFound = true;
+
+            if(key.keyFlags & RSTLV_KEY_DISTRIB_PUBLISH)
+                publishFound = true;
+
+        }
+        else if(key.keyFlags & RSTLV_KEY_TYPE_PUBLIC_ONLY)		// this one is not useful. Just a security.
+        {
+            std::cerr << "(EE) found a public only key in the private key list" << std::endl;
+            return SERVICE_GXSCHATS_DEFAULT ;
+        }
+    }
+
+    // user must have both private and public parts of publish and admin keys
+    if(adminFound || publishFound)  //owner | admin of the gxsgroup
+        return SERVICE_GXSCHATS_UPDATE_SUCCESS;
+
+    if( grpItem->meta.mCircleType !=GXS_CIRCLE_TYPE_PUBLIC)
+        return SERVICE_GXSCHATS_DEFAULT ;
+
+    return SERVICE_GXSCHATS_UPDATE_SUCCESS;
+
+}
+
 RsGenExchange::ServiceCreate_Return p3GxsChats::service_PublishGroup(RsNxsGrp *grp, bool update){
     if (ownChatId==NULL){ //initalized chatInfo
         initChatId();
