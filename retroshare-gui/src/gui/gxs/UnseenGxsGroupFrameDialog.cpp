@@ -139,13 +139,15 @@ UnseenGxsGroupFrameDialog::UnseenGxsGroupFrameDialog(RsGxsIfaceHelper *ifaceImpl
 
     connect(ui->unseenGroupTreeWidget, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(groupTreeCustomPopupMenu(QPoint)));
 
-	/* Set initial size the splitter */
-	ui->splitter->setStretchFactor(0, 0);
-	ui->splitter->setStretchFactor(1, 1);
+    /* Set initial size the splitter */
+    ui->splitter->setStretchFactor(0, 0);
+    ui->splitter->setStretchFactor(1, 1);
+    ui->splitter->setCollapsible(0, false);
+    ui->splitter->setCollapsible(1, false);
 
 	QList<int> sizes;
-	sizes << 300 << width(); // Qt calculates the right sizes
-	ui->splitter->setSizes(sizes);
+    sizes << 200 << width(); // Qt calculates the right sizes
+    ui->splitter->setSizes(sizes);
 
 #ifndef UNFINISHED
 	ui->todoPushButton->hide();
