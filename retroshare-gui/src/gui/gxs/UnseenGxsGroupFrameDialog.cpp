@@ -93,7 +93,8 @@ UnseenGxsGroupFrameDialog::UnseenGxsGroupFrameDialog(RsGxsIfaceHelper *ifaceImpl
 	mOtherGroups = NULL;
 	mMessageWidget = NULL;
 
-    QObject::connect( NotifyQt::getInstance(), SIGNAL(alreadySendChat(const gxsChatId&, std::string, long long, std::string, bool)), this, SLOT(updateRecentTime(const ChatId&, std::string, long long, std::string, bool)));
+    QObject::connect( NotifyQt::getInstance(), SIGNAL(alreadySendChat(const gxsChatId&, std::string, long long, std::string, bool)), this, SLOT(updateRecentTimeOrNewMsg(const gxsChatId&, std::string, long long, std::string, bool)));
+    QObject::connect( NotifyQt::getInstance(), SIGNAL(newChatMessageReceive(const gxsChatId&, std::string, long long, std::string, bool)), this, SLOT(updateRecentTimeOrNewMsg(const gxsChatId&, std::string, long long, std::string, bool)));
 
     connect(ui->filterLineEdit, SIGNAL(textChanged(QString)), this, SLOT(filterChanged()));
     connect(ui->filterLineEdit, SIGNAL(filterChanged(int)), this, SLOT(filterChanged()));
@@ -120,12 +121,6 @@ UnseenGxsGroupFrameDialog::UnseenGxsGroupFrameDialog(RsGxsIfaceHelper *ifaceImpl
 
     ui->unseenGroupTreeWidget->setContextMenuPolicy(Qt::CustomContextMenu) ;
     ui->unseenGroupTreeWidget->header()->hide();
-
-//	/* Initialize display button */
-//	initDisplayMenu(ui->displayButton);
-
-    //sort();
-
 
 	/* Setup Queue */
 	mInterface = ifaceImpl;
@@ -425,11 +420,6 @@ void UnseenGxsGroupFrameDialog::groupTreeCustomPopupMenu(QPoint point)
         action = contextMnu.addAction(QIcon(IMAGE_SHARE), tr("Share publish permissions"), this, SLOT(sharePublishKey()));
         action->setEnabled(!mGroupId.isNull() && isPublisher);
     }
-
-//	if (getLinkType() != RetroShareLink::TYPE_UNKNOWN) {
-//        action = contextMnu.addAction(QIcon(IMAGE_COPYLINK), tr("Copy UnseenP2P Link"), this, SLOT(copyGroupLink()));
-//		action->setEnabled(!mGroupId.isNull());
-//	}
 
     contextMnu.addSeparator();
 
@@ -928,6 +918,7 @@ void UnseenGxsGroupFrameDialog::groupInfoToGroupItemInfo(const RsGroupMetaData &
 void UnseenGxsGroupFrameDialog::groupInfoToUnseenGroupItemInfo(const RsGroupMetaData &groupInfo, UnseenGroupItemInfo &groupItemInfo, const RsUserdata */*userdata*/)
 {
     groupItemInfo.id = QString::fromStdString(groupInfo.mGroupId.toStdString());
+    groupItemInfo.gxsGroupId = groupInfo.mGroupId;
     groupItemInfo.name = QString::fromUtf8(groupInfo.mGroupName.c_str());
     groupItemInfo.popularity = groupInfo.mPop;
     groupItemInfo.lastpost = QDateTime::fromTime_t(groupInfo.mLastPost);
@@ -961,6 +952,7 @@ void UnseenGxsGroupFrameDialog::groupInfoToUnseenGroupItemInfo(const RsGroupMeta
 void UnseenGxsGroupFrameDialog::groupInfoToUnseenGroupItemInfo2(const RsGxsChatGroup &groupInfo, UnseenGroupItemInfo &groupItemInfo, const RsUserdata */*userdata*/)
 {
     groupItemInfo.id = QString::fromStdString(groupInfo.mMeta.mGroupId.toStdString());
+    groupItemInfo.gxsGroupId = groupInfo.mMeta.mGroupId;
     groupItemInfo.name = QString::fromUtf8(groupInfo.mMeta.mGroupName.c_str());
     groupItemInfo.popularity = groupInfo.mMeta.mPop;
     groupItemInfo.lastpost = QDateTime::fromTime_t(groupInfo.mMeta.mLastPost);
@@ -1003,11 +995,10 @@ void UnseenGxsGroupFrameDialog::addChatPage(UnseenGxsChatLobbyDialog *d)
         ChatLobbyInfo linfo;
         ui->stackedWidget->addWidget(d) ;
 
-        //TODO: logic of gxs group chat go here: connect GxsChat signals and slots, replace these ones
-
+        //logic of gxs group chat go here: connect GxsChat signals and slots
         connect(d,SIGNAL(gxsGroupLeave(RsGxsGroupId)),this,SLOT(unsubscribeGxsGroupChat(RsGxsGroupId))) ;
 //        connect(d,SIGNAL(typingEventReceived(ChatLobbyId)),this,SLOT(updateTypingStatus(ChatLobbyId))) ;
-//        connect(d,SIGNAL(messageReceived(bool,ChatLobbyId,QDateTime,QString,QString)),this,SLOT(updateMessageChanged(bool,ChatLobbyId,QDateTime,QString,QString))) ;
+        connect(d,SIGNAL(messageReceived(RsGxsChatMsg,bool,gxsChatId,QDateTime,QString,QString)),this,SLOT(updateMessageChanged(RsGxsChatMsg,bool,gxsChatId,QDateTime,QString,QString))) ;
 //        connect(d,SIGNAL(peerJoined(ChatLobbyId)),this,SLOT(updatePeerEntering(ChatLobbyId))) ;
 //        connect(d,SIGNAL(peerLeft(ChatLobbyId)),this,SLOT(updatePeerLeaving(ChatLobbyId))) ;
 
@@ -1022,51 +1013,57 @@ void UnseenGxsGroupFrameDialog::addChatPage(UnseenGxsChatLobbyDialog *d)
         {
             if (index.row()!=-1)
             {
-                //selectedUId = rsMsgs->getSeletedUIdBeforeSorting(index.row());
+                selectedUId = allGxsGroupList.at(index.row()).id.toStdString();
                 break;
             }
         }
         //get the groupchat info
         std::string uId = groupId.toStdString(); // std::to_string(groupId);
-//        if (!rsMsgs->isChatIdInConversationList(uId))
-//        {
-//            uint current_time = QDateTime::currentDateTime().toTime_t();
-//            std::string groupname = "Unknown name";
-//            //TODO: need to check the
-//            if(rsMsgs->getChatLobbyInfo(id,linfo))
-//            {
-//                groupname = linfo.lobby_name.c_str();
-//                bool is_private = !(linfo.lobby_flags & RS_CHAT_LOBBY_FLAGS_PUBLIC);
-//                int groupChatType = (is_private? 1:0);
-//                //rsMsgs->saveContactOrGroupChatToModelData(groupname, "", 0, current_time, "", true, 0, groupChatType,"", id, uId );
+        RsGxsChatGroup gxsChatGroup;
+        if (!isGroupIdInGxsConversationList(uId))
+        {
+            uint current_time = QDateTime::currentDateTime().toTime_t();
+            std::string groupname = "Unknown name";
+            //TODO: need to get the group name from the RsGxsChat
+            std::list<RsGxsGroupId> groupChatId;
+            groupChatId.push_back(groupId);
+            std::vector<RsGxsChatGroup> chatsInfo;
+            if (rsGxsChats->getChatsInfo(groupChatId, chatsInfo))
+            {
+                if (chatsInfo.size() > 0)
+                {
+                    gxsChatGroup = chatsInfo[0];
+                    saveGxsGroupChatInfoToModelData(chatsInfo[0], "", 0, current_time, "", true );
 
-//                //after open new window and add the new conversation item, need to sort and update the layout
-//                //rsMsgs->sortConversationItemListByRecentTime();
-//                emit ui->unseenGroupTreeWidget->model()->layoutChanged();
-//            }
-//        }
+                    //after open new window and add the new conversation item, need to sort and update the layout
+                    sortGxsConversationListByRecentTime();
+                    emit ui->unseenGroupTreeWidget->model()->layoutChanged();
+                }
+            }
+
+        }
         //Here need to check whether this groupchat this member create or receive auto-accept group invite
         // If this is this member create so no need to clearSelection and re-select, if not, no need to do these following
-//        if (!receiveGroupInvite)
-//        {
-//            ui->lobbyTreeWidget->selectionModel()->clearSelection();
-//            // need to re-select the conversation item when we have new chat only
-//            int seletedrow = rsMsgs->getIndexFromUId(uId);
-//            QModelIndex idx = ui->lobbyTreeWidget->model()->index(seletedrow, 0);
-//            ui->lobbyTreeWidget->selectionModel()->select(idx, QItemSelectionModel::Select);
-//            emit ui->lobbyTreeWidget->model()->layoutChanged();
-//        }
-//        else
-//        {
-//            //if receive the auto-accept group-invite, so after sort conversation items, the selection will go wrong,
-//            // need to save the selected item and re-select again
-//            ui->lobbyTreeWidget->selectionModel()->clearSelection();
-//            int seletedrow = rsMsgs->getIndexFromUId(selectedUId);
-//            QModelIndex idx = ui->lobbyTreeWidget->model()->index(seletedrow, 0);
-//            ui->lobbyTreeWidget->selectionModel()->select(idx, QItemSelectionModel::Select);
-//            emit ui->lobbyTreeWidget->model()->layoutChanged();
-//        }
-//        if (receiveGroupInvite) receiveGroupInvite = false;
+        if (IS_GROUP_ADMIN(gxsChatGroup.mMeta.mSubscribeFlags))
+        {
+            ui->unseenGroupTreeWidget->selectionModel()->clearSelection();
+            // need to re-select the conversation item when we have new chat only
+            int seletedrow = getIndexFromUId(uId);
+            QModelIndex idx = ui->unseenGroupTreeWidget->model()->index(seletedrow, 0);
+            ui->unseenGroupTreeWidget->selectionModel()->select(idx, QItemSelectionModel::Select);
+            emit ui->unseenGroupTreeWidget->model()->layoutChanged();
+        }
+        else
+        {
+            //if receive the auto-accept group-invite, so after sort conversation items, the selection will go wrong,
+            // need to save the selected item and re-select again
+            ui->unseenGroupTreeWidget->selectionModel()->clearSelection();
+            int seletedrow = getIndexFromUId(selectedUId);
+            QModelIndex idx = ui->unseenGroupTreeWidget->model()->index(seletedrow, 0);
+            ui->unseenGroupTreeWidget->selectionModel()->select(idx, QItemSelectionModel::Select);
+            emit ui->unseenGroupTreeWidget->model()->layoutChanged();
+        }
+
     }
 }
 
@@ -1083,9 +1080,10 @@ void UnseenGxsGroupFrameDialog::insertGroupsData(const std::map<RsGxsGroupId,RsG
     QList<UnseenGroupItemInfo> popList;
     QList<UnseenGroupItemInfo> otherList;
     //QList<GroupItemInfo> allGxsGroupList; //unseenp2p - allGxsGroupList = adminList + subList
-    std::vector<UnseenGroupItemInfo> allGxsGroupList; //allGxsGroupList = adminList + subList
+
     std::multimap<uint32_t, UnseenGroupItemInfo> popMap;
 
+    allGxsGroupList.clear();
 	for (auto it = groupList.begin(); it != groupList.end(); ++it) {
 		/* sort it into Publish (Own), Subscribed, Popular and Other */
 		uint32_t flags = it->second.mSubscribeFlags;
@@ -1140,14 +1138,6 @@ void UnseenGxsGroupFrameDialog::insertGroupsData(const std::map<RsGxsGroupId,RsG
     }
 #endif
 
-
-
-//	/* Re-fill group */
-//    if (!ui->unseenGroupTreeWidget->activateId(QString::fromStdString(mGroupId.toStdString()), true)) {
-//		mGroupId.clear();
-//	}
-
-    //updateMessageSummaryList(RsGxsGroupId());
 }
 
 void UnseenGxsGroupFrameDialog::insertGroupsData2(const std::map<RsGxsGroupId,RsGxsChatGroup> &groupList, const RsUserdata *userdata)
@@ -1160,8 +1150,8 @@ void UnseenGxsGroupFrameDialog::insertGroupsData2(const std::map<RsGxsGroupId,Rs
 
     QList<UnseenGroupItemInfo> adminList;
     QList<UnseenGroupItemInfo> subList;
-    std::vector<UnseenGroupItemInfo> allGxsGroupList; //allGxsGroupList = adminList + subList
 
+    allGxsGroupList.clear();
     for (auto it = groupList.begin(); it != groupList.end(); ++it) {
         /* sort it into Publish (Own), Subscribed, Popular and Other */
         uint32_t flags = it->second.mMeta.mSubscribeFlags;
@@ -1512,6 +1502,18 @@ void UnseenGxsGroupFrameDialog::selectConversation(const QModelIndex& index)
 
     showGxsGroupChatMVC(gxsChatId(mGroupId));
 
+    //Need to check the unread msg, if this item has unread number, so call these functions
+    if (gxsGroupItem.UnreadMessagesCount > 0)
+    {
+        //reset the unread number as 0 when user click on the conversation item on the left side
+        updateUnreadNumberOfItemInGxsConversationList(gxsGroupItem.id.toStdString(), 1, true);
+        smartListModel_->setGxsGroupList(allGxsGroupList);
+        //when user click on the conversation item, just update the msg as read
+        //rsHistory->updateMessageAsRead(chatId);
+
+        emit ui->unseenGroupTreeWidget->model()->layoutChanged();
+    }
+
 }
 
 QString UnseenGxsGroupFrameDialog::itemIdAt(QPoint &point)
@@ -1581,49 +1583,82 @@ void UnseenGxsGroupFrameDialog::showGxsGroupChatMVC(gxsChatId chatId)
 }
 
 //update recent time for every chat item and sort by recent time
-void UnseenGxsGroupFrameDialog::updateRecentTime(const gxsChatId & chatId, std::string nickInGroupChat, long long current_time, std::string textmsg, bool isSend)
+void UnseenGxsGroupFrameDialog::updateRecentTimeOrNewMsg(const gxsChatId & gxschatId, std::string nickInGroupChat, long long current_time, std::string textmsg, bool isSend)
 {
 
-        //TODO: update the gxs conversation list
 
-        //Need to update the Conversation list in rsMsg, then update the GUI of chat item list
-//       std::string chatIdStr;
-//       if (chatId.isLobbyId())          //for groupchat
-//       {
-//           chatIdStr = std::to_string(chatId.toLobbyId());
-//       }
-//       else if (chatId.isPeerId())      //for one2one chat
-//       {
-//           chatIdStr = chatId.toPeerId().toStdString();
-//       }
+       //Need to get the selected item with saving uId before sorting and updating the layout
+       //so that we use uId to re-select the item with saved uId
+        // Even when user in search mode, we still can get the right selectedUId
+       QModelIndexList list = ui->unseenGroupTreeWidget->selectionModel()->selectedIndexes();
+       std::string selectedUId;
+       foreach (QModelIndex index, list)
+       {
+           if (index.row()!=-1)
+           {
+               selectedUId = allGxsGroupList.at(index.row()).id.toStdString();
+               break;
+           }
+       }
 
-//       //update both new last msg and last msg datetime to the conversation list
-//       rsMsgs->updateRecentTimeOfItemInConversationList(chatIdStr, nickInGroupChat, current_time, textmsg, !isSend);
+       //update both new last msg and last msg datetime to the conversation list
+        updateRecentTimeOfItemInGxsConversationList(gxschatId.toGxsGroupId().toStdString(), nickInGroupChat, current_time, textmsg, !isSend);
 
-//       //Need to get the selected item with saving uId before sorting and updating the layout
-//       //so that we use uId to re-select the item with saved uId
-//        // Even when user in search mode, we still can get the right selectedUId
-//       QModelIndexList list = ui->lobbyTreeWidget->selectionModel()->selectedIndexes();
-//       std::string selectedUId;
-//       foreach (QModelIndex index, list)
-//       {
-//           if (index.row()!=-1)
-//           {
-//               selectedUId = rsMsgs->getSeletedUIdBeforeSorting(index.row());
-//               break;
-//           }
-//       }
 
-//        if (!isSend)
-//        {
-//            //receive new msg, need to update unread msg to model data, increase 1
-//            rsMsgs->updateUnreadNumberOfItemInConversationList(chatIdStr, 1, false);
-//            //check if this is a current chat window, so update new msg as read
-//            if (chatIdStr == selectedUId)
-//            {
-//                rsHistory->updateMessageAsRead(chatId);
-//            }
-//        }
+       if (!isSend)
+        {
+            //receive new msg, need to update unread msg to model data, increase 1
+            updateUnreadNumberOfItemInGxsConversationList(gxschatId.toGxsGroupId().toStdString(), 1, false);
+
+            //after update the unread msg, need to sort the list and update the unread notification on the item
+            smartListModel_->setGxsGroupList(allGxsGroupList);
+            sortGxsConversationListByRecentTime();
+
+            //reselect the seletion (because the list already sorted, the selection is still keeping the index
+            ui->unseenGroupTreeWidget->selectionModel()->clearSelection();
+
+            //re-select the chat item again, the old selected one was saved to selectedIndex
+            // at first find the index of the uId, then re-select
+
+            int seletedrow = getIndexFromUId(selectedUId);
+            QModelIndex idx = ui->unseenGroupTreeWidget->model()->index(seletedrow, 0);
+            ui->unseenGroupTreeWidget->selectionModel()->select(idx, QItemSelectionModel::Select);
+            emit ui->unseenGroupTreeWidget->model()->layoutChanged();
+
+            //check if this is a current chat window, so update new msg as read
+            if (gxschatId.toGxsGroupId().toStdString() == selectedUId)
+            {
+                updateUnreadNumberOfItemInGxsConversationList(gxschatId.toGxsGroupId().toStdString(), 1, true);
+
+                //after update the unread msg, need to sort the list and update the unread notification on the item
+                smartListModel_->setGxsGroupList(allGxsGroupList);
+                emit ui->unseenGroupTreeWidget->model()->layoutChanged();
+                //TODO: how to get the last msgId to mark it as read?
+//                RsGxsGrpMsgIdPair msgPair = std::make_pair(gxschatId.toGxsGroupId(), gxsChatMsg.mMeta.mMsgId);
+//                uint32_t token;
+//                rsGxsChats->setMessageReadStatus(token, msgPair, true);
+
+            }
+        }
+       else
+       {
+           // if this is we send the msg, just select the first one after sorting???
+           smartListModel_->setGxsGroupList(allGxsGroupList);
+           sortGxsConversationListByRecentTime();
+
+           //emit ui->unseenGroupTreeWidget->model()->layoutChanged();
+
+           // For both case of sending or receiving, just clear the selection and re-select chat item
+           ui->unseenGroupTreeWidget->selectionModel()->clearSelection();
+
+           //re-select the chat item again, the old selected one was saved to selectedIndex
+           // at first find the index of the uId, then re-select
+
+           int seletedrow = 0; //getIndexFromUId(selectedUId);
+           QModelIndex idx = ui->unseenGroupTreeWidget->model()->index(seletedrow, 0);
+           ui->unseenGroupTreeWidget->selectionModel()->select(idx, QItemSelectionModel::Select);
+           emit ui->unseenGroupTreeWidget->model()->layoutChanged();
+       }
 //        else
 //        {
 //            //check if this is the filtered search mode, just return to normal mode
@@ -1636,19 +1671,8 @@ void UnseenGxsGroupFrameDialog::updateRecentTime(const gxsChatId & chatId, std::
 //            }
 //        }
 
-//        rsMsgs->sortConversationItemListByRecentTime();
-//        emit ui->lobbyTreeWidget->model()->layoutChanged();
 
-//        // For both case of sending or receiving, just clear the selection and re-select chat item
-//        ui->lobbyTreeWidget->selectionModel()->clearSelection();
 
-//        //re-select the chat item again, the old selected one was saved to selectedIndex
-//        // at first find the index of the uId, then re-select
-
-//        int seletedrow = rsMsgs->getIndexFromUId(selectedUId);
-//        QModelIndex idx = ui->lobbyTreeWidget->model()->index(seletedrow, 0);
-//        ui->lobbyTreeWidget->selectionModel()->select(idx, QItemSelectionModel::Select);
-//        emit ui->lobbyTreeWidget->model()->layoutChanged();
 
 }
 
@@ -1660,9 +1684,9 @@ void UnseenGxsGroupFrameDialog::unsubscribeGxsGroupChat(RsGxsGroupId id)
 
     if(it != _unseenGxsGroup_infos.end())
     {
-//        if (myChatLobbyUserNotify){
-//            myChatLobbyUserNotify->chatLobbyCleared(id, "");
-//        }
+        if (myGxsChatUserNotify){
+            myGxsChatUserNotify->gxsChatCleared(gxsChatId(id), "");
+        }
 
         ui->stackedWidget->removeWidget(it->second.dialog) ;
         _unseenGxsGroup_infos.erase(it) ;
@@ -1716,6 +1740,128 @@ void UnseenGxsGroupFrameDialog::unsubscribeGxsGroupChat(RsGxsGroupId id)
 //         }
 
 //    }
+}
 
 
+void UnseenGxsGroupFrameDialog::updateMessageChanged(RsGxsChatMsg gxsChatMsg, bool incoming, RsGxsGroupId id, QDateTime time, QString senderName, QString msg)
+{
+
+    if (myGxsChatUserNotify)
+    {
+        if (incoming)
+        {
+            myGxsChatUserNotify->gxsChatNewMessage(gxsChatMsg, gxsChatId(id), time, senderName, msg);
+        }
+        //myGxsChatUserNotify->chatLobbyNewMessage(id, time, senderName, msg);
+    }
+}
+
+UserNotify *UnseenGxsGroupFrameDialog::getUserNotify(QObject *parent)
+{
+    if (!myGxsChatUserNotify)
+    {
+        myGxsChatUserNotify = new GxsChatUserNotify(rsGxsChats, parent);
+        connect(myGxsChatUserNotify, SIGNAL(countChanged(RsGxsChatMsg, gxsChatId, unsigned int)), this, SLOT(updateGxsMsgNotify(RsGxsChatMsg, gxsChatId, unsigned int)));
+    }
+    return myGxsChatUserNotify;
+}
+
+
+void UnseenGxsGroupFrameDialog::updateGxsMsgNotify(RsGxsChatMsg gxsChatMsg, gxsChatId id, unsigned int count)
+{
+    UnseenGxsChatLobbyDialog *dialog=NULL;
+    dialog=_unseenGxsGroup_infos[id.toGxsGroupId()].dialog;
+    if(!dialog) return;
+
+    QToolButton* notifyButton=dialog->getChatWidget()->getNotifyButton();
+    if (!notifyButton) return;
+    dialog->getChatWidget()->setGxsNotify(myGxsChatUserNotify);
+    if (count>0){
+        notifyButton->setVisible(true);
+        //notifyButton->setIcon(_lobby_infos[id].default_icon);
+        notifyButton->setToolTip(QString("(%1)").arg(count));
+    } else {
+        notifyButton->setVisible(false);
+        RsGxsGrpMsgIdPair msgPair = std::make_pair(id.toGxsGroupId(), gxsChatMsg.mMeta.mMsgId);
+        uint32_t token;
+        rsGxsChats->setMessageReadStatus(token, msgPair, true);
+    }
+}
+
+
+void UnseenGxsGroupFrameDialog::updateRecentTimeOfItemInGxsConversationList(std::string uId, std::string nickInGroupChat, long long lastMsgDatetime, std::string textmsg, bool isOtherMsg )
+{
+    for (unsigned int i = 0; i < allGxsGroupList.size(); i++ )
+    {
+        if (allGxsGroupList[i].id.toStdString() == uId)
+        {
+            allGxsGroupList[i].lastMsgDatetime = lastMsgDatetime;
+            allGxsGroupList[i].lastMessage = textmsg;
+            allGxsGroupList[i].isOtherLastMsg = isOtherMsg;
+            allGxsGroupList[i].nickInGroupChat = nickInGroupChat;
+            break;
+        }
+    }
+    //smartListModel_->setGxsGroupList(allGxsGroupList);
+    //emit ui->unseenGroupTreeWidget->model()->layoutChanged();
+}
+
+bool UnseenGxsGroupFrameDialog::isGroupIdInGxsConversationList(std::string uId)
+{
+    bool foundUIdInList = false;
+    for (unsigned int i = 0; i < allGxsGroupList.size(); i++ )
+    {
+        if (allGxsGroupList[i].id.toStdString() == uId)
+        {
+            foundUIdInList = true;
+            break;
+        }
+    }
+    return foundUIdInList;
+}
+
+void UnseenGxsGroupFrameDialog::saveGxsGroupChatInfoToModelData(const RsGxsChatGroup gxsGroupInfo, std::string nickInGroupChat, unsigned int UnreadMessagesCount, unsigned int lastMsgDatetime, std::string lastMessage, bool isOtherLastMsg )
+{
+    UnseenGroupItemInfo entry;
+    RsUserdata* userdata;
+    groupInfoToUnseenGroupItemInfo2(gxsGroupInfo, entry, userdata);
+
+    entry.nickInGroupChat = nickInGroupChat;
+    entry.UnreadMessagesCount = UnreadMessagesCount;
+    entry.lastMsgDatetime = lastMsgDatetime;
+    entry.lastMessage = lastMessage;
+    entry.isOtherLastMsg = isOtherLastMsg;
+
+    allGxsGroupList.push_back(entry);
+    smartListModel_->setGxsGroupList(allGxsGroupList);
+    emit ui->unseenGroupTreeWidget->model()->layoutChanged();
+
+}
+
+int UnseenGxsGroupFrameDialog::getIndexFromUId(std::string uId)
+{
+    int index = -1;
+    for (unsigned int i = 0; i < allGxsGroupList.size(); i++ )
+    {
+        if (allGxsGroupList[i].id.toStdString() == uId)
+        {
+            index = static_cast<int>(i);
+            break;
+        }
+    }
+    return index;
+}
+
+void UnseenGxsGroupFrameDialog::updateUnreadNumberOfItemInGxsConversationList(std::string uId, unsigned int unreadNumber, bool isReset)
+{
+    for (unsigned int i = 0; i < allGxsGroupList.size(); i++ )
+    {
+        if (allGxsGroupList[i].id.toStdString() == uId)
+        {
+            if (isReset) allGxsGroupList[i].UnreadMessagesCount = 0;
+            else  allGxsGroupList[i].UnreadMessagesCount += unreadNumber;
+            break;
+        }
+    }
+    //smartListModel_->setGxsGroupList(allGxsGroupList);
 }

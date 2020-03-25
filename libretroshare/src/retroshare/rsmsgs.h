@@ -411,7 +411,7 @@ public:
     bool unread;
     //bool system_message;
     //unseenp2p - for gxs chat
-    gxsChatId groupId;
+    gxsChatId gxs_ChatId;
 };
 
 class ChatLobbyInvite : RsSerializable

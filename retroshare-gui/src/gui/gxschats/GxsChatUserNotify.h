@@ -22,9 +22,25 @@
 #ifndef GXSCHATUSERNOTIFY_H
 #define GXSCHATUSERNOTIFY_H
 
-
+#include <QDateTime>
 
 #include "gui/gxs/GxsUserNotify.h"
+#include "retroshare/rsmsgs.h"
+#include "retroshare/rsgxschats.h"
+
+struct ActionTagGxs {
+    RsGxsGroupId cli;
+    QString timeStamp;
+    bool removeALL;
+};
+Q_DECLARE_METATYPE(ActionTagGxs)
+
+
+struct MsgGxsData {
+    QString text;
+    bool unread;
+};
+Q_DECLARE_METATYPE(MsgGxsData)
 
 class GxsChatUserNotify : public GxsUserNotify
 {
@@ -35,10 +51,54 @@ public:
 
     virtual bool hasSetting(QString *name, QString *group);
 
-private:
     virtual QIcon getIcon();
     virtual QIcon getMainIcon(bool hasNew);
     virtual void iconClicked();
+
+    void gxsChatNewMessage(RsGxsChatMsg gxsChatMsg, gxsChatId groupChatId, QDateTime time, QString senderName, QString msg);
+    void gxsChatCleared(gxsChatId groupChatId, QString anchor, bool onlyUnread=false);
+//	void setCheckForNickName(bool value);
+//	bool isCheckForNickName() { return _bCheckForNickName;}
+//	void setCountUnRead(bool value);
+//	bool isCountUnRead() { return _bCountUnRead;}
+//	void setCountSpecificText(bool value);
+//	bool isCountSpecificText() { return _bCountSpecificText;}
+//	void setTextToNotify(QStringList);
+//	void setTextToNotify(QString);
+//	QString textToNotify() { return _textToNotify.join("\n");}
+//	void setTextCaseSensitive(bool value);
+//	bool isTextCaseSensitive() {return _bTextCaseSensitive;}
+
+private slots:
+    void chatMessageReceived(ChatMessage msg);
+
+signals:
+    void countChanged(RsGxsChatMsg gxsChatMsg, gxsChatId id, unsigned int count);
+private:
+//	virtual QIcon getIcon();
+//	virtual QIcon getMainIcon(bool hasNew);
+//	virtual unsigned int getNewCount();
+//	virtual QString getTrayMessage(bool plural);
+//	virtual QString getNotifyMessage(bool plural);
+//	virtual void iconClicked();
+//	virtual void iconHovered();
+    bool checkWord(QString msg, QString word);
+
+//	QString _name;
+//	QString _group;
+
+    typedef std::map<QString, MsgGxsData> msg_map;
+    typedef	std::map<gxsChatId, msg_map> lobby_map;
+    lobby_map _listMsg;
+
+//    typedef	std::map<ChatId, msg_map> p2pchat_map;
+//    p2pchat_map _listP2PMsg;
+
+    bool _bCountUnRead;
+    bool _bCheckForNickName;
+    bool _bCountSpecificText;
+    QStringList _textToNotify;
+    bool _bTextCaseSensitive;
 };
 
 

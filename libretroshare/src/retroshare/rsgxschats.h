@@ -97,7 +97,7 @@ class RsGxsChatGroup : RsSerializable
         enum ChatType { ONE2ONE, GROUPCHAT, CHANNEL } ;
         ChatType  type;  //one2one,groupchat, and channel
         RsGroupMetaData mMeta;
-        std::string mDescription;   //conversation display name or groupname
+        std::string mDescription;   // conversation display name or groupname
         RsGxsImage  mImage; //conversation avatar image
         std::set<GxsChatMember> members;
         /// @see RsSerializable

@@ -34,6 +34,9 @@
 #include "gui/style/RSStyle.h"
 #include "ChatLobbyUserNotify.h"
 
+//unseenp2p
+#include "gui/gxschats/GxsChatUserNotify.h"
+
 #include <retroshare/rsmsgs.h>
 #include <retroshare/rsfiles.h>
 #include <retroshare/rsgxschats.h>
@@ -99,6 +102,8 @@ public:
 	void focusDialog();
 	QToolButton* getNotifyButton();
 	void setNotify(ChatLobbyUserNotify* clun);
+
+    void setGxsNotify(GxsChatUserNotify *gxsUn);
 	void scrollToAnchor(QString anchor);
 	void addToParent(QWidget *newParent);
 	void removeFromParent(QWidget *oldParent);
@@ -279,6 +284,9 @@ private:
 
 	QList<ChatWidgetHolder*> mChatWidgetHolder;
 	ChatLobbyUserNotify* notify;
+
+    //unseenp2p
+    GxsChatUserNotify* gxsChatNotify;
 
 	Ui::ChatWidget *ui;
 

@@ -1062,6 +1062,13 @@ void ChatWidget::setNotify(ChatLobbyUserNotify *clun)
 	if(clun) notify=clun;
 }
 
+//unseenp2p
+void ChatWidget::setGxsNotify(GxsChatUserNotify *gxsUn)
+{
+    if(gxsUn) gxsChatNotify=gxsUn;
+}
+
+
 void ChatWidget::on_notifyButton_clicked()
 {
 	if(!notify) return;
@@ -1215,9 +1222,22 @@ void ChatWidget::addChatMsg(bool incoming, const QString &name, const RsGxsId gx
 
 		emit infoChanged(this);
 
+        /* meiyousixin - update recent time when user send msg, need to sort the contact list by recent time */
+        if (this->chatType() == CHATTYPE_PRIVATE || this->chatType() == CHATTYPE_LOBBY )
+        {
+            std::string nickInGroupChat = "You";
+            long long current_time = QDateTime::currentSecsSinceEpoch();
+            emit NotifyQt::getInstance()->newChatMessageReceive(this->chatId, name.toStdString(), current_time, message.toStdString(), false);
+        }
+        // this for gxs chat recent time, sort the gxschat conversation list
+        else if (this->chatType() == CHATTYPE_GXSGROUPCHAT)
+        {
+            long long current_time = QDateTime::currentSecsSinceEpoch();
+            std::string nickInGroupChat = "You";
+            emit NotifyQt::getInstance()->newChatMessageReceive(this->getGxsChatId(), name.toStdString(), current_time, message.toStdString(), false);
+        }
         /* meiyousixin - need to update the recent time and sort the chat list */
-        long long current_time = QDateTime::currentSecsSinceEpoch();
-        emit NotifyQt::getInstance()->newChatMessageReceive(this->chatId, name.toStdString(), current_time, message.toStdString(), false);
+
 	}
 }
 

@@ -561,7 +561,7 @@ void UnseenGxsChatLobbyDialog::addChatMsg(const ChatMessage& msg)
     QString message = QString::fromUtf8(msg.msg.c_str());
     RsGxsId gxs_id = msg.lobby_peer_gxs_id ;
 
-    if(!isParticipantMuted(gxs_id))
+    //if(!isParticipantMuted(gxs_id))
     {
         // We could change addChatMsg to display the peers icon, passing a ChatId
 
@@ -574,7 +574,7 @@ void UnseenGxsChatLobbyDialog::addChatMsg(const ChatMessage& msg)
             name = QString::fromUtf8(msg.peer_alternate_nickname.c_str()) + " (" + QString::fromStdString(gxs_id.toStdString()) + ")" ;
 
         ui.chatWidget->addChatMsg(msg.incoming, name, gxs_id, sendTime, recvTime, message, ChatWidget::MSGTYPE_NORMAL);
-        emit messageReceived(msg.incoming, id(), sendTime, name, message) ;
+        //emit messageReceived(msg.incoming, gxsChatId(groupId()), sendTime, name, message) ;
 
         // This is a trick to translate HTML into text.
         QTextEdit editor;
@@ -1338,6 +1338,21 @@ void UnseenGxsChatLobbyDialog::insertGxsChatPosts(std::vector<RsGxsChatMsg> &pos
 
         //uneenp2p - need to check if these are files sharing, need to show "Download" link
         ui.chatWidget->addChatMsg(incomming, nickname, gxs_id, sendTime, recvTime, mmsg, ChatWidget::MSGTYPE_NORMAL);
+        emit messageReceived(posts[i], incomming, gxsChatId(groupId()), sendTime, nickname, mmsg) ;
+
+        // This is a trick to translate HTML into text.
+        QTextEdit editor;
+        editor.setHtml(mmsg);
+        QString notifyMsg = nickname + ": " + editor.toPlainText();
+
+        if(incomming)
+        {
+            if(notifyMsg.length() > 30)
+                MainWindow::displayLobbySystrayMsg(tr("Group chat") + ": " + mGroupName, notifyMsg.left(30) + QString("..."));
+            else
+                MainWindow::displayLobbySystrayMsg(tr("Group chat") + ": " + mGroupName, notifyMsg);
+        }
+
         updateParticipantsList();
     }
 

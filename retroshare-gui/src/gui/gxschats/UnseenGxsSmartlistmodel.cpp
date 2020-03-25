@@ -169,15 +169,30 @@ QVariant UnseenGxsSmartListModel::data(const QModelIndex &index, int role) const
         }
 
         //GET LAST MSG from html format
-        QString lastMsgQstr = chatItem.description;
+        QString lastMsgQstr = QString::fromStdString(chatItem.lastMessage);
         QDomDocument docCheck;
         QString temp = lastMsgQstr;
-        //TODO: need to add last msg/info of the publisher
-        QString lastMsg = lastMsgQstr;
+        QString lastMsg;
+        if (chatItem.type == RsGxsChatGroup::GROUPCHAT)
+        {
+            if (docCheck.setContent(temp))
+                lastMsg =QString::fromStdString(chatItem.nickInGroupChat) + ": " + readMsgFromXml(temp);
+            else
+            {
+                lastMsg =QString::fromStdString(chatItem.nickInGroupChat) + ": " + lastMsgQstr;
+            }
+        }
+        else
+        {
+             if (docCheck.setContent(temp))
+                lastMsg = readMsgFromXml(temp);
+            else lastMsg = lastMsgQstr;
+        }
 
 
         //TODO: GET status of last msg, check if the last msg is "You" or other?
-        QString lastMsgStatus =  "";
+
+        QString lastMsgStatus =  (chatItem.isOtherLastMsg? "": "sent");
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -208,7 +223,7 @@ QVariant UnseenGxsSmartListModel::data(const QModelIndex &index, int role) const
                 return QVariant(QString::fromStdString("unseenp2p.com"));
             }
             case Role::UnreadMessagesCount:
-                return QVariant(0);
+                return QVariant(chatItem.UnreadMessagesCount);
             case Role::LastInteractionDate:
             {
                 return QVariant(timedateForMsgResult);

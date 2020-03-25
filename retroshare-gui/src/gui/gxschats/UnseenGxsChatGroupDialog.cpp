@@ -116,6 +116,7 @@ QPixmap UnseenGxsChatGroupDialog::serviceImage()
 void UnseenGxsChatGroupDialog::prepareGxsChatGroup(RsGxsChatGroup &group, const RsGroupMetaData &meta)
 {
     group.mMeta = meta;
+    //group.mLastMessage =
     group.mDescription = getDescription().toUtf8().constData();
 
     //unseenp2p a- meiyousixin: try to get all member list from the Create Conversation Dialog

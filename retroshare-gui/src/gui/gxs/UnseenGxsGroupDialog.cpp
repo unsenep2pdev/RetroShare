@@ -224,7 +224,7 @@ void UnseenGxsGroupDialog::editAndUpdateGroup()
                 if (newName != oldGroupName)
                 {
                     std::cerr << " The new group name changed to: " << newName.toStdString() << std::endl;
-                    chatsInfo[0].mMeta.mGroupName =  chatsInfo[0].mDescription = newName.toStdString();
+                    chatsInfo[0].mMeta.mGroupName = newName.toStdString();
 
                 }
                 if (newMemberList != oldMemberList)
@@ -766,7 +766,7 @@ void UnseenGxsGroupDialog::setDefaultOptions()
 
                 if (chatsInfo.size() > 0)
                 {
-                    oldGroupName = QString::fromStdString(chatsInfo[0].mDescription);
+                    oldGroupName = QString::fromStdString(chatsInfo[0].mMeta.mGroupName);
                     std::set<GxsChatMember> memberList;
                     memberList.clear();
                     for (auto it(chatsInfo[0].members.begin()); it != chatsInfo[0].members.end(); ++it)

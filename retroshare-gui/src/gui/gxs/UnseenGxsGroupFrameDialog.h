@@ -35,6 +35,7 @@
 #include "UnseenGxsGroupDialog.h"
 #include "gui/gxschats/UnseenGxsSmartlistmodel.h"
 
+#include "gui/gxschats/GxsChatUserNotify.h"
 
 
 namespace Ui {
@@ -109,6 +110,9 @@ public:
     UnseenGroupItemInfo groupItemIdAt(QString groupId);
     void sortGxsConversationListByRecentTime();
 
+    //unseenp2p - overload with the parent
+    virtual UserNotify *getUserNotify(QObject *parent);
+
 protected:
 	virtual void showEvent(QShowEvent *event);
 	virtual void updateDisplay(bool complete);
@@ -164,9 +168,12 @@ private slots:
 	void removeCurrentSearch();
 
     void smartListSelectionChanged(const QItemSelection  &selected, const QItemSelection  &deselected);
-    void updateRecentTime(const gxsChatId&, std::string, long long, std::string, bool);
+    void updateRecentTimeOrNewMsg(const gxsChatId&, std::string, long long, std::string, bool);
 
     void unsubscribeGxsGroupChat(RsGxsGroupId id);
+
+    void updateMessageChanged(RsGxsChatMsg gxsChatMsg, bool incoming, RsGxsGroupId id, QDateTime time, QString senderName, QString msg);
+    void updateGxsMsgNotify(RsGxsChatMsg gxsChatMsg, gxsChatId id, unsigned int count);
 private:
 	virtual QString text(TextType type) = 0;
 	virtual QString icon(IconType type) = 0;
@@ -219,6 +226,11 @@ private:
     //unseenp2p
     void selectConversation(const QModelIndex& index);
     void showGxsGroupChatMVC(gxsChatId chatId);
+    void updateRecentTimeOfItemInGxsConversationList(std::string uId, std::string nickInGroupChat, long long lastMsgDatetime, std::string textmsg, bool isOtherMsg );
+    bool isGroupIdInGxsConversationList(std::string uId);
+    void saveGxsGroupChatInfoToModelData(const RsGxsChatGroup gxsGroupInfo, std::string nickInGroupChat, unsigned int UnreadMessagesCount, unsigned int lastMsgDatetime, std::string lastMessage, bool isOtherLastMsg);
+    int getIndexFromUId(std::string uId);
+    void updateUnreadNumberOfItemInGxsConversationList(std::string uId, unsigned int unreadNumber, bool isReset);
 
 protected:
 	bool mCountChildMsgs; // Count unread child messages?
@@ -255,6 +267,13 @@ private:
 
     std::map<RsGxsGroupId,UnseenGxsChatLobbyInfoStruct> _unseenGxsGroup_infos ;
     UnseenGxsSmartListModel* smartListModel_; //unseenp2p - use the MVC GUI for the gxs chat
+
+    //unseenp2p GUI
+    GxsChatUserNotify* myGxsChatUserNotify;
+
+    std::vector<UnseenGroupItemInfo> allGxsGroupList; //allGxsGroupList = adminList + subList
+
+    std::map<RsGxsGroupId,std::set<RsGxsMessageId>> _unreadMsgs ;
 
 };
 

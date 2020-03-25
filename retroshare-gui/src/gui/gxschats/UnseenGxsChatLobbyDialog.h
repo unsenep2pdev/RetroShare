@@ -24,7 +24,7 @@
 #define _UNSEENGXSCHATLOBBYDIALOG_H
 
 #include "ui_UnseenGxsChatLobbyDialog.h"
-#include "ui_ChatLobbyDialog.h"
+//#include "ui_ChatLobbyDialog.h"
 #include "gui/common/RSTreeWidgetItem.h"
 #include "gui/chat/ChatDialog.h"
 
@@ -94,9 +94,9 @@ private slots:
 signals:
     void gxsGroupLeave(RsGxsGroupId) ;
 	void typingEventReceived(ChatLobbyId) ;
-	void messageReceived(bool incoming, ChatLobbyId lobby_id, QDateTime time, QString senderName, QString msg) ;
+    //void messageReceived(bool incoming, ChatLobbyId lobby_id, QDateTime time, QString senderName, QString msg) ;
     //unseenp2p: for gxs groupchat
-    void messageReceived(bool incoming, RsGxsGroupId groupId, QDateTime time, QString senderName, QString msg) ;
+    void messageReceived(RsGxsChatMsg gxsChatMsg, bool incoming, gxsChatId groupChatId, QDateTime time, QString senderName, QString msg) ;
 
 	void peerJoined(ChatLobbyId) ;
 	void peerLeft(ChatLobbyId) ;
@@ -149,7 +149,7 @@ private:
 	QToolButton *unsubscribeButton ;
 
 	/** Qt Designer generated object */
-	Ui::ChatLobbyDialog ui;
+    Ui::UnseenGxsChatLobbyDialog ui;
 	
 	/** Ignored Users in Chatlobby by nickname until we had implemented Peer Ids in ver 0.6 */
     std::set<RsGxsId> mutedParticipants;
