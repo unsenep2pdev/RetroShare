@@ -33,6 +33,9 @@
 #include "retroshare/rspeers.h"
 #include "util/HandleRichText.h"
 
+#include "retroshare/rsstatus.h"
+#include "gui/common/AvatarDefs.h"
+
 
 #define IMAGE_PUBLIC          ":/chat/img/groundchat.png"               //copy from ChatLobbyWidget
 #define IMAGE_PRIVATE         ":/chat/img/groundchat_private.png"       //copy from ChatLobbyWidget
@@ -138,6 +141,41 @@ QVariant UnseenContactSmartListModel::data(const QModelIndex &index, int role) c
 
         QString name = QString::fromUtf8(detail.mNickname.c_str());
         QString presenceForChat = "no-status"; //for groupchat
+
+        RsPeerDetails details;
+        RsPeerId sslId;
+        if (rsPeers->getGPGDetails(detail.mPgpId, details))
+        {
+            std::list<RsPeerId> sslIds;
+            rsPeers->getAssociatedSSLIds(details.gpg_id, sslIds);
+            if (sslIds.size() >= 1) {
+
+                sslId = sslIds.front();
+            }
+
+            StatusInfo statusContactInfo;
+
+            rsStatus->getStatus(sslId,statusContactInfo);
+            switch (statusContactInfo.status)
+            {
+                case RS_STATUS_OFFLINE:
+                    presenceForChat = "offline";
+                    break;
+                case RS_STATUS_INACTIVE:
+                    presenceForChat = "idle";
+                    break;
+                case RS_STATUS_ONLINE:
+                    presenceForChat = "online";
+                    break;
+                case RS_STATUS_AWAY:
+                    presenceForChat = "away";
+                    break;
+                case RS_STATUS_BUSY:
+                    presenceForChat = "busy";
+                    break;
+            }
+        }
+
         QImage avatar = identicon.pixmap(identicon.actualSize(QSize(32, 32))).toImage();
         QString lastMsgStatus  = "last seen ";
         rstime_t lastseen = detail.mLastUsageTS;
@@ -146,16 +184,6 @@ QVariant UnseenContactSmartListModel::data(const QModelIndex &index, int role) c
         lastMsgStatus += getHumanReadableDuration(now - detail.mLastUsageTS) ;
          QString isChoosenContact  = "";
 
-         RsPeerDetails details;
-         RsPeerId sslId;
-         if (rsPeers->getGPGDetails(detail.mPgpId, details))
-         {
-             std::list<RsPeerId> sslIds;
-             rsPeers->getAssociatedSSLIds(detail.mPgpId, sslIds);
-             if (sslIds.size() >= 1) {
-                  sslId = sslIds.front();
-             }
-         }
          RsGxsMyContact::STATUS status;
          if (!sslId.isNull())
          {

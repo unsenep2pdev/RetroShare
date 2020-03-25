@@ -78,6 +78,40 @@ UnseenContactItemDelegate::paint(QPainter* painter
                    QPixmap::fromImage(index.data(Qt::DecorationRole).value<QImage>())
                    .scaled(sizeImage_, sizeImage_, Qt::KeepAspectRatio, Qt::SmoothTransformation));
 
+    // Presence indicator
+    QString statusStr =  index.data(static_cast<int>(UnseenContactSmartListModel::Role::Presence)).value<QString>();
+    if (statusStr != "no-status")
+    {
+        qreal radius = sizeImage_ / 6;
+        QPainterPath outerCircle, innerCircle;
+        QPointF center(rectAvatar.right() - radius + 2, (rectAvatar.bottom() - radius) + 1 + 2);
+        qreal outerCRadius = radius;
+        qreal innerCRadius = outerCRadius * 0.75;
+        outerCircle.addEllipse(center, outerCRadius, outerCRadius);
+        innerCircle.addEllipse(center, innerCRadius, innerCRadius);
+        painter->fillPath(outerCircle, Qt::white);
+        if (statusStr == "offline")
+        {
+            painter->fillPath(innerCircle, RingTheme::grey_);
+        }
+        else if (statusStr == "idle")
+        {
+            painter->fillPath(innerCircle, RingTheme::urgentOrange_);
+        }
+        else if (statusStr == "online")
+        {
+            painter->fillPath(innerCircle, RingTheme::presenceGreen_);
+        }
+        else if (statusStr == "away")
+        {
+            painter->fillPath(innerCircle, RingTheme::urgentOrange_);
+        }
+        else if (statusStr == "busy")
+        {
+            painter->fillPath(innerCircle, RingTheme::red_);
+        }
+    }
+
     paintConversationItem(painter, option, rect, index,
                           false);
 
