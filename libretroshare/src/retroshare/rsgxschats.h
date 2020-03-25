@@ -90,6 +90,52 @@ class GxsChatMember: RsSerializable
 
 std::ostream &operator<<(std::ostream& out, const GxsChatMember& member);
 
+class  LocalGroupInfo : RsSerializable
+{
+public:
+    std::string msg;
+    rstime_t update_ts;
+    std::set<RsGxsMessageId> unreadMsgIds;
+    bool isSubscribed;
+    //uint32_t mUnRead;
+
+    LocalGroupInfo(): update_ts(time(NULL)), isSubscribed(false){};
+
+    LocalGroupInfo(RsGxsMessageId msgId, std::string message, bool subscribe=false):update_ts(time(NULL)),
+        isSubscribed(subscribe){
+        msg = message;
+        unreadMsgIds.insert(msgId);
+    }
+    void clear(){
+        unreadMsgIds.clear();
+        update_ts = time(NULL); //set the latest timestamp
+    }
+    virtual void serial_process( RsGenericSerializer::SerializeJob j,
+                             RsGenericSerializer::SerializeContext& ctx )
+    {
+        RS_SERIAL_PROCESS(unreadMsgIds);
+        RS_SERIAL_PROCESS(isSubscribed);
+        RS_SERIAL_PROCESS(msg);
+        RS_SERIAL_PROCESS(update_ts);
+
+    }
+
+    void operator=(const LocalGroupInfo &info)
+    {
+        unreadMsgIds   = info.unreadMsgIds;
+        msg            = info.msg;
+        update_ts      = info.update_ts;
+        isSubscribed   = info.isSubscribed;
+    }
+    bool operator<(const LocalGroupInfo &info) const
+    {
+        return update_ts < info.update_ts;
+    }
+};
+std::ostream &operator<<(std::ostream& out, const LocalGroupInfo& info);
+
+typedef std::pair<rstime_t, std::string> RecentMessage;
+//typedef LocalGroupInfo RecentMessage;
 
 class RsGxsChatGroup : RsSerializable
 {
@@ -102,6 +148,8 @@ class RsGxsChatGroup : RsSerializable
         std::set<GxsChatMember> members;
         /// @see RsSerializable
         bool mAutoDownload;
+        LocalGroupInfo localMsgInfo;   //conversation last|recent message and timestamp.
+
         RsGxsChatGroup(): type(GROUPCHAT){}
         virtual void serial_process( RsGenericSerializer::SerializeJob j,
                                  RsGenericSerializer::SerializeContext& ctx )
@@ -213,7 +261,16 @@ public:
      * @param[in] read
      */
     virtual void setMessageReadStatus(
-            uint32_t& token, const RsGxsGrpMsgIdPair& msgId, bool read) = 0;
+            uint32_t& token, const RsGxsGrpMsgIdPair& msgId, const std::string shortMsg, bool read) = 0;
+
+    /**
+     * @brief set local chat message read status
+     * @jsonapi{development}
+     * @param[out] token GXS token queue token
+     * @param[in] msgId
+     * @param[in] read
+     */
+    virtual void setLocalMessageStatus(uint32_t& token, const RsGxsGrpMsgIdPair& msgId, const std::string msg)=0;
 
     /**
      * @brief Enable or disable auto-download for given channel

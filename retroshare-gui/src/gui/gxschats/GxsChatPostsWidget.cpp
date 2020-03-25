@@ -723,7 +723,7 @@ static void setAllMessagesReadCallback(FeedItem *feedItem, void *data)
         return ;
 
     RsGxsGrpMsgIdPair msgPair = std::make_pair(chatPostItem->groupId(), chatPostItem->messageId());
-    rsGxsChats->setMessageReadStatus(readData->mLastToken, msgPair, readData->mRead);
+    rsGxsChats->setMessageReadStatus(readData->mLastToken, msgPair, chatPostItem->messageId().toStdString(),  readData->mRead);
 }
 
 void GxsChatPostsWidget::setAllMessagesReadDo(bool read, uint32_t &token)

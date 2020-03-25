@@ -50,6 +50,8 @@
 
 RsGxsChats *rsGxsChats = NULL;
 
+//cache delay
+#define DELAY_BETWEEN_CONFIG_UPDATES   300
 
 #define GXSCHAT_STOREPERIOD	(3600 * 24 * 30)  // 30 days store
 
@@ -88,6 +90,8 @@ p3GxsChats::p3GxsChats(RsGeneralDataService *gds, RsNetworkExchangeService *nes,
     //RsTickEvent::schedule_in(CHAT_TESTEVENT_DUMMYDATA, DUMMYDATA_PERIOD);
     mGenToken = 0;
     mGenCount = 0;
+
+    mLastConfigUpdate=0;
 
     //initalized chatInfo
     initChatId();
@@ -141,7 +145,7 @@ struct RsGxsChatNotifyRecordsItem: public RsItem
 
     void clear() {}
 
-    std::map<RsGxsGroupId,rstime_t> records;
+    std::map<RsGxsGroupId,LocalGroupInfo> records;
 };
 
 
@@ -191,11 +195,15 @@ bool p3GxsChats::loadList(std::list<RsItem *>& loadList)
 
         if(fnr != NULL)
         {
+            RS_STACK_MUTEX(mChatMtx);
             mKnownChats.clear();
 
-            for(auto it(fnr->records.begin());it!=fnr->records.end();++it)
-                if( it->second + GXS_CHATS_CONFIG_MAX_TIME_NOTIFY_STORAGE < now)
+            for(auto it(fnr->records.begin());it!=fnr->records.end();++it){
+                LocalGroupInfo localInfo = it->second;
+                rstime_t lasttime = localInfo.update_ts;
+                if( lasttime + GXS_CHATS_CONFIG_MAX_TIME_NOTIFY_STORAGE < now)
                     mKnownChats.insert(*it) ;
+            }
         }
 
         delete item ;
@@ -874,6 +882,7 @@ void p3GxsChats::notifyChanges(std::vector<RsGxsNotify *> &changes)
                 /* message received */
                 if (notify)
                 {
+
                     std::map<RsGxsGroupId, std::set<RsGxsMessageId> > &msgChangeMap = msgChange->msgChangeMap;
                     for (auto mit = msgChangeMap.begin(); mit != msgChangeMap.end(); ++mit)
                         for (auto mit1 = mit->second.begin(); mit1 != mit->second.end(); ++mit1)
@@ -926,10 +935,18 @@ void p3GxsChats::notifyChanges(std::vector<RsGxsNotify *> &changes)
                                 if(mKnownChats.find(*git) == mKnownChats.end())
                                 {
                                     notify->AddFeedItem(RS_FEED_ITEM_CHATS_NEW, git->toStdString());
-                                    mKnownChats.insert(std::make_pair(*git,time(NULL))) ;
+                                    bool subscribe=true;
+
+                                    {
+                                        RS_STACK_MUTEX(mChatMtx);
+                                        LocalGroupInfo localGrp;
+                                        localGrp.msg="New";
+                                        localGrp.isSubscribed=subscribe;
+                                        mKnownChats.insert(std::make_pair(*git,localGrp)) ;
+
+                                    }
                                     //auto subscribe chat conversation when it's first received.
                                     uint32_t token;
-                                    bool subscribe=true;
                                     subscribeToGroup(token, *git, subscribe);
                                 }
                                 else
@@ -1009,6 +1026,17 @@ bool p3GxsChats::getGroupData(const uint32_t &token, std::vector<RsGxsChatGroup>
                 delete item;
                 groups.push_back(grp);
                 loadChatsMembers(grp);
+                if(mKnownChats.find(item->meta.mGroupId) != mKnownChats.end())
+                    grp.localMsgInfo = mKnownChats[item->meta.mGroupId];
+                else{
+                    RS_STACK_MUTEX(mChatMtx);
+                    LocalGroupInfo localMsg;
+                    localMsg.msg ="New Join";
+                    localMsg.update_ts = time(NULL);
+                    localMsg.isSubscribed = true;
+                    grp.localMsgInfo = localMsg;
+                    mKnownChats[item->meta.mGroupId] =  localMsg;
+                }
             }
             else
             {
@@ -1570,7 +1598,7 @@ void p3GxsChats::setMessageProcessedStatus(uint32_t& token, const RsGxsGrpMsgIdP
 }
 
 void p3GxsChats::setMessageReadStatus( uint32_t& token,
-                                          const RsGxsGrpMsgIdPair& msgId,
+                                          const RsGxsGrpMsgIdPair& msgId, const std::string shortMsg,
                                           bool read )
 {
 #ifdef GXSCHATS_DEBUG
@@ -1581,11 +1609,56 @@ void p3GxsChats::setMessageReadStatus( uint32_t& token,
     /* Always remove status unprocessed */
     uint32_t mask = GXS_SERV::GXS_MSG_STATUS_GUI_NEW | GXS_SERV::GXS_MSG_STATUS_GUI_UNREAD;
     uint32_t status = GXS_SERV::GXS_MSG_STATUS_GUI_UNREAD;
-    if (read) status = 0;
+    {
+        RS_STACK_MUTEX(mChatMtx);
+        auto found = mKnownChats.find(msgId.first);
+        if (read) {
+            status = 0;
+            if(found !=mKnownChats.end()){
+                mKnownChats[msgId.first].clear();  //clear all the unread messageId
+                mKnownChats[msgId.first].unreadMsgIds.insert(msgId.second);
+                mKnownChats[msgId.first].msg = shortMsg;
+                mKnownChats[msgId.first].update_ts = time(NULL);
 
+                slowIndicateConfigChanged();
+            }
+        }else if(found !=mKnownChats.end()){
+                mKnownChats[msgId.first].unreadMsgIds.insert(msgId.second);
+                mKnownChats[msgId.first].msg = shortMsg;
+                mKnownChats[msgId.first].update_ts = time(NULL);
+
+                slowIndicateConfigChanged();
+        }
+    }
     setMsgStatusFlags(token, msgId, status, mask);
 }
 
+void p3GxsChats::setLocalMessageStatus(uint32_t& token, const RsGxsGrpMsgIdPair& msgId, const std::string msg){
+#ifdef GXSCHATS_DEBUG
+    std::cerr << "p3GxsChats::setLocalMessageStatus()";
+    std::cerr << std::endl;
+#endif
+    RS_STACK_MUTEX(mChatMtx);
+    auto found = mKnownChats.find(msgId.first);
+    if(found !=mKnownChats.end()){
+        mKnownChats[msgId.first].unreadMsgIds.insert(msgId.second);
+        mKnownChats[msgId.first].msg = msg;
+        mKnownChats[msgId.first].update_ts = time(NULL);
+
+        slowIndicateConfigChanged();
+    }
+}
+
+void p3GxsChats::slowIndicateConfigChanged()
+{
+    rstime_t now = time(NULL) ;
+
+    if(mLastConfigUpdate + DELAY_BETWEEN_CONFIG_UPDATES < now)
+    {
+        IndicateConfigChanged() ;
+    mLastConfigUpdate = now ;
+    }
+}
 
 /********************************************************************************************/
 /********************************************************************************************/
