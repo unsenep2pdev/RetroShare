@@ -146,7 +146,9 @@ private:
         RSTreeWidgetItemCompareRole *mParticipantCompareRole ;
 
     QToolButton *inviteFriendsButton ;
-	QToolButton *unsubscribeButton ;
+    QToolButton *membersListButton ;
+    QToolButton *membersListButton2 ;
+    QToolButton *unsubscribeButton ;
 
 	/** Qt Designer generated object */
     Ui::UnseenGxsChatLobbyDialog ui;
