@@ -109,8 +109,20 @@ QVariant UnseenGxsSmartListModel::data(const QModelIndex &index, int role) const
 
     else
     {
+
+        std::vector<UnseenGroupItemInfo> list; // = rsMsgs->getConversationItemList();
+        if (conversationMode == 0x0000)
+        {
+            list = allGxsGroupList;
+        }
+        else if (conversationMode == 0x0001)
+        {
+            list = filterGxsGroupList;
+        }
+
         //Get avatar for groupchat or contact item
-        UnseenGroupItemInfo chatItem = allGxsGroupList.at(index.row());
+         if (list.size() == 0 || index.row() >= static_cast<int>(list.size())) return QVariant();
+        UnseenGroupItemInfo chatItem = list.at(index.row());
 
         //STATUS FOR CONTACT
 
@@ -278,6 +290,17 @@ UnseenGxsSmartListModel::setAccount(const std::string& accId)
     beginResetModel();
     accId_ = accId;
     endResetModel();
+}
+
+void UnseenGxsSmartListModel::setFilterGxsGroupListAndMode(std::vector<UnseenGroupItemInfo> allList, uint32_t mode)
+{
+    conversationMode = mode;
+    if (conversationMode == 0x0000)
+    {
+        allGxsGroupList = allList;
+    }
+    else if (conversationMode == 0x0001)
+        filterGxsGroupList = allList;
 }
 
 void UnseenGxsSmartListModel::setGxsGroupList(std::vector<UnseenGroupItemInfo> allList)

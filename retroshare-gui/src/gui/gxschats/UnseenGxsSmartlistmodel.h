@@ -110,9 +110,12 @@ public:
     bool isContextMenuOpen{ false };
     std::vector<UnseenGroupItemInfo> getGxsGroupList();
     void setGxsGroupList(std::vector<UnseenGroupItemInfo> allList);
+    void setFilterGxsGroupListAndMode(std::vector<UnseenGroupItemInfo> allList, uint32_t mode);
     void sortGxsConversationListByRecentTime();
 private:
     std::string accId_;
     bool contactList_;
     std::vector<UnseenGroupItemInfo> allGxsGroupList;
+    std::vector<UnseenGroupItemInfo> filterGxsGroupList;
+    uint32_t conversationMode;
 };

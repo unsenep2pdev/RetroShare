@@ -37,6 +37,8 @@
 
 #include "gui/gxschats/GxsChatUserNotify.h"
 
+#define GXSCONVERSATION_MODE_WITHOUT_FILTER                    0x0000
+#define GXSCONVERSATION_MODE_WITH_SEARCH_FILTER                0x0001
 
 namespace Ui {
 class UnseenGxsGroupFrameDialog;
@@ -174,6 +176,9 @@ private slots:
 
     void updateMessageChanged(RsGxsChatMsg gxsChatMsg, bool incoming, RsGxsGroupId id, QDateTime time, QString senderName, QString msg);
     void updateGxsMsgNotify(RsGxsChatMsg gxsChatMsg, gxsChatId id, unsigned int count);
+
+    void filterGxsItems(const QString &text);
+    void filterColumnChanged(int);
 private:
 	virtual QString text(TextType type) = 0;
 	virtual QString icon(IconType type) = 0;
@@ -232,6 +237,11 @@ private:
     int getIndexFromUId(std::string uId);
     void updateUnreadNumberOfItemInGxsConversationList(std::string uId, unsigned int unreadNumber, bool isReset);
 
+    void setConversationListMode(uint32_t mode);
+    uint32_t getConversationListMode();
+    void setSearchFilter(const std::string &filtertext);
+    std::vector<UnseenGroupItemInfo> getSearchFilteredGxsGroupList();
+
 protected:
 	bool mCountChildMsgs; // Count unread child messages?
 
@@ -273,7 +283,10 @@ private:
 
     std::vector<UnseenGroupItemInfo> allGxsGroupList; //allGxsGroupList = adminList + subList
 
-    std::map<RsGxsGroupId,std::set<RsGxsMessageId>> _unreadMsgs ;
+    std::vector<UnseenGroupItemInfo> filteredGxsGroupList;
+    uint32_t conversationListMode ; // CONVERSATION_MODE_WITHOUT_FILTER  or
+                                    // CONVERSATION_MODE_WITH_SEARCH_FILTER
+    std::string filter_text;
 
 };
 

@@ -281,7 +281,7 @@ UnseenGxsConversationItemDelegate::paintConversationItem(QPainter* painter,
 
     // top-right: last interaction date/time
     QString lastUsedStr = index.data(static_cast<int>(UnseenGxsSmartListModel::Role::LastInteractionDate)).value<QString>();
-    if (!lastUsedStr.isNull()) {
+    if (!lastUsedStr.isNull() && lastUsedStr.length() > 0) {
         font.setItalic(false);
         font.setBold(false);
         pen.setColor(RingTheme::grey_);

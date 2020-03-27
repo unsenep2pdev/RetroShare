@@ -83,9 +83,9 @@ UnseenGxsGroupFrameDialog::UnseenGxsGroupFrameDialog(RsGxsIfaceHelper *ifaceImpl
     ui = new Ui::UnseenGxsGroupFrameDialog();
 	ui->setupUi(this);
 
-	mInitialized = false;
+    mInitialized = false;
 	mDistSyncAllowed = allow_dist_sync;
-	mInFill = false;
+    mInFill = false;
 	mCountChildMsgs = false;
 	mYourGroups = NULL;
 	mSubscribedGroups = NULL;
@@ -96,8 +96,8 @@ UnseenGxsGroupFrameDialog::UnseenGxsGroupFrameDialog(RsGxsIfaceHelper *ifaceImpl
     QObject::connect( NotifyQt::getInstance(), SIGNAL(alreadySendChat(const gxsChatId&, std::string, long long, std::string, bool)), this, SLOT(updateRecentTimeOrNewMsg(const gxsChatId&, std::string, long long, std::string, bool)));
     QObject::connect( NotifyQt::getInstance(), SIGNAL(newChatMessageReceive(const gxsChatId&, std::string, long long, std::string, bool)), this, SLOT(updateRecentTimeOrNewMsg(const gxsChatId&, std::string, long long, std::string, bool)));
 
-    connect(ui->filterLineEdit, SIGNAL(textChanged(QString)), this, SLOT(filterChanged()));
-    connect(ui->filterLineEdit, SIGNAL(filterChanged(int)), this, SLOT(filterChanged()));
+    connect(ui->filterLineEdit, SIGNAL(textChanged(const QString &)), this, SLOT(filterGxsItems(const QString &)));
+    connect(ui->filterLineEdit, SIGNAL(filterChanged(int)), this, SLOT(filterColumnChanged(int)));
     QObject::connect( ui->createGxsGroupChatButton, SIGNAL(clicked()), this, SLOT(newGroup()));
 
     /* add filter actions */
@@ -122,6 +122,9 @@ UnseenGxsGroupFrameDialog::UnseenGxsGroupFrameDialog(RsGxsIfaceHelper *ifaceImpl
     ui->unseenGroupTreeWidget->setContextMenuPolicy(Qt::CustomContextMenu) ;
     ui->unseenGroupTreeWidget->header()->hide();
 
+    conversationListMode = GXSCONVERSATION_MODE_WITHOUT_FILTER;
+    smartListModel_->setFilterGxsGroupListAndMode(allGxsGroupList, conversationListMode);
+
 	/* Setup Queue */
 	mInterface = ifaceImpl;
 	mTokenService = mInterface->getTokenService();
@@ -143,6 +146,8 @@ UnseenGxsGroupFrameDialog::UnseenGxsGroupFrameDialog(RsGxsIfaceHelper *ifaceImpl
 	QList<int> sizes;
     sizes << 200 << width(); // Qt calculates the right sizes
     ui->splitter->setSizes(sizes);
+
+
 
 #ifndef UNFINISHED
 	ui->todoPushButton->hide();
@@ -1492,7 +1497,19 @@ void UnseenGxsGroupFrameDialog::selectConversation(const QModelIndex& index)
     //How to get the ConversationModel and get the index of it
     if (!index.isValid()) return;
 
-    std::vector<UnseenGroupItemInfo> list = smartListModel_->getGxsGroupList();
+    //uint32_t conversationMode = getConversationListMode();
+    std::vector<UnseenGroupItemInfo> list;
+    if (conversationListMode == GXSCONVERSATION_MODE_WITHOUT_FILTER)
+    {
+        list = smartListModel_->getGxsGroupList();
+        //list = allGxsGroupList;
+    }
+    else if (conversationListMode == GXSCONVERSATION_MODE_WITH_SEARCH_FILTER)
+    {
+        list = filteredGxsGroupList;
+    }
+
+    //std::vector<UnseenGroupItemInfo> list = smartListModel_->getGxsGroupList();
 
     if (list.size() <= index.row()) return;
 
@@ -1660,18 +1677,16 @@ void UnseenGxsGroupFrameDialog::updateRecentTimeOrNewMsg(const gxsChatId & gxsch
            QModelIndex idx = ui->unseenGroupTreeWidget->model()->index(seletedrow, 0);
            ui->unseenGroupTreeWidget->selectionModel()->select(idx, QItemSelectionModel::Select);
            emit ui->unseenGroupTreeWidget->model()->layoutChanged();
+
+           //check if this is the filtered search mode, just return to normal mode
+           if (getConversationListMode() == GXSCONVERSATION_MODE_WITH_SEARCH_FILTER)
+           {
+               if (!ui->filterLineEdit->text().isEmpty())
+               {
+                   ui->filterLineEdit->setText("");
+               }
+           }
        }
-//        else
-//        {
-//            //check if this is the filtered search mode, just return to normal mode
-//            if (rsMsgs->getConversationListMode() == CONVERSATION_MODE_WITH_SEARCH_FILTER)
-//            {
-//                if (!ui->filterLineEdit->text().isEmpty())
-//                {
-//                    ui->filterLineEdit->setText("");
-//                }
-//            }
-//        }
 
 
 
@@ -1790,7 +1805,6 @@ void UnseenGxsGroupFrameDialog::updateGxsMsgNotify(RsGxsChatMsg gxsChatMsg, gxsC
     }
 }
 
-
 void UnseenGxsGroupFrameDialog::updateRecentTimeOfItemInGxsConversationList(std::string uId, std::string nickInGroupChat, long long lastMsgDatetime, std::string textmsg, bool isOtherMsg )
 {
     for (unsigned int i = 0; i < allGxsGroupList.size(); i++ )
@@ -1866,4 +1880,73 @@ void UnseenGxsGroupFrameDialog::updateUnreadNumberOfItemInGxsConversationList(st
         }
     }
     //smartListModel_->setGxsGroupList(allGxsGroupList);
+}
+
+void UnseenGxsGroupFrameDialog::setConversationListMode(uint32_t mode)
+{
+    conversationListMode = mode;
+    if (conversationListMode == GXSCONVERSATION_MODE_WITHOUT_FILTER)
+    {
+        smartListModel_->setFilterGxsGroupListAndMode(allGxsGroupList, conversationListMode);
+    }
+    else if (conversationListMode == GXSCONVERSATION_MODE_WITH_SEARCH_FILTER)
+        smartListModel_->setFilterGxsGroupListAndMode(filteredGxsGroupList, conversationListMode);
+}
+
+uint32_t UnseenGxsGroupFrameDialog::getConversationListMode()
+{
+    return conversationListMode;
+}
+
+std::vector<UnseenGroupItemInfo> UnseenGxsGroupFrameDialog::getSearchFilteredGxsGroupList()
+{
+     return filteredGxsGroupList;
+}
+
+void UnseenGxsGroupFrameDialog::setSearchFilter(const std::string &filtertext)
+{
+    filter_text = filtertext;
+
+    filteredGxsGroupList.clear();
+    for (const UnseenGroupItemInfo& item : allGxsGroupList)
+    {
+        std::string nameforsearch = item.name.toStdString();
+
+        std::transform(nameforsearch.begin(), nameforsearch.end(), nameforsearch.begin(),
+            [](unsigned char c){ return std::tolower(c); });
+        std::string filtertext2 = filtertext;
+        std::transform(filtertext2.begin(), filtertext2.end(), filtertext2.begin(),
+            [](unsigned char c){ return std::tolower(c); });
+
+        if (std::size_t found = nameforsearch.find(filtertext2) !=std::string::npos)
+        {
+            //std::cout << "id: " << item.displayName << " is good" << std::endl;
+            filteredGxsGroupList.push_back(item);
+        }
+   }
+
+}
+
+void UnseenGxsGroupFrameDialog::filterColumnChanged(int)
+{
+    filterGxsItems(ui->filterLineEdit->text());
+}
+
+void UnseenGxsGroupFrameDialog::filterGxsItems(const QString &text)
+{
+    if (text.isEmpty())
+    {
+        setConversationListMode(GXSCONVERSATION_MODE_WITHOUT_FILTER);
+    }
+    else
+    {
+
+        std::string filter = text.toStdString();
+        setSearchFilter(filter);
+        setConversationListMode(GXSCONVERSATION_MODE_WITH_SEARCH_FILTER);
+        //smartListModel_->setFilterGxsGroupListAndMode(filteredGxsGroupList, GXSCONVERSATION_MODE_WITH_SEARCH_FILTER);
+    }
+    ui->unseenGroupTreeWidget->selectionModel()->clearSelection();
+    emit ui->unseenGroupTreeWidget->model()->layoutChanged();
+    ui->unseenGroupTreeWidget->show();
 }
