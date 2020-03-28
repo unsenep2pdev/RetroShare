@@ -44,7 +44,7 @@
 #include "gui/gxschats/UnseenGxsSmartlistview.h"
 #include "gui/UnseenGxsConversationitemdelegate.h"
 
-#define DEBUG_GROUPFRAMEDIALOG 1
+//#define DEBUG_GROUPFRAMEDIALOG 1
 
 /* Images for TreeWidget */
 #define IMAGE_SUBSCRIBE      ":/images/edit_add24.png"
@@ -1505,7 +1505,7 @@ void UnseenGxsGroupFrameDialog::selectConversation(const QModelIndex& index)
 
     UnseenGroupItemInfo gxsGroupItem = list.at(index.row());
 
-    std::cerr << " gxsGroupItem info, name : " << gxsGroupItem.name.toStdString() << std::endl;
+    //std::cerr << " gxsGroupItem info, name : " << gxsGroupItem.name.toStdString() << std::endl;
 
     mGroupId = RsGxsGroupId(gxsGroupItem.id.toStdString());
 
@@ -1837,7 +1837,7 @@ void UnseenGxsGroupFrameDialog::updateGxsMsgNotify(RsGxsChatMsg gxsChatMsg, gxsC
         notifyButton->setVisible(false);
         RsGxsGrpMsgIdPair msgPair = std::make_pair(id.toGxsGroupId(), gxsChatMsg.mMeta.mMsgId);
         uint32_t token;
-        rsGxsChats->setMessageReadStatus(token, msgPair, true);
+        rsGxsChats->setMessageReadStatus(token, msgPair, gxsChatMsg.mMsg, true);
     }
 }
 

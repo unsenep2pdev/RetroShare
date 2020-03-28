@@ -261,7 +261,10 @@ IdDialog::IdDialog(QWidget *parent) :
 	connect(ui->addContactButton, SIGNAL(clicked()), this, SLOT(openAddContactPage()));
 
 	//28 sep 2018 - meiyousixin - check the peer status change to change status of peer on contact list
-	connect(NotifyQt::getInstance(), SIGNAL(peerStatusChanged(const QString&,int)), this, SLOT(peerStatusChanged(const QString&,int)));
+    connect(NotifyQt::getInstance(), SIGNAL(peerStatusChanged(const QString&,int)), this, SLOT(peerStatusChanged(const QString&,int)));
+
+    //unseenp2pdev - adding status update for gxscontact
+    connect(NotifyQt::getInstance(), SIGNAL(gxsContactStatusChanged(const QString&,int)), this, SLOT(gxsContactStatusChanged(const QString&,int)));
 
 	ui->avlabel_Circles->setPixmap(QPixmap(":/icons/png/circles.png"));
 
@@ -1471,7 +1474,6 @@ bool IdDialog::fillIdListItem(const RsGxsIdGroup& data, QTreeWidgetItem *&item, 
 	bool isLinkedToOwnNode = (data.mPgpKnown && (data.mPgpId == ownPgpId)) ;
 	bool isOwnId = (data.mMeta.mSubscribeFlags & GXS_SERV::GROUP_SUBSCRIBE_ADMIN);
 	RsIdentityDetails idd ;
-	std::cerr << "fillIdListItem: data.mMeta.mGroupId: " <<  data.mMeta.mGroupId; std::cerr << std::endl;
 	rsIdentity->getIdDetails(RsGxsId(data.mMeta.mGroupId),idd) ;
 
 	bool isBanned = idd.mReputation.mOverallReputationLevel == RsReputations::REPUTATION_LOCALLY_NEGATIVE;
@@ -1524,8 +1526,6 @@ bool IdDialog::fillIdListItem(const RsGxsIdGroup& data, QTreeWidgetItem *&item, 
         item = new TreeWidgetItem();
         
 
-    std::cerr << "IdDialog: fillIdListItem: is this nickname: " <<  data.mMeta.mGroupName;
-    std::cerr << std::endl;
     item->setText(RSID_COL_NICKNAME, QString::fromUtf8(data.mMeta.mGroupName.c_str()).left(RSID_MAXIMUM_NICKNAME_SIZE));
     item->setText(RSID_COL_KEYID, QString::fromStdString(data.mMeta.mGroupId.toStdString()));
     
@@ -1661,12 +1661,11 @@ void IdDialog::insertIdList(uint32_t token)
 		return;
 	}
     
-    	// turn that vector into a std::set, to avoid a linear search
-    
-    	std::map<RsGxsGroupId,RsGxsIdGroup> ids_set ;
-        
-        for(uint32_t i=0;i<datavector.size();++i)
-            ids_set[datavector[i].mMeta.mGroupId] = datavector[i] ;
+    // turn that vector into a std::set, to avoid a linear search
+    std::map<RsGxsGroupId,RsGxsIdGroup> ids_set ;
+
+    for(uint32_t i=0;i<datavector.size();++i)
+        ids_set[datavector[i].mMeta.mGroupId] = datavector[i] ;
 
 	mStateHelper->setActive(IDDIALOG_IDLIST, true);
 
@@ -1683,23 +1682,23 @@ void IdDialog::insertIdList(uint32_t token)
 		++itemIterator;
 		std::map<RsGxsGroupId,RsGxsIdGroup>::iterator it = ids_set.find(RsGxsGroupId(item->text(RSID_COL_KEYID).toStdString())) ;
 
-		if(it == ids_set.end())
-		{
-			if(item != allItem && item != contactsItem && item != ownItem)
-				delete(item);
-                        
-                        continue ;
-		} 
-                
-        	QTreeWidgetItem *parent_item = item->parent() ;
-                    
-                if(    (parent_item == allItem && it->second.mIsAContact) || (parent_item == contactsItem && !it->second.mIsAContact))
-                {
-                    delete item ;	// do not remove from the list, so that it is added again in the correct place.
-                    continue ;
-                }
-                
-		if (!fillIdListItem(it->second, item, ownPgpId, accept))
+        if(it == ids_set.end())
+        {
+            if(item != allItem && item != contactsItem && item != ownItem)
+                delete(item);
+
+            continue ;
+        }
+
+        QTreeWidgetItem *parent_item = item->parent() ;
+
+        if( (parent_item == allItem && it->second.mIsAContact) || (parent_item == contactsItem && !it->second.mIsAContact))
+        {
+            delete item ;	// do not remove from the list, so that it is added again in the correct place.
+            continue ;
+        }
+
+        if (!fillIdListItem(it->second, item, ownPgpId, accept))
 			delete(item);
             
 		ids_set.erase(it);	// erase, so it is not considered to be a new item
@@ -1712,7 +1711,7 @@ void IdDialog::insertIdList(uint32_t token)
 
 	    item = NULL;
 	    //meiyousixin - remove our own items - no need at this time.
-	    //ui->idTreeWidget->insertTopLevelItem(0, ownItem);
+        ui->idTreeWidget->insertTopLevelItem(0, ownItem);
 	    ui->idTreeWidget->insertTopLevelItem(0, allItem);
 	    ui->idTreeWidget->insertTopLevelItem(0, contactsItem );  
 
@@ -1727,20 +1726,30 @@ void IdDialog::insertIdList(uint32_t token)
 		{
 			if(data.mMeta.mSubscribeFlags & GXS_SERV::GROUP_SUBSCRIBE_ADMIN)
 				ownItem->addChild(item);
-			else if(data.mIsAContact)
-				{
-                    contactsItem->addChild(item);
-				}
-			else
-				allItem->addChild(item);
-		}
 
-	}
+            if(data.mIsAContact)
+                contactsItem->addChild(item);
+
+            allItem->addChild(item);
+
+        }
+
+    }
+    //UnseenP2P ContactList approach.
+    std::set<RsGxsMyContact> contactList;
+    rsIdentity->getMyContacts(contactList);
+
+//    std::cerr <<"IdDialog::insertIdList()"<<std::endl;
+//    for(auto it = contactList.begin(); it != contactList.end(); it++){
+//         std::cerr <<"Name : "<< it->name << " and GxsId: " << it->gxsId << std::endl;
+//         std::cerr <<"Status: " << it->status << " and PgPId: "<< std::endl;
+//    }
 
 	//meiyousixin - show again the friend list here
-	showFriendList();
+    //showFriendList();
 	/* count items */
-	int itemCount = contactsItem->childCount() + allItem->childCount() + ownItem->childCount();
+    //int itemCount = contactsItem->childCount() + allItem->childCount() + ownItem->childCount();
+    int itemCount = contactsItem->childCount() ;
 	ui->label_count->setText( "(" + QString::number( itemCount ) + ")" );
 
 	navigate(RsGxsId(oldCurrentId));
@@ -1990,7 +1999,6 @@ void IdDialog::insertIdDetails(uint32_t token)
     // now fill in usage cases
 
 	RsIdentityDetails det ;
-	std::cerr << "inserIdDetails: data.mMeta.mGroupId: " <<  data.mMeta.mGroupId; std::cerr << std::endl;
 	rsIdentity->getIdDetails(RsGxsId(data.mMeta.mGroupId),det) ;
 
     QString usage_txt ;
@@ -2348,7 +2356,7 @@ void IdDialog::loadRequest(const TokenQueue * queue, const TokenRequest &req)
 
 	    case IDDIALOG_REFRESH:
 		    // replaced by RsGxsUpdateBroadcastPage
-		    //			updateDisplay(true);
+            updateDisplay(true);
 		    break;
 	    default:
 		    std::cerr << "IdDialog::loadRequest() ERROR";
@@ -2427,7 +2435,6 @@ void IdDialog::IdListCustomPopupMenu( QPoint )
 		RsGxsId keyId((*it)->text(RSID_COL_KEYID).toStdString());
 
 		RsIdentityDetails det ;
-		std::cerr << "IdListCustomPopupMenu: keyId: " <<  keyId; std::cerr << std::endl;
 		rsIdentity->getIdDetails(keyId,det) ;
 
 		switch(det.mReputation.mOwnOpinion)
@@ -2912,4 +2919,35 @@ void IdDialog::peerStatusChanged(const QString& peerId, int status)
 	}
 
    return;
+}
+
+void IdDialog::gxsContactStatusChanged(const QString &gxs_id, int status){
+
+    std::cerr <<"IdDialog::gxsContactStatusChanged(): notify rsGxsId:"<<gxs_id.toStdString()<<" and status: "<<status <<std::endl;
+
+    QTreeWidgetItemIterator itemIterator(ui->idTreeWidget);
+    QTreeWidgetItem *item = NULL;
+
+    while ((item = *itemIterator) != NULL)
+    {
+        ++itemIterator;
+        QTreeWidgetItem *parent_item = item->parent() ;
+
+        if  (parent_item == allItem )
+        {
+            continue;
+        }
+
+        std::string Id = item->text(RSID_COL_KEYID).toStdString();
+        if (gxs_id.toStdString() ==Id )
+        {
+            item->setIcon(RSID_COL_VOTES, QIcon(StatusDefs::imageStatus(status)));
+            //if (status == RS_STATUS_OFFLINE)
+            //item->setIcon(RSID_COL_VOTES, QIcon(IMAGE_UNKNOWN));
+            break;
+
+        }
+    }
+
+    return;
 }

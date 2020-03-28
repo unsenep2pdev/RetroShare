@@ -791,7 +791,7 @@ void GxsChatPostItem::readToggled(bool checked)
     RsGxsGrpMsgIdPair msgPair = std::make_pair(groupId(), messageId());
 
     uint32_t token;
-    rsGxsChats->setMessageReadStatus(token, msgPair, !checked);
+    rsGxsChats->setMessageReadStatus(token, msgPair,messageId().toStdString(), !checked);
 
     setReadStatus(false, checked);
 }

@@ -31,6 +31,7 @@
 #include "retroshare/rsgxsifacehelper.h"
 #include "retroshare/rsreputations.h"
 #include "retroshare/rsids.h"
+//#include <retroshare/rsmsgs.h>
 #include "serialiser/rstlvimage.h"
 #include "retroshare/rsgxscommon.h"
 #include "serialiser/rsserializable.h"
@@ -41,6 +42,9 @@
 struct RsIdentity;
 extern RsIdentity *rsIdentity;
 
+//release versions of unseenp2p for backward compatibility
+enum VERSION { V69, V70, V71};
+static VERSION current_version = V69;
 
 // GroupFlags: Only one so far:
 
@@ -105,7 +109,7 @@ struct GxsReputation : RsSerializable
 struct RsGxsIdGroup : RsSerializable
 {
 	RsGxsIdGroup() :
-	    mLastUsageTS(0), mPgpKnown(false), mIsAContact(false) {}
+        mLastUsageTS(0), mPgpKnown(false), mIsAContact(false), version(current_version) {}
 	~RsGxsIdGroup() {}
 
 	RsGroupMetaData mMeta;
@@ -137,6 +141,7 @@ struct RsGxsIdGroup : RsSerializable
     rstime_t mLastUsageTS ;
 
     //inviteURL=..., and other infos.
+    //version V70 and above will support this.
     std::map<std::string,std::string> profileInfo;
 
     // Not Serialised - for GUI's benefit.
@@ -144,6 +149,9 @@ struct RsGxsIdGroup : RsSerializable
     bool mIsAContact;	// change that into flags one day
     RsPgpId mPgpId;
     GxsReputation mReputation;
+
+    //adding version to backward compatibility.
+    VERSION version;
 
 	/// @see RsSerializable
 	void serial_process( RsGenericSerializer::SerializeJob j,
@@ -156,7 +164,16 @@ std::ostream &operator<<(std::ostream &out, const RsGxsIdGroup &group);
 class RsGxsMyContact: RsSerializable
 {
     public:
-        enum STATUS {UNKNOWN,PENDING,REQUEST,APPROVED, TRUSTED, BANNED};
+        enum STATUS {UNKNOWN,PENDING,PENDING_REQ, PENDING_ACCEPT, REQUEST,ACCEPT, APPROVE, TRUSTED, BANNED, REJECT,ACK};
+        /*  PENDING=NOT READY, PENDING_REQ=ALREADY SENT REQUEST, PENDING_ACCEPT=ALREADY RECEIVE REQ
+         *  ACCEPT=  APPROVE already add Friend.
+         *  BANNED = REJECT TO BE FRIEND
+         *  TRUST  = CONNECTION ESTABLISHED
+         *  Example: A add B:  A Add Contact step: Pending, Send Request/ack: PENDING_REQ,
+         *                 B: PENDING_ACCEPT, B's Approved/Accept, Sending Approved to A.
+         *                 A: Validate B's Cert and Accept. A send ACK to B.
+         *                 A connects to B: Online,  A->Trust, B->Trust.
+        **/
         RsGxsId gxsId;
         RsPgpId mPgpId;
         RsPeerId  peerId;
@@ -438,6 +455,13 @@ struct RsIdentity : RsGxsIfaceHelper
     virtual bool updateMyContact(const RsGxsMyContact & contact) =0;
     virtual bool removeMyContact(const RsGxsMyContact& contact) =0;
     virtual void getMyContacts(std::set<RsGxsMyContact>& contactList) =0;
+
+    virtual bool validContact(const RsGxsId &id) =0;
+    virtual bool inviteContact(RsGxsId &id)=0;
+    virtual bool approveContact(RsGxsId &id, bool denied=false)=0;
+    virtual bool approveContact(RsGxsMyContact &contact, bool denied=false)=0;
+    virtual void processContactPendingRequest()=0;
+
 
 	virtual bool serialiseIdentityToMemory( const RsGxsId& id,
 	                                        std::string& radix_string ) = 0;

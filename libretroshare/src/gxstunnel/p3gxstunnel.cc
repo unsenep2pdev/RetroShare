@@ -1262,8 +1262,10 @@ bool p3GxsTunnelService::locked_sendEncryptedTunnelData(RsGxsTunnelItem *item)
 	}
 	if(it->second.status != RS_GXS_TUNNEL_STATUS_CAN_TALK)
 	{
+#ifdef DEBUG_GXS_TUNNEL
 		std::cerr << "(EE) Cannot talk to tunnel id " << tunnel_id
 		          << ". Tunnel status is: " << it->second.status << std::endl;
+#endif
 		return false;
 	}
 
@@ -1329,6 +1331,7 @@ bool p3GxsTunnelService::requestSecuredTunnel(const RsGxsId& to_gxs_id, const Rs
 	
     std::list<RsGxsId> lst ;
     mGixs->getOwnIds(lst) ;
+
 
     bool found = false ;
     for(std::list<RsGxsId>::const_iterator it = lst.begin();it!=lst.end();++it)

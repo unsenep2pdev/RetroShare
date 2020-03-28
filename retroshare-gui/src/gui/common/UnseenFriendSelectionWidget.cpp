@@ -41,7 +41,7 @@
 #include <QMessageBox>
 //unseenp2p
 #include "gui/common/UnseenContactSmartListView.h"
-#include "gui/UnseenContactItemdelegate.h"
+#include "gui/UnseenContactItemDelegate.h"
 
 
 #define COLUMN_NAME   0

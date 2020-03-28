@@ -553,7 +553,7 @@ class MsgCounter
 void p3ChatService::handleIncomingItem(RsItem *item)
 {
 #ifdef CHAT_DEBUG
-	std::cerr << "p3ChatService::receiveChatQueue() Item:" << (void*)item
+    std::cerr << "p3ChatService::handleIncomingItem() Item:" << (void*)item
 	          << std::endl ;
 #endif
 

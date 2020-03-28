@@ -19,22 +19,6 @@ libresapihttpserver {
 
 !include("../../libretroshare/src/use_libretroshare.pri"):error("Including")
 
-FORMS   += TorControl/TorControlWindow.ui \
-    gui/gxs/UnseenGxsGroupFrameDialog.ui \
-    gui/gxschats/UnseenGxsChatLobbyDialog.ui \
-    gui/gxs/UnseenGxsGroupDialog.ui \
-    gui/common/UnseenFriendSelectionWidget.ui
-SOURCES += gui/common/UnseenFriendSelectionWidget.cpp \
-    gui/common/UnseenContactSmartlistview.cpp \
-    gui/common/UnseenContactSmartlistmodel.cpp \
-    gui/UnseenContactItemdelegate.cpp \
-    gui/common/UnseenFriendSelectionDialog.cpp
-HEADERS += gui/common/UnseenFriendSelectionWidget.h \
-    gui/common/UnseenContactSmartlistview.h \
-    gui/common/UnseenContactSmartlistmodel.h \
-    gui/UnseenContactItemdelegate.h \
-    gui/common/UnseenFriendSelectionDialog.h
-
 #QMAKE_CFLAGS += -fmudflap 
 #LIBS *= /usr/lib/gcc/x86_64-linux-gnu/4.4/libmudflap.a /usr/lib/gcc/x86_64-linux-gnu/4.4/libmudflapth.a
 
@@ -306,25 +290,37 @@ wikipoos {
 
 
 #GxsChats
-FORMS   +=      gui/gxs/UnseenGxsGroupFrameDialog.ui \
+FORMS   +=      gui/common/UnseenFriendSelectionWidget.ui \
+                                gui/gxs/UnseenGxsGroupFrameDialog.ui \
                                 gui/gxschats/UnseenGxsChatLobbyDialog.ui \
                                 gui/gxs/UnseenGxsGroupDialog.ui
 
-SOURCES +=      gui/gxs/UnseenGxsGroupFrameDialog.cpp \
-                                gui/gxschats/UnseenGxsSmartlistmodel.cpp \
-                                gui/gxschats/UnseenGxsSmartlistview.cpp \
+
+SOURCES +=      gui/common/UnseenFriendSelectionWidget.cpp \
+                                gui/common/UnseenContactSmartListView.cpp \
+                                gui/common/UnseenContactSmartListModel.cpp \
+                                gui/UnseenContactItemDelegate.cpp \
+                                gui/gxs/UnseenGxsGroupFrameDialog.cpp \
+                                gui/gxschats/UnseenGxsSmartListModel.cpp \
+                                gui/gxschats/UnseenGxsSmartListView.cpp \
                                 gui/UnseenGxsConversationitemdelegate.cpp \
                                 gui/gxschats/UnseenGxsChatLobbyDialog.cpp \
                                 gui/gxschats/UnseenGxsChatGroupDialog.cpp \
-                                gui/gxs/UnseenGxsGroupDialog.cpp
+                                gui/gxs/UnseenGxsGroupDialog.cpp \
+                                gui/common/UnseenFriendSelectionDialog.cpp
 
-HEADERS +=      gui/gxs/UnseenGxsGroupFrameDialog.h \
-                                gui/gxschats/UnseenGxsSmartlistmodel.h \
-                                gui/gxschats/UnseenGxsSmartlistview.h \
+HEADERS +=      gui/common/UnseenFriendSelectionWidget.h \
+                                gui/common/UnseenContactSmartListView.h \
+                                gui/common/UnseenContactSmartListModel.h \
+                                gui/UnseenContactItemDelegate.h \
+                                gui/gxs/UnseenGxsGroupFrameDialog.h \
+                                gui/gxschats/UnseenGxsSmartListModel.h \
+                                gui/gxschats/UnseenGxsSmartListView.h \
                                 gui/UnseenGxsConversationitemdelegate.h \
                                 gui/gxschats/UnseenGxsChatLobbyDialog.h \
                                 gui/gxschats/UnseenGxsChatGroupDialog.h \
-                                gui/gxs/UnseenGxsGroupDialog.h
+                                gui/gxs/UnseenGxsGroupDialog.h \
+                                gui/common/UnseenFriendSelectionDialog.h
 
 
 # Tor controller

@@ -57,6 +57,10 @@ RsItem *RsChatSerialiser::create_item(uint16_t service_id,uint8_t item_sub_id) c
     case RS_PKT_SUBTYPE_GXSCHAT_GROUP: return new GxsNxsChatGroupItem();  //adding direct chat gxs group message
     case RS_PKT_SUBTYPE_GXSCHAT_MSG: return new GxsNxsChatMsgItem();          //adding direct chat gxs message
     case RS_PKT_SUBTYPE_GXSCHAT_PUBLISH_KEY: return new GxsNxsGroupPublishKeyItem();  //adding direct share publish key gxs group
+    case RS_PKT_SUBTYPE_GXSCHAT_REQUEST: return new RsChatMsgItem(RS_PKT_SUBTYPE_GXSCHAT_REQUEST);
+    case RS_PKT_SUBTYPE_GXSCHAT_ACTKN:   return new RsChatMsgItem(RS_PKT_SUBTYPE_GXSCHAT_ACTKN);
+    case RS_PKT_SUBTYPE_GXSCHAT_APPROVED: return new RsChatMsgItem(RS_PKT_SUBTYPE_GXSCHAT_APPROVED);
+    case RS_PKT_SUBTYPE_GXSCHAT_REJECT: return new RsChatMsgItem(RS_PKT_SUBTYPE_GXSCHAT_REJECT);
     default:
 		std::cerr << "Unknown packet type in chat!" << std::endl;
 		return NULL;

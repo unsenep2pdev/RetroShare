@@ -378,7 +378,6 @@ HEADERS += directory_updater.h \
 HEADERS += chat/distantchat.h \
 			  chat/p3chatservice.h \
 			  chat/distributedchat.h \
-                          chat/p3gxschatservice.h \
 			  chat/rschatitems.h
 
 HEADERS +=	pqi/authssl.h \
@@ -544,7 +543,6 @@ SOURCES += crypto/chacha20.cpp \
 SOURCES += chat/distantchat.cc \
 			  chat/p3chatservice.cc \
 			  chat/distributedchat.cc \
-                          chat/p3gxschatservice.cc \
                           chat/rschatitems.cc
 
 SOURCES +=	pqi/authgpg.cc \

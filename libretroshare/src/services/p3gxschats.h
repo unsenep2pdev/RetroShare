@@ -203,7 +203,8 @@ virtual bool subscribeToGroup(uint32_t &token, const RsGxsGroupId &groupId, bool
 
     // Set Statuses.
 virtual void setMessageProcessedStatus(uint32_t& token, const RsGxsGrpMsgIdPair& msgId, bool processed);
-virtual void setMessageReadStatus(uint32_t& token, const RsGxsGrpMsgIdPair& msgId, bool read);
+virtual void setMessageReadStatus(uint32_t& token, const RsGxsGrpMsgIdPair& msgId, const std::string shortMsg, bool read);
+virtual void setLocalMessageStatus(uint32_t& token, const RsGxsGrpMsgIdPair& msgId, const std::string msg);
 
     // File Interface
     virtual bool ExtraFileHash(const std::string& path);
@@ -227,6 +228,7 @@ protected:
     // Overloaded from GxsTokenQueue for Request callbacks.
     virtual void handleResponse(uint32_t token, uint32_t req_type);
 
+    void slowIndicateConfigChanged() ;  //auto saving the chat conversationlist
 
 private:
 
@@ -287,7 +289,7 @@ bool generateGroup(uint32_t &token, std::string groupName);
     RsGxsMessageId mGenThreadId;
 
     p3GxsCommentService *mCommentService;
-    std::map<RsGxsGroupId,rstime_t> mKnownChats;
+    std::map<RsGxsGroupId,LocalGroupInfo> mKnownChats;
 
     /** Store search callbacks with timeout*/
     std::map<
@@ -317,6 +319,8 @@ bool generateGroup(uint32_t &token, std::string groupName);
     std::map<RsGxsGrpMsgIdPair, uint32_t> messageCache;
     std::map<RsNxsNotifyChat*, rstime_t> notifyMsgCache;
     std::map<uint32_t, rstime_t> already_notifyMsg;
+
+    rstime_t mLastConfigUpdate;
 
 };
 

@@ -19,7 +19,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  **************************************************************************/
 
-#include "UnseenGxsSmartlistview.h"
+#include "UnseenContactSmartListView.h"
 
 #include <QScrollBar>
 #include <QMouseEvent>
@@ -27,8 +27,9 @@
 #include <QItemDelegate>
 
 #include <ciso646>
+#include <iostream>
 
-UnseenGxsSmartListView::UnseenGxsSmartListView(QWidget *parent) :
+UnseenContactSmartListView::UnseenContactSmartListView(QWidget *parent) :
     QTreeView(parent)
 {
     verticalScrollBar()->setEnabled(true);
@@ -45,26 +46,24 @@ UnseenGxsSmartListView::UnseenGxsSmartListView(QWidget *parent) :
     horizontalScrollBar()->hide();
 }
 
-UnseenGxsSmartListView::~UnseenGxsSmartListView()
+UnseenContactSmartListView::~UnseenContactSmartListView()
 {
     reset();
 }
 
 void
-UnseenGxsSmartListView::enterEvent(QEvent* event)
+UnseenContactSmartListView::enterEvent(QEvent* event)
 {
     Q_UNUSED(event);
 }
 
-void
-UnseenGxsSmartListView::leaveEvent(QEvent* event)
+void UnseenContactSmartListView::leaveEvent(QEvent* event)
 {
     Q_UNUSED(event);
     //hoveredRow_ = QModelIndex();
 }
 
-void
-UnseenGxsSmartListView::mousePressEvent(QMouseEvent *event)
+void UnseenContactSmartListView::mousePressEvent(QMouseEvent *event)
 {
     if (event->button() == Qt::RightButton) {
         //emit customContextMenuRequested(event->pos());
@@ -74,8 +73,7 @@ UnseenGxsSmartListView::mousePressEvent(QMouseEvent *event)
     }
 }
 
-bool
-UnseenGxsSmartListView::eventFilter(QObject* watched, QEvent* event)
+bool UnseenContactSmartListView::eventFilter(QObject* watched, QEvent* event)
 {
     auto index = this->indexAt(static_cast<QMouseEvent*>(event)->pos());
     if (!index.isValid()) {
@@ -88,8 +86,7 @@ UnseenGxsSmartListView::eventFilter(QObject* watched, QEvent* event)
     return QObject::eventFilter(watched, event);
 }
 
-void
-UnseenGxsSmartListView::drawRow(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const
+void UnseenContactSmartListView::drawRow(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const
 {
     if (index == hoveredRow_ && indexWidget(hoveredRow_)) {
         indexWidget(index)->setVisible(true);
@@ -98,4 +95,5 @@ UnseenGxsSmartListView::drawRow(QPainter* painter, const QStyleOptionViewItem& o
         indexWidget(index)->setVisible(false);
     }
     QTreeView::drawRow(painter, option, index);
+
 }

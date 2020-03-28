@@ -795,9 +795,9 @@ void UnseenGxsChatLobbyDialog::updateParticipantsList()
                members_update2.insert(myown);
                thisGroup.members = members_update2;
 
-               std::cerr << "   Participating friends: " << std::endl;
-               std::cerr << "   groupchat name: " << chatsInfo[0].mDescription<< std::endl;
-               std::cerr << "   Participating nick names (sslId): " << std::endl;
+//               std::cerr << "   Participating friends: " << std::endl;
+//               std::cerr << "   groupchat name: " << chatsInfo[0].mDescription<< std::endl;
+//               std::cerr << "   Participating nick names (sslId): " << std::endl;
 
 
                QList<QTreeWidgetItem*>  qlOldParticipants=ui.participantsList->findItems("*",Qt::MatchWildcard,COLUMN_ID);
