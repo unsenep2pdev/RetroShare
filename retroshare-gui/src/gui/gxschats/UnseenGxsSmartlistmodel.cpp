@@ -310,7 +310,12 @@ void UnseenGxsSmartListModel::setGxsGroupList(std::vector<UnseenGroupItemInfo> a
 
 std::vector<UnseenGroupItemInfo> UnseenGxsSmartListModel::getGxsGroupList()
 {
-    return allGxsGroupList;
+    if (conversationMode == 0x0000)
+    {
+        return allGxsGroupList;
+    }
+    else if (conversationMode == 0x0001)
+        return filterGxsGroupList;
 }
 
 void UnseenGxsSmartListModel::sortGxsConversationListByRecentTime()

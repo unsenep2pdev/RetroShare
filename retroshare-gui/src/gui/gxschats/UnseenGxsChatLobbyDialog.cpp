@@ -343,6 +343,11 @@ void UnseenGxsChatLobbyDialog::inviteFriends()
     {
         if (chatsInfo.size() > 0)
         {
+            if(chatsInfo[0].mMeta.mInternalCircle.isNull())
+            {
+                chatsInfo[0].mMeta.mInternalCircle = RsGxsCircleId::random();
+            }
+
             for(std::set<GxsChatMember>::iterator it = invitedMemberList.begin(); it != invitedMemberList.end(); ++it)
             {
                 if(chatsInfo[0].members.find(*it)== chatsInfo[0].members.end())
@@ -350,6 +355,8 @@ void UnseenGxsChatLobbyDialog::inviteFriends()
             }
             uint32_t token;
             rsGxsChats->updateGroup(token, chatsInfo[0]);
+
+
         }
     }
 }

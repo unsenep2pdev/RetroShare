@@ -241,6 +241,7 @@ private:
     uint32_t getConversationListMode();
     void setSearchFilter(const std::string &filtertext);
     std::vector<UnseenGroupItemInfo> getSearchFilteredGxsGroupList();
+    std::string getSelectedId();
 
 protected:
 	bool mCountChildMsgs; // Count unread child messages?

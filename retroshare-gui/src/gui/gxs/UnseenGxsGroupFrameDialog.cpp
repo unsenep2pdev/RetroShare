@@ -1193,11 +1193,11 @@ void UnseenGxsGroupFrameDialog::insertGroupsData2(const std::map<RsGxsGroupId,Rs
     {
         std::cerr << " GxsChat Id: " << (*it2).id.toStdString() << " : " << (*it2).name.toStdString() << std::endl;
         std::set<GxsChatMember> list = (*it2).members;
+        std::cerr << " Member: " << std::endl;
         for(std::set<GxsChatMember>::iterator it3=list.begin(); it3!= list.end(); ++it3)
         {
-            std::cerr << " Member: " << (*it3).nickname << ", ";
+            std::cerr << (*it3).nickname << ", " << std::endl;;
         }
-         std::cerr << std::endl;
     }
 #endif
     //update the groupname and member list if the groupchat already opened: need to check the changes ?!!!
@@ -1206,6 +1206,7 @@ void UnseenGxsGroupFrameDialog::insertGroupsData2(const std::map<RsGxsGroupId,Rs
        //need to check the changes ?!!!
        if(_unseenGxsGroup_infos.find((*it).first) != _unseenGxsGroup_infos.end())
         {
+           std::cerr << " There is change in the group: " << (*it).second.mMeta.mGroupName << std::endl;
            _unseenGxsGroup_infos[(*it).first].dialog->updateTitle(QString::fromStdString((*it).second.mMeta.mGroupName));
            _unseenGxsGroup_infos[(*it).first].dialog->updateParticipantsList();
        }
@@ -1498,20 +1499,9 @@ void UnseenGxsGroupFrameDialog::selectConversation(const QModelIndex& index)
     if (!index.isValid()) return;
 
     //uint32_t conversationMode = getConversationListMode();
-    std::vector<UnseenGroupItemInfo> list;
-    if (conversationListMode == GXSCONVERSATION_MODE_WITHOUT_FILTER)
-    {
-        list = smartListModel_->getGxsGroupList();
-        //list = allGxsGroupList;
-    }
-    else if (conversationListMode == GXSCONVERSATION_MODE_WITH_SEARCH_FILTER)
-    {
-        list = filteredGxsGroupList;
-    }
+    std::vector<UnseenGroupItemInfo> list = smartListModel_->getGxsGroupList();
 
-    //std::vector<UnseenGroupItemInfo> list = smartListModel_->getGxsGroupList();
-
-    if (list.size() <= index.row()) return;
+    if (list.size() == 0 || index.row() >= static_cast<int>(list.size())) return;
 
     UnseenGroupItemInfo gxsGroupItem = list.at(index.row());
 
@@ -1521,17 +1511,42 @@ void UnseenGxsGroupFrameDialog::selectConversation(const QModelIndex& index)
 
     showGxsGroupChatMVC(gxsChatId(mGroupId));
 
+    //check if this is the filtered search mode, just return to normal mode
+    if (getConversationListMode() == GXSCONVERSATION_MODE_WITH_SEARCH_FILTER)
+    {
+        if (!ui->filterLineEdit->text().isEmpty())
+        {
+            ui->filterLineEdit->setText("");
+        }
+    }
+
     //Need to check the unread msg, if this item has unread number, so call these functions
     if (gxsGroupItem.UnreadMessagesCount > 0)
     {
         //reset the unread number as 0 when user click on the conversation item on the left side
         updateUnreadNumberOfItemInGxsConversationList(gxsGroupItem.id.toStdString(), 1, true);
-        smartListModel_->setGxsGroupList(allGxsGroupList);
+
+        smartListModel_->setFilterGxsGroupListAndMode(allGxsGroupList, GXSCONVERSATION_MODE_WITHOUT_FILTER);
+
         //when user click on the conversation item, just update the msg as read
         //rsHistory->updateMessageAsRead(chatId);
 
-        emit ui->unseenGroupTreeWidget->model()->layoutChanged();
     }
+
+//    std::string selectedId = getSelectedId();
+//    int seletedrow = getIndexFromUId(mGroupId.toStdString());
+//    QModelIndex idx = ui->unseenGroupTreeWidget->model()->index(seletedrow, 0);
+//    if (idx.isValid())
+//    {
+//        // For both case of sending or receiving, just clear the selection and re-select chat item
+//        ui->unseenGroupTreeWidget->selectionModel()->clearSelection();
+
+//        ui->unseenGroupTreeWidget->selectionModel()->select(idx, QItemSelectionModel::Select);
+//        emit ui->unseenGroupTreeWidget->model()->layoutChanged();
+
+//    }
+
+    emit ui->unseenGroupTreeWidget->model()->layoutChanged();
 
 }
 
@@ -1578,7 +1593,9 @@ UnseenGroupItemInfo UnseenGxsGroupFrameDialog::groupItemIdAt(QString groupId)
 
 void UnseenGxsGroupFrameDialog::sortGxsConversationListByRecentTime()
 {
-    smartListModel_->sortGxsConversationListByRecentTime();
+    std::sort(allGxsGroupList.begin(), allGxsGroupList.end(),
+              [] (UnseenGroupItemInfo const& a, UnseenGroupItemInfo const& b)
+    { return a.lastMsgDatetime > b.lastMsgDatetime; });
 }
 
 void UnseenGxsGroupFrameDialog::showGxsGroupChatMVC(gxsChatId chatId)
@@ -1601,25 +1618,40 @@ void UnseenGxsGroupFrameDialog::showGxsGroupChatMVC(gxsChatId chatId)
 
 }
 
+std::string UnseenGxsGroupFrameDialog::getSelectedId()
+{
+    QModelIndexList list = ui->unseenGroupTreeWidget->selectionModel()->selectedIndexes();
+    std::string selectedUId = "";
+    foreach (QModelIndex index, list)
+    {
+        if (index.row()!=-1)
+        {
+            if (getConversationListMode() == GXSCONVERSATION_MODE_WITH_SEARCH_FILTER)
+            {
+                 if(index.row() < static_cast<int>(filteredGxsGroupList.size()))
+                     selectedUId = filteredGxsGroupList.at(index.row()).id.toStdString();
+            }
+            else if (conversationListMode == GXSCONVERSATION_MODE_WITHOUT_FILTER)
+            {
+                if(index.row() < static_cast<int>(allGxsGroupList.size()))
+                     selectedUId = allGxsGroupList.at(index.row()).id.toStdString();
+            }
+
+            break;
+        }
+    }
+    return selectedUId;
+}
+
 //update recent time for every chat item and sort by recent time
 void UnseenGxsGroupFrameDialog::updateRecentTimeOrNewMsg(const gxsChatId & gxschatId, std::string nickInGroupChat, long long current_time, std::string textmsg, bool isSend)
 {
 
-
        //Need to get the selected item with saving uId before sorting and updating the layout
        //so that we use uId to re-select the item with saved uId
-        // Even when user in search mode, we still can get the right selectedUId
-       QModelIndexList list = ui->unseenGroupTreeWidget->selectionModel()->selectedIndexes();
-       std::string selectedUId;
-       foreach (QModelIndex index, list)
-       {
-           if (index.row()!=-1)
-           {
-               selectedUId = allGxsGroupList.at(index.row()).id.toStdString();
-               break;
-           }
-       }
 
+        // Even when user in search mode, we still can get the right selectedUId
+       std::string selectedUId = getSelectedId();
        //update both new last msg and last msg datetime to the conversation list
         updateRecentTimeOfItemInGxsConversationList(gxschatId.toGxsGroupId().toStdString(), nickInGroupChat, current_time, textmsg, !isSend);
 
@@ -1630,9 +1662,9 @@ void UnseenGxsGroupFrameDialog::updateRecentTimeOrNewMsg(const gxsChatId & gxsch
             updateUnreadNumberOfItemInGxsConversationList(gxschatId.toGxsGroupId().toStdString(), 1, false);
 
             //after update the unread msg, need to sort the list and update the unread notification on the item
-            smartListModel_->setGxsGroupList(allGxsGroupList);
-            sortGxsConversationListByRecentTime();
 
+            sortGxsConversationListByRecentTime();
+            smartListModel_->setGxsGroupList(allGxsGroupList);
             //reselect the seletion (because the list already sorted, the selection is still keeping the index
             ui->unseenGroupTreeWidget->selectionModel()->clearSelection();
 
@@ -1640,9 +1672,12 @@ void UnseenGxsGroupFrameDialog::updateRecentTimeOrNewMsg(const gxsChatId & gxsch
             // at first find the index of the uId, then re-select
 
             int seletedrow = getIndexFromUId(selectedUId);
-            QModelIndex idx = ui->unseenGroupTreeWidget->model()->index(seletedrow, 0);
-            ui->unseenGroupTreeWidget->selectionModel()->select(idx, QItemSelectionModel::Select);
-            emit ui->unseenGroupTreeWidget->model()->layoutChanged();
+            if (seletedrow >= 0)
+            {
+                QModelIndex idx = ui->unseenGroupTreeWidget->model()->index(seletedrow, 0);
+                ui->unseenGroupTreeWidget->selectionModel()->select(idx, QItemSelectionModel::Select);
+                emit ui->unseenGroupTreeWidget->model()->layoutChanged();
+            }
 
             //check if this is a current chat window, so update new msg as read
             if (gxschatId.toGxsGroupId().toStdString() == selectedUId)
@@ -1662,20 +1697,9 @@ void UnseenGxsGroupFrameDialog::updateRecentTimeOrNewMsg(const gxsChatId & gxsch
        else
        {
            // if this is we send the msg, just select the first one after sorting???
-           smartListModel_->setGxsGroupList(allGxsGroupList);
            sortGxsConversationListByRecentTime();
-
-           //emit ui->unseenGroupTreeWidget->model()->layoutChanged();
-
-           // For both case of sending or receiving, just clear the selection and re-select chat item
-           ui->unseenGroupTreeWidget->selectionModel()->clearSelection();
-
-           //re-select the chat item again, the old selected one was saved to selectedIndex
-           // at first find the index of the uId, then re-select
-
-           int seletedrow = 0; //getIndexFromUId(selectedUId);
-           QModelIndex idx = ui->unseenGroupTreeWidget->model()->index(seletedrow, 0);
-           ui->unseenGroupTreeWidget->selectionModel()->select(idx, QItemSelectionModel::Select);
+           allGxsGroupList = smartListModel_->getGxsGroupList();
+           smartListModel_->setGxsGroupList(allGxsGroupList);
            emit ui->unseenGroupTreeWidget->model()->layoutChanged();
 
            //check if this is the filtered search mode, just return to normal mode
@@ -1686,11 +1710,23 @@ void UnseenGxsGroupFrameDialog::updateRecentTimeOrNewMsg(const gxsChatId & gxsch
                    ui->filterLineEdit->setText("");
                }
            }
+
+//           conversationListMode = GXSCONVERSATION_MODE_WITHOUT_FILTER;
+//           smartListModel_->setFilterGxsGroupListAndMode(allGxsGroupList, conversationListMode);
+           //re-select the chat item again, the old selected one was saved to selectedIndex
+           // at first find the index of the uId, then re-select
+           int seletedrow = 0; //getIndexFromUId(selectedUId);
+           QModelIndex idx = ui->unseenGroupTreeWidget->model()->index(seletedrow, 0);
+           if (idx.isValid())
+           {
+               // For both case of sending or receiving, just clear the selection and re-select chat item
+               ui->unseenGroupTreeWidget->selectionModel()->clearSelection();
+
+               ui->unseenGroupTreeWidget->selectionModel()->select(idx, QItemSelectionModel::Select);
+               emit ui->unseenGroupTreeWidget->model()->layoutChanged();
+
+           }
        }
-
-
-
-
 }
 
 void UnseenGxsGroupFrameDialog::unsubscribeGxsGroupChat(RsGxsGroupId id)
@@ -1920,7 +1956,6 @@ void UnseenGxsGroupFrameDialog::setSearchFilter(const std::string &filtertext)
 
         if (std::size_t found = nameforsearch.find(filtertext2) !=std::string::npos)
         {
-            //std::cout << "id: " << item.displayName << " is good" << std::endl;
             filteredGxsGroupList.push_back(item);
         }
    }
@@ -1940,13 +1975,9 @@ void UnseenGxsGroupFrameDialog::filterGxsItems(const QString &text)
     }
     else
     {
-
         std::string filter = text.toStdString();
         setSearchFilter(filter);
         setConversationListMode(GXSCONVERSATION_MODE_WITH_SEARCH_FILTER);
-        //smartListModel_->setFilterGxsGroupListAndMode(filteredGxsGroupList, GXSCONVERSATION_MODE_WITH_SEARCH_FILTER);
     }
-    ui->unseenGroupTreeWidget->selectionModel()->clearSelection();
     emit ui->unseenGroupTreeWidget->model()->layoutChanged();
-    ui->unseenGroupTreeWidget->show();
 }
