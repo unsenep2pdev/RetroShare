@@ -207,5 +207,7 @@
         <file>home/img/Setting/bull-horn-announcer_x.png</file>
         <file>home/img/Setting/comment-black-oval-bubble-shape_x.png</file>
         <file>home/img/mountain3-1.jpg</file>
+        <file>home/img/face_icon/collapse32.png</file>
+        <file>home/img/face_icon/expand32.png</file>
     </qresource>
 </RCC>

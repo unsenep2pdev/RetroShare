@@ -218,6 +218,9 @@ public slots:
     void showBandwidthGraph();
 
     void toggleStatusToolTip(bool toggle);
+
+    void expandToolBar();
+    void collapseToolBar();
 protected:
     /** Default Constructor */
     MainWindow(QWidget *parent = 0, Qt::WindowFlags flags = 0);
