@@ -170,11 +170,12 @@ private slots:
 	void removeCurrentSearch();
 
     void smartListSelectionChanged(const QItemSelection  &selected, const QItemSelection  &deselected);
-    void updateRecentTimeOrNewMsg(const gxsChatId&, std::string, long long, std::string, bool);
+    void updateRecentTime(const gxsChatId&, const RsGxsChatMsg&, std::string, long long, std::string, bool);
+    void updateNewGxsMsg(const gxsChatId&, const RsGxsChatMsg&, std::string, long long, std::string, bool);
 
     void unsubscribeGxsGroupChat(RsGxsGroupId id);
 
-    void updateMessageChanged(RsGxsChatMsg gxsChatMsg, bool incoming, RsGxsGroupId id, QDateTime time, QString senderName, QString msg);
+    void updateGxsMessageChanged(RsGxsChatMsg gxsChatMsg, bool incoming, RsGxsGroupId id, QDateTime time, QString senderName, QString msg);
     void updateGxsMsgNotify(RsGxsChatMsg gxsChatMsg, gxsChatId id, unsigned int count);
 
     void filterGxsItems(const QString &text);
@@ -231,11 +232,10 @@ private:
     //unseenp2p
     void selectConversation(const QModelIndex& index);
     void showGxsGroupChatMVC(gxsChatId chatId);
-    void updateRecentTimeOfItemInGxsConversationList(std::string uId, std::string nickInGroupChat, long long lastMsgDatetime, std::string textmsg, bool isOtherMsg );
     bool isGroupIdInGxsConversationList(std::string uId);
     void saveGxsGroupChatInfoToModelData(const RsGxsChatGroup gxsGroupInfo, std::string nickInGroupChat, unsigned int UnreadMessagesCount, unsigned int lastMsgDatetime, std::string lastMessage, bool isOtherLastMsg);
     int getIndexFromUId(std::string uId);
-    void updateUnreadNumberOfItemInGxsConversationList(std::string uId, unsigned int unreadNumber, bool isReset);
+    void updateRecentTimeAndUnreadNumber(const RsGxsGroupId &groupId, const RsGxsMessageId& gxsChatMsgId, std::string nickInGroupChat, long long lastMsgDatetime, std::string textmsg, bool isOtherMsg, unsigned int unreadNumber, bool isReset);
 
     void setConversationListMode(uint32_t mode);
     uint32_t getConversationListMode();

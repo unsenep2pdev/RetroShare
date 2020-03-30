@@ -57,6 +57,7 @@ public:
     bool isOtherLastMsg;            //unseenp2p, using from the conversationItem: true if receiving msg, false if sending msg
 
     RsGxsGroupId gxsGroupId;
+    LocalGroupInfo localMsgInfo;
     /*
      * std::string displayName;            //group name or contact name
     std::string nickInGroupChat;        // only in groupchat

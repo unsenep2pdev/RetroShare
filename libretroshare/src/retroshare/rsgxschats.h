@@ -76,6 +76,7 @@ class GxsChatMember: RsSerializable
         //if chatId match exactly.
         return chatPeerId== comp.chatPeerId && chatGxsId == comp.chatGxsId;
     }
+
     bool operator()(const GxsChatMember& b) const
     {
         return chatPeerId < b.chatPeerId;

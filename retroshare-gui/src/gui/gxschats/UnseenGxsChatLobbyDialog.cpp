@@ -259,6 +259,7 @@ UnseenGxsChatLobbyDialog::UnseenGxsChatLobbyDialog( const RsGxsGroupId& id, QWid
     getChatWidget()->addTitleBarWidget(unsubscribeButton) ;
 
     old_participating_friends.clear();
+    allDownloadedMsgs.clear();
 
     //////////////////////////////////////////////////////////////////////////////
     /// //END of Keep for UnseenGxsChatLobbyDialog
@@ -1387,10 +1388,13 @@ void UnseenGxsChatLobbyDialog::insertGxsChatPosts(std::vector<RsGxsChatMsg> &pos
             fi.mHash = fit->mHash;
             fileList.push_back(fi);
         }
+        //save all the msgId to set, to avoid the duplication when request/load or show:
+        allDownloadedMsgs.insert(posts[i].mMeta.mMsgId);
 
         //uneenp2p - need to check if these are files sharing, need to show "Download" link
-        ui.chatWidget->addChatMsg(incomming, nickname, gxs_id, sendTime, recvTime, mmsg, ChatWidget::MSGTYPE_NORMAL);
-        emit messageReceived(posts[i], incomming, gxsChatId(groupId()), sendTime, nickname, mmsg) ;
+        //ui.chatWidget->addChatMsg(incomming, nickname, gxs_id, sendTime, recvTime, mmsg, ChatWidget::MSGTYPE_NORMAL);
+        ui.chatWidget->addChatMsg(incomming, nickname, posts[i], sendTime, recvTime, mmsg, ChatWidget::MSGTYPE_NORMAL);
+        emit gxsMessageReceived(posts[i], incomming, gxsChatId(groupId()), sendTime, nickname, mmsg) ;
 
         // This is a trick to translate HTML into text.
         QTextEdit editor;
@@ -1530,7 +1534,7 @@ void UnseenGxsChatLobbyDialog::insertAllPosts(const uint32_t &token, GxsMessageF
 void UnseenGxsChatLobbyDialog::updateDisplay(bool complete)
 {
     if (complete) {
-        /* Fill complete */
+        /* Fill complete */ // --> Fill complete here mean: load all messages!
         //fix the duplication of show all messages
         if (!showAllPostOnlyOnce)   //we get all msg only once, the next time will not show all again!
         {
@@ -1565,11 +1569,59 @@ void UnseenGxsChatLobbyDialog::updateDisplay(bool complete)
     } else {
         std::map<RsGxsGroupId, std::set<RsGxsMessageId> > msgs;
         getAllMsgIds(msgs);
-        if (!msgs.empty()) {
-            auto mit = msgs.find(groupId());
-            if (mit != msgs.end()) {
-                requestPosts(mit->second);
+        if (!msgs.empty())
+        {
+            std::map<RsGxsGroupId, std::set<RsGxsMessageId> >::iterator mit2 = msgs.find(groupId());
+
+            if (mit2 != msgs.end())
+            {
+
+                std::set<RsGxsMessageId> notReceiveSet;
+                 notReceiveSet.clear();
+                if(mit2->second.size() > 0)
+                {
+                    std::set<RsGxsMessageId>::iterator msgIdIt;
+                    for (msgIdIt = mit2->second.begin(); msgIdIt != mit2->second.end(); ++msgIdIt)
+                    {
+                        if (allDownloadedMsgs.find(*msgIdIt) == allDownloadedMsgs.end())
+                        {
+                            notReceiveSet.insert(*msgIdIt);
+                        }
+                    }
+                }
+                if (notReceiveSet.size() == 0)
+                {
+                    return;
+                }
+                else
+                {
+                    requestPosts(notReceiveSet);
+                    notReceiveSet.clear();
+                }
+
+
             }
+//            auto mit = msgs.find(groupId());
+//            std::set<RsGxsMessageId> &msgIdV = mit->second;
+//            if (mit != msgs.end())
+//            {
+//                //std::set<RsGxsMessageId> &msgIdV = mit->second;
+
+//                if(msgIdV.size() > 0)
+//                {
+//                    std::set<RsGxsMessageId>::iterator msgIdIt;
+//                    for (msgIdIt = msgIdV.begin(); msgIdIt != msgIdV.end(); ++msgIdIt)
+//                    {
+//                        if (allDownloadedMsgs.find(*msgIdIt) != allDownloadedMsgs.end())
+//                        {
+//                            mit->second.erase(*msgIdIt);
+//                        }
+//                    }
+//                }
+//                if(msgIdV.size() > 0) requestPosts(msgIdV);
+//                    //requestPosts(mit->second);
+//                else return;
+//            }
         }
     }
 

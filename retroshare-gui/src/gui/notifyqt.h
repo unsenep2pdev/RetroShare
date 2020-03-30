@@ -10,6 +10,7 @@
 #include <QPoint>
 //#include <QMutex>
 
+#include <retroshare/rsgxschats.h>
 #include <string>
 
 class QTimer;
@@ -162,8 +163,8 @@ class NotifyQt: public QObject, public NotifyClient
         void alreadySendChat(const ChatId&, std::string nickInGroupChat, long long current_time, std::string textmsg, bool);
         void newChatMessageReceive(const ChatId&, std::string nickInGroupChat, long long current_time, std::string textmsg, bool);
         /* meiyousixin - add more notification for sort by recent time for gxsChat*/
-        void alreadySendChat(const gxsChatId&, std::string nickInGroupChat, long long current_time, std::string textmsg, bool);
-        void newChatMessageReceive(const gxsChatId&, std::string nickInGroupChat, long long current_time, std::string textmsg, bool);
+        void alreadySendChat(const gxsChatId&, const RsGxsChatMsg& gxsChatMsg, std::string nickInGroupChat, long long current_time, std::string textmsg, bool);
+        void newGxsChatMessageReceive(const gxsChatId&, const RsGxsChatMsg& gxsChatMsg, std::string nickInGroupChat, long long current_time, std::string textmsg, bool);
 
 	public slots:
 		void UpdateGUI(); /* called by timer */

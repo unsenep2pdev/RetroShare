@@ -96,7 +96,7 @@ signals:
 	void typingEventReceived(ChatLobbyId) ;
     //void messageReceived(bool incoming, ChatLobbyId lobby_id, QDateTime time, QString senderName, QString msg) ;
     //unseenp2p: for gxs groupchat
-    void messageReceived(RsGxsChatMsg gxsChatMsg, bool incoming, gxsChatId groupChatId, QDateTime time, QString senderName, QString msg) ;
+    void gxsMessageReceived(RsGxsChatMsg gxsChatMsg, bool incoming, gxsChatId groupChatId, QDateTime time, QString senderName, QString msg) ;
 
 	void peerJoined(ChatLobbyId) ;
 	void peerLeft(ChatLobbyId) ;
@@ -196,11 +196,11 @@ public:
     const std::set<TurtleRequestId>& getSearchResults() ;
 
     RsGxsIfaceHelper *interfaceHelper() { return mInterfaceHelper; }
-
+    virtual void updateDisplay(bool complete);
 protected:
     virtual void showEvent(QShowEvent *event);
     // This is overloaded in subclasses. -> now it will in one class only
-    virtual void updateDisplay(bool complete);
+    //virtual void updateDisplay(bool complete); move to public to call from the UnseenGxsGroupFrameDialog
 
 private slots:
     void fillDisplay(bool complete);
@@ -209,6 +209,7 @@ private:
     RsGxsUpdateBroadcastBase *mBase;
     RsGxsIfaceHelper *mInterfaceHelper;
     bool showAllPostOnlyOnce;
+    std::set<RsGxsMessageId> allDownloadedMsgs;
 //END of copy from RsGxsUpdateBroadcastWidget
 
 
