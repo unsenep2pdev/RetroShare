@@ -66,7 +66,7 @@
          </property>
          <property name="text">
           <string>Run Firefox 
-Profile Mac</string>
+For Mac</string>
          </property>
          <property name="icon">
           <iconset resource="../Unseengui/unseengui.qrc">
@@ -92,7 +92,7 @@ Profile Mac</string>
          </property>
          <property name="text">
           <string>Run Firefox 
-Profile Windows</string>
+For Windows</string>
          </property>
          <property name="icon">
           <iconset resource="../Unseengui/unseengui.qrc">
@@ -118,7 +118,7 @@ Profile Windows</string>
          </property>
          <property name="text">
           <string>Run Firefox 
-Profile Ubuntu</string>
+For Ubuntu</string>
          </property>
          <property name="icon">
           <iconset resource="../Unseengui/unseengui.qrc">
