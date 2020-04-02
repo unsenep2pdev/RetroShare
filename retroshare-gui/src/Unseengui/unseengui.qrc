@@ -219,5 +219,9 @@
         <file>home/img/Setting/circles_tr.svg</file>
         <file>home/img/Setting/circles_x.png</file>
         <file>home/img/Setting/circles_x.svg</file>
+        <file>home/img/Setting/groupchat_tr.PNG</file>
+        <file>home/img/Setting/groupchat_tr.svg</file>
+        <file>home/img/Setting/groupchat_x.PNG</file>
+        <file>home/img/Setting/groupchat_x.svg</file>
     </qresource>
 </RCC>
