@@ -167,8 +167,8 @@ QVariant UnseenGxsSmartListModel::data(const QModelIndex &index, int role) const
         // if msg in the 7 days, choose the 3 first character like "Mon"
         // if msg older than 7 days, choose "Jan 21"
         QString timedateForMsgResult;
-        //QDateTime dateTime =  QDateTime::fromTime_t(chatItem.lastMsgDatetime);
-        QDateTime dateTime = QDateTime::fromTime_t(gxsChatItem.mMeta.mLastPost); // chatItem.lastpost;
+        QDateTime dateTime =  QDateTime::fromTime_t(gxsChatItem.localMsgInfo.update_ts);
+        //QDateTime dateTime = QDateTime::fromTime_t(gxsChatItem.mMeta.mLastPost); // chatItem.lastpost;
         QString timedateForMsg = dateTime.toString();
         qint64 secondsOfDatetime = dateTime.toSecsSinceEpoch();
 

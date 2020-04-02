@@ -285,11 +285,12 @@ void UnseenGxsGroupFrameDialog::updateDisplay(bool complete)
             }
 
             //updateMessageSummaryList(msgIt->first);
-            if(_unseenGxsGroup_infos[msgIt->first].dialog)
+            if(_unseenGxsGroup_infos.find(msgIt->first) != _unseenGxsGroup_infos.end())
                 _unseenGxsGroup_infos[msgIt->first].dialog->updateDisplay(false);
             else
             {
-                ChatDialog::chatFriend(gxsChatId(msgIt->first),true) ;
+                //unseenp2p - try to create chat dialog when we receive the new msg when we still not have the dialog
+                ChatDialog::chatFriend(gxsChatId(msgIt->first),false) ;
             }
         }
 	}
@@ -1990,7 +1991,7 @@ void UnseenGxsGroupFrameDialog::updateRecentTimeAndUnreadNumber(const RsGxsGroup
 //            rsIdentity->getOwnIds(ownIds);
 //            if (ownIds.size() > 0) allGxsChatGroupList[i].mMeta.mAuthorId = ownIds.front();
 
-            allGxsChatGroupList[i].mMeta.mAuthorId = gxsChatMsg.mMeta.mAuthorId;
+            //allGxsChatGroupList[i].mMeta.mAuthorId = gxsChatMsg.mMeta.mAuthorId;
 
             uint32_t token;
             RsGxsGrpMsgIdPair msgPair = std::make_pair(allGxsChatGroupList[i].mMeta.mGroupId,gxsChatMsg.mMeta.mMsgId);

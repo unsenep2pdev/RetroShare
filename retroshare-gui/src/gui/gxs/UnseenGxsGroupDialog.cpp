@@ -666,6 +666,10 @@ void UnseenGxsGroupDialog::createGroup()
     meta.mInternalCircle = RsGxsCircleId(groupInfo.id);
     meta.mGroupFlags = flags;
     meta.mSignFlags = getGroupSignFlags();
+    std::list<RsGxsId> ownIds;
+    rsIdentity->getOwnIds(ownIds);
+    if(!ownIds.empty())
+        meta.mAuthorId = ownIds.front();
 
 	if (!prepareGroupMetaData(meta))
 	{
