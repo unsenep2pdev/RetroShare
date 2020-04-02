@@ -133,7 +133,7 @@ QString GxsChatDialog::icon(IconType type)
 {
     switch (type) {
     case ICON_NAME:
-        return ":/home/img/face_icon/youtube-play-button_xu_128.png";      //d: update icon
+        return ":/home/img/Setting/groupchat_x.PNG";      //d: update icon
     case ICON_NEW:
         return ":/icons/png/add.png";
     case ICON_YOUR_GROUP:

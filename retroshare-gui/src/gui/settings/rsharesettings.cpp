@@ -71,11 +71,11 @@
 #define DEFAULT_BWGRAPH_ALWAYS_ON_TOP   false
 
 /* values for ToolButtonStyle */
-#define SETTING_VALUE_TOOLBUTTONSTYLE_ICONONLY        1
+#define SETTING_VALUE_TOOLBUTTONSTYLE_ICONONLY        0
     /*D: Remove this*/
 // #define SETTING_VALUE_TOOLBUTTONSTYLE_TEXTONLY        2
-// #define SETTING_VALUE_TOOLBUTTONSTYLE_TEXTBESIDEICON  3
-#define SETTING_VALUE_TOOLBUTTONSTYLE_TEXTUNDERICON   4
+#define SETTING_VALUE_TOOLBUTTONSTYLE_TEXTBESIDEICON  1
+#define SETTING_VALUE_TOOLBUTTONSTYLE_TEXTUNDERICON   2
 
 // the one and only global settings object
 RshareSettings *Settings = NULL;
@@ -210,7 +210,7 @@ void RshareSettings::setActionButtonLoc(bool onToolBar)
 /** Gets the tool button's style.*/
 Qt::ToolButtonStyle RshareSettings::getToolButtonStyle()
 {
-	int intValue=value(SETTING_TOOLBUTTONSTYLE, SETTING_VALUE_TOOLBUTTONSTYLE_TEXTUNDERICON).toInt();
+    int intValue=value(SETTING_TOOLBUTTONSTYLE,SETTING_VALUE_TOOLBUTTONSTYLE_TEXTBESIDEICON).toInt();
 	switch (intValue)
 	{
 	case SETTING_VALUE_TOOLBUTTONSTYLE_ICONONLY:
@@ -218,10 +218,10 @@ Qt::ToolButtonStyle RshareSettings::getToolButtonStyle()
         /*d: Remove this*/
 //	case SETTING_VALUE_TOOLBUTTONSTYLE_TEXTONLY:
 //		return Qt::ToolButtonTextOnly;
-//	case SETTING_VALUE_TOOLBUTTONSTYLE_TEXTBESIDEICON:
-//		return Qt::ToolButtonTextBesideIcon;
+    case SETTING_VALUE_TOOLBUTTONSTYLE_TEXTBESIDEICON:
+        return Qt::ToolButtonTextBesideIcon;
 	case SETTING_VALUE_TOOLBUTTONSTYLE_TEXTUNDERICON:
-	default:
+    default:
         return Qt::ToolButtonTextUnderIcon;
 	}
 }
@@ -237,9 +237,9 @@ void RshareSettings::setToolButtonStyle(Qt::ToolButtonStyle style)
 //	case Qt::ToolButtonTextOnly:
 //		setValue(SETTING_TOOLBUTTONSTYLE, SETTING_VALUE_TOOLBUTTONSTYLE_TEXTONLY);
 //		break;
-//	case Qt::ToolButtonTextBesideIcon:
-//		setValue(SETTING_TOOLBUTTONSTYLE, SETTING_VALUE_TOOLBUTTONSTYLE_TEXTBESIDEICON);
-//		break;
+    case Qt::ToolButtonTextBesideIcon:
+        setValue(SETTING_TOOLBUTTONSTYLE, SETTING_VALUE_TOOLBUTTONSTYLE_TEXTBESIDEICON);
+        break;
 	case Qt::ToolButtonTextUnderIcon:
 	default:
 		setValue(SETTING_TOOLBUTTONSTYLE, SETTING_VALUE_TOOLBUTTONSTYLE_TEXTUNDERICON);

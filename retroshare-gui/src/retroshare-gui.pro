@@ -288,7 +288,10 @@ wikipoos {
 	LIBS *= $$OUT_PWD/../../supportlibs/pegmarkdown/lib/libpegmarkdown.a
 }
 
-
+#Browser
+FORMS   += gui/BrowserPage.ui
+SOURCES += gui/BrowserPage.cpp
+HEADERS += gui/BrowserPage.h
 #GxsChats
 FORMS   +=      gui/common/UnseenFriendSelectionWidget.ui \
                                 gui/gxs/UnseenGxsGroupFrameDialog.ui \

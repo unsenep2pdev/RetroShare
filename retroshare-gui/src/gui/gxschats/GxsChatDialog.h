@@ -25,7 +25,7 @@
 
 #include "gui/gxs/GxsGroupFrameDialog.h"
 #include "gui/gxs/UnseenGxsGroupFrameDialog.h"
-#define IMAGE_GXSCHANNELS       ":/home/img/face_icon/youtube-play-button_128.png"      //d
+#define IMAGE_GXSCHANNELS       ":/home/img/Setting/groupchat_tr.svg"      //d
 
 class GxsChatDialog : public UnseenGxsGroupFrameDialog
 {
