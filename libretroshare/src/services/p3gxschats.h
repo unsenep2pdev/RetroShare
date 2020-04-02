@@ -204,7 +204,9 @@ virtual bool subscribeToGroup(uint32_t &token, const RsGxsGroupId &groupId, bool
     // Set Statuses.
 virtual void setMessageProcessedStatus(uint32_t& token, const RsGxsGrpMsgIdPair& msgId, bool processed);
 virtual void setMessageReadStatus(uint32_t& token, const RsGxsGrpMsgIdPair& msgId, const std::string shortMsg, bool read);
-virtual void setLocalMessageStatus(uint32_t& token, const RsGxsGrpMsgIdPair& msgId, const std::string msg);
+
+virtual void setLocalMessageStatus(const RsGxsGrpMsgIdPair& msgId, const std::string msg);
+virtual bool getLocalMessageStatus(const RsGxsGroupId& groupId, LocalGroupInfo &localInfo);
 
     // File Interface
     virtual bool ExtraFileHash(const std::string& path);

@@ -74,7 +74,9 @@ class GxsChatMember: RsSerializable
     bool operator==(const GxsChatMember& comp ) const
     {
         //if chatId match exactly.
-        return chatPeerId== comp.chatPeerId && chatGxsId == comp.chatGxsId;
+        return chatPeerId== comp.chatPeerId ;
+        //current just use SSL as comparision unique memberid
+        //in the future, we should use gxsId to be primary chat ID: chatGxsId == comp.chatGxsId
     }
 
     bool operator()(const GxsChatMember& b) const
@@ -271,7 +273,9 @@ public:
      * @param[in] msgId
      * @param[in] read
      */
-    virtual void setLocalMessageStatus(uint32_t& token, const RsGxsGrpMsgIdPair& msgId, const std::string msg)=0;
+    virtual void setLocalMessageStatus(const RsGxsGrpMsgIdPair& msgId, const std::string msg)=0;
+    virtual bool getLocalMessageStatus(const RsGxsGroupId& groupId, LocalGroupInfo &localInfo)=0;
+
 
     /**
      * @brief Enable or disable auto-download for given channel

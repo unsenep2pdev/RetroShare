@@ -143,7 +143,9 @@ struct RsGxsChatNotifyRecordsItem: public RsItem
                          RsGenericSerializer::SerializeContext& ctx )
     { RS_SERIAL_PROCESS(records); }
 
-    void clear() {}
+    void clear() {
+        records.clear();
+    }
 
     std::map<RsGxsGroupId,LocalGroupInfo> records;
 };
@@ -171,6 +173,10 @@ public:
 
 bool p3GxsChats::saveList(bool &cleanup, std::list<RsItem *>&saveList)
 {
+#ifdef GXSCHATS_DEBUG
+    std::cerr <<" p3GxsChats::saveList()"<<std::endl;
+#endif
+
     cleanup = true ;
 
     RsGxsChatNotifyRecordsItem *item = new RsGxsChatNotifyRecordsItem ;
@@ -179,11 +185,34 @@ bool p3GxsChats::saveList(bool &cleanup, std::list<RsItem *>&saveList)
 
     saveList.push_back(item) ;
 
+#ifdef GXSCHATS_DEBUG
+    for(auto it = mKnownChats.begin(); it !=mKnownChats.end(); it++) {
+        LocalGroupInfo localInfo = it->second;
+
+        std::cerr<<"GroupId: "<<it->first ;
+        std::cerr <<"   LocalInfo Msg:"<<localInfo.msg;
+        std::cerr <<"   LastTimestamp: "<<localInfo.update_ts ;
+        std::cerr <<"   IsSubscribed: "<<localInfo.isSubscribed ;
+        std::cerr <<"   Unread Count:" <<localInfo.unreadMsgIds.size() <<std::endl;
+
+        if(localInfo.unreadMsgIds.size()>0){
+            for(auto it = localInfo.unreadMsgIds.begin(); it !=localInfo.unreadMsgIds.end(); it++){
+                std::cerr <<"MessageId:" <<*it <<std::endl;
+            }
+        }
+
+    }
+#endif
+
     return true;
 }
 
 bool p3GxsChats::loadList(std::list<RsItem *>& loadList)
 {
+#ifdef GXSCHATS_DEBUG
+    std::cerr <<" p3GxsChats::loadList()"<<std::endl;
+#endif
+
     while(!loadList.empty())
     {
         RsItem *item = loadList.front();
@@ -198,12 +227,31 @@ bool p3GxsChats::loadList(std::list<RsItem *>& loadList)
             RS_STACK_MUTEX(mChatMtx);
             mKnownChats.clear();
 
+
             for(auto it(fnr->records.begin());it!=fnr->records.end();++it){
                 LocalGroupInfo localInfo = it->second;
                 rstime_t lasttime = localInfo.update_ts;
-                if( lasttime + GXS_CHATS_CONFIG_MAX_TIME_NOTIFY_STORAGE < now)
-                    mKnownChats.insert(*it) ;
+                if( lasttime + GXS_CHATS_CONFIG_MAX_TIME_NOTIFY_STORAGE > now){
+                    mKnownChats.insert(std::make_pair(it->first, it->second)) ;
+                }
+
             }
+
+#ifdef GXSCHATS_DEBUG
+            for(auto its = mKnownChats.begin(); its !=mKnownChats.end(); its++){
+                LocalGroupInfo localInfo = its->second;
+                std::cerr <<"GroupId:"<<its->first<<std::endl;
+                std::cerr <<"   LocalInfo Msg:"<<localInfo.msg;
+                std::cerr <<"   LastTimestamp: "<<localInfo.update_ts ;
+                std::cerr <<"   IsSubscribed: "<<localInfo.isSubscribed ;
+                std::cerr <<"   Unread Count:" <<localInfo.unreadMsgIds.size() <<std::endl;
+                if(localInfo.unreadMsgIds.size()>0){
+                    for(auto it = localInfo.unreadMsgIds.begin(); it !=localInfo.unreadMsgIds.end(); it++){
+                        std::cerr <<"MessageId:" <<*it <<std::endl;
+                    }
+                }
+            }
+#endif
         }
 
         delete item ;
@@ -1048,12 +1096,12 @@ static  rstime_t last_notifyClear = 0;
 
 bool p3GxsChats::getGroupData(const uint32_t &token, std::vector<RsGxsChatGroup> &groups)
 {
-
     std::vector<RsGxsGrpItem*> grpData;
     bool ok = RsGenExchange::getGroupData(token, grpData);
 
     if(ok)
     {
+
         std::vector<RsGxsGrpItem*>::iterator vit = grpData.begin();
 
         for(; vit != grpData.end(); ++vit)
@@ -1063,11 +1111,11 @@ bool p3GxsChats::getGroupData(const uint32_t &token, std::vector<RsGxsChatGroup>
             {
                 RsGxsChatGroup grp;
                 item->toChatGroup(grp, true);
-                delete item;
-                groups.push_back(grp);
-                loadChatsMembers(grp);
-                if(mKnownChats.find(item->meta.mGroupId) != mKnownChats.end())
-                    grp.localMsgInfo = mKnownChats[item->meta.mGroupId];
+
+                auto found = mKnownChats.find(RsGxsGroupId(item->meta.mGroupId));
+                if( found != mKnownChats.end()){
+                    grp.localMsgInfo = mKnownChats[RsGxsGroupId(item->meta.mGroupId)];
+                }
                 else{
                     RS_STACK_MUTEX(mChatMtx);
                     LocalGroupInfo localMsg;
@@ -1077,6 +1125,10 @@ bool p3GxsChats::getGroupData(const uint32_t &token, std::vector<RsGxsChatGroup>
                     grp.localMsgInfo = localMsg;
                     mKnownChats[item->meta.mGroupId] =  localMsg;
                 }
+                groups.push_back(grp);
+                loadChatsMembers(grp);
+
+                delete item;
             }
             else
             {
@@ -1656,9 +1708,7 @@ void p3GxsChats::setMessageReadStatus( uint32_t& token,
             status = 0;
             if(found !=mKnownChats.end()){
                 mKnownChats[msgId.first].clear();  //clear all the unread messageId
-                mKnownChats[msgId.first].unreadMsgIds.insert(msgId.second);
                 mKnownChats[msgId.first].msg = shortMsg;
-                mKnownChats[msgId.first].update_ts = time(NULL);
 
                 slowIndicateConfigChanged();
             }
@@ -1673,7 +1723,7 @@ void p3GxsChats::setMessageReadStatus( uint32_t& token,
     setMsgStatusFlags(token, msgId, status, mask);
 }
 
-void p3GxsChats::setLocalMessageStatus(uint32_t& token, const RsGxsGrpMsgIdPair& msgId, const std::string msg){
+void p3GxsChats::setLocalMessageStatus(const RsGxsGrpMsgIdPair& msgId, const std::string msg){
 #ifdef GXSCHATS_DEBUG
     std::cerr << "p3GxsChats::setLocalMessageStatus()";
     std::cerr << std::endl;
@@ -1687,6 +1737,16 @@ void p3GxsChats::setLocalMessageStatus(uint32_t& token, const RsGxsGrpMsgIdPair&
 
         slowIndicateConfigChanged();
     }
+}
+
+bool  p3GxsChats::getLocalMessageStatus(const RsGxsGroupId& groupId, LocalGroupInfo &localInfo){
+
+    auto found = mKnownChats.find(groupId);
+    if(found ==mKnownChats.end())
+        return false;
+
+    localInfo = mKnownChats[groupId];
+    return true;
 }
 
 void p3GxsChats::slowIndicateConfigChanged()
