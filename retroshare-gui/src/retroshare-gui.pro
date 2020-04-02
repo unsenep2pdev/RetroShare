@@ -290,6 +290,14 @@ wikipoos {
 	LIBS *= $$OUT_PWD/../../supportlibs/pegmarkdown/lib/libpegmarkdown.a
 }
 
+#Browser Socks5 TorProxy
+
+HEADERS +=      Browser/BrowserProcess.h \
+                                Browser/BrowserProcess_p.h \
+                                Browser/BrowserManager.h
+
+SOURCES +=      Browser/BrowserProcess.cpp \
+                                Browser/BrowserManager.cpp
 
 #GxsChats
 FORMS   +=      gui/common/UnseenFriendSelectionWidget.ui \
