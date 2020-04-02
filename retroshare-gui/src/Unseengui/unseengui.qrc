@@ -209,5 +209,11 @@
         <file>home/img/mountain3-1.jpg</file>
         <file>home/img/face_icon/collapse32.png</file>
         <file>home/img/face_icon/expand32.png</file>
+        <file>home/img/Setting/Browser.png</file>
+        <file>home/img/Setting/Browser.svg</file>
+        <file>home/img/OperatingSystems/apple.svg</file>
+        <file>home/img/OperatingSystems/apple-logo.svg</file>
+        <file>home/img/OperatingSystems/ubuntu.svg</file>
+        <file>home/img/OperatingSystems/windows.svg</file>
     </qresource>
 </RCC>
