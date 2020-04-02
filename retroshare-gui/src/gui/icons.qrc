@@ -245,5 +245,8 @@
         <file>../rsMacIcon.icns</file>
         <file>icons/png/memberslist.png</file>
         <file>icons/png/memberslist2.png</file>
+        <file>icons/png/posted_tr.png</file>
+        <file>icons/png/posted-notify_v.png</file>
+        <file>icons/png/posted_x.png</file>
     </qresource>
 </RCC>

@@ -90,7 +90,7 @@ void PostedGroupDialog::initUi()
 
 QPixmap PostedGroupDialog::serviceImage()
 {
-	return QPixmap(":/icons/png/posted.png");
+    return QPixmap(":/icons/png/posted_x.png");
 }
 
 bool PostedGroupDialog::service_CreateGroup(uint32_t &token, const RsGroupMetaData &meta)
