@@ -235,13 +235,15 @@ private:
     bool isGroupIdInGxsConversationList(std::string uId);
     void saveGxsGroupChatInfoToModelData(const RsGxsChatGroup gxsGroupInfo, std::string nickInGroupChat, unsigned int UnreadMessagesCount, unsigned int lastMsgDatetime, std::string lastMessage, bool isOtherLastMsg);
     int getIndexFromUId(std::string uId);
-    void updateRecentTimeAndUnreadNumber(const RsGxsGroupId &groupId, const RsGxsMessageId& gxsChatMsgId, std::string nickInGroupChat, long long lastMsgDatetime, std::string textmsg, bool isOtherMsg, unsigned int unreadNumber, bool isReset);
+    void updateRecentTimeAndUnreadNumber(const RsGxsGroupId &groupId, const RsGxsChatMsg& gxsChatMsg, std::string nickInGroupChat, long long lastMsgDatetime, std::string textmsg, bool isOtherMsg, unsigned int unreadNumber, bool isReset);
 
     void setConversationListMode(uint32_t mode);
     uint32_t getConversationListMode();
     void setSearchFilter(const std::string &filtertext);
     std::vector<UnseenGroupItemInfo> getSearchFilteredGxsGroupList();
+    std::vector<RsGxsChatGroup> getSearchFilteredGxsChatGroupList();
     std::string getSelectedId();
+    void UnseenGroupItemInfoToRsGxsChatGroup( RsGxsChatGroup &groupInfo, const UnseenGroupItemInfo &groupItemInfo);
 
 protected:
 	bool mCountChildMsgs; // Count unread child messages?
@@ -288,6 +290,9 @@ private:
     uint32_t conversationListMode ; // CONVERSATION_MODE_WITHOUT_FILTER  or
                                     // CONVERSATION_MODE_WITH_SEARCH_FILTER
     std::string filter_text;
+
+    std::vector<RsGxsChatGroup> allGxsChatGroupList;
+    std::vector<RsGxsChatGroup> filteredGxsChatGroupList;
 
 };
 

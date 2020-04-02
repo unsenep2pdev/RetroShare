@@ -110,13 +110,19 @@ public:
     // hack for context menu highlight retention
     bool isContextMenuOpen{ false };
     std::vector<UnseenGroupItemInfo> getGxsGroupList();
+    std::vector<RsGxsChatGroup> getGxsChatGroupList();
     void setGxsGroupList(std::vector<UnseenGroupItemInfo> allList);
     void setFilterGxsGroupListAndMode(std::vector<UnseenGroupItemInfo> allList, uint32_t mode);
+    void setFilterGxsChatGroupListAndMode(std::vector<RsGxsChatGroup> allList, uint32_t mode);
     void sortGxsConversationListByRecentTime();
+    void setGxsChatGroupList(std::vector<RsGxsChatGroup> allList);
+
 private:
     std::string accId_;
     bool contactList_;
     std::vector<UnseenGroupItemInfo> allGxsGroupList;
     std::vector<UnseenGroupItemInfo> filterGxsGroupList;
     uint32_t conversationMode;
+    std::vector<RsGxsChatGroup> allGxsChatGroupList;
+    std::vector<RsGxsChatGroup> filteredGxsChatGroupList;
 };

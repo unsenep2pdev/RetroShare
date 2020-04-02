@@ -127,7 +127,6 @@ QVariant UnseenContactSmartListModel::data(const QModelIndex &index, int role) c
     else
     {
         //Get avatar for groupchat or contact item
-       // UnseenGroupItemInfo chatItem = allGxsGroupList.at(index.row());
         RsGxsGroupId contactId = allIdentities.at(index.row());
         RsIdentityDetails detail;
         if (!rsIdentity->getIdDetails(RsGxsId(contactId), detail))

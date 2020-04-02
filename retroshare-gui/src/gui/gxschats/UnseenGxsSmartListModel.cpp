@@ -30,6 +30,7 @@
 
 #include "gui/models/conversationmodel.h"
 #include "retroshare/rsgxsflags.h"
+#include "retroshare/rsidentity.h"
 
 #include "util/HandleRichText.h"
 
@@ -66,8 +67,16 @@ static QString readMsgFromXml(const QString &historyMsg)
 
 int UnseenGxsSmartListModel::rowCount(const QModelIndex &parent) const
 {
+    int count =  0;
+    if (conversationMode == 0x0000)
+    {
+        count = allGxsChatGroupList.size();
+    }
+    else if (conversationMode == 0x0001)
+    {
+        count = filteredGxsChatGroupList.size();
+    }
 
-    int count = allGxsGroupList.size();
     return count;
 }
 
@@ -105,33 +114,41 @@ QVariant UnseenGxsSmartListModel::data(const QModelIndex &index, int role) const
     if (!index.isValid()) {
         return QVariant();
     }
-    if (allGxsGroupList.size() == 0) return QVariant();
-
+    //if (allGxsGroupList.size() == 0) return QVariant();
+    if (allGxsChatGroupList.size() == 0) return  QVariant();
     else
     {
 
-        std::vector<UnseenGroupItemInfo> list; // = rsMsgs->getConversationItemList();
+        //std::vector<UnseenGroupItemInfo> list; // = rsMsgs->getConversationItemList();
+        std::vector<RsGxsChatGroup> chatList;
         if (conversationMode == 0x0000)
         {
-            list = allGxsGroupList;
+            //list = allGxsGroupList;
+            chatList = allGxsChatGroupList;
         }
         else if (conversationMode == 0x0001)
         {
-            list = filterGxsGroupList;
+            //list = filterGxsGroupList;
+            chatList = filteredGxsChatGroupList;
         }
 
         //Get avatar for groupchat or contact item
-         if (list.size() == 0 || index.row() >= static_cast<int>(list.size())) return QVariant();
-        UnseenGroupItemInfo chatItem = list.at(index.row());
+         //if (list.size() == 0 || index.row() >= static_cast<int>(list.size())) return QVariant();
+          if (chatList.size() == 0 || index.row() >= static_cast<int>(chatList.size())) return QVariant();
+        //UnseenGroupItemInfo chatItem = list.at(index.row());
+        RsGxsChatGroup gxsChatItem = chatList.at(index.row());
 
+        //std::cerr << " name: " << chatItem.name.toStdString() << ", nick: " << chatItem.nickInGroupChat << ", last msg: " << chatItem.localMsgInfo.msg << ", last date:  " << chatItem.LastInteractionDate << ", unread number: " << chatItem.localMsgInfo.unreadMsgIds.size() <<std::endl;
         //STATUS FOR CONTACT
+
+        std::cerr << " gxs name: " << gxsChatItem.mMeta.mGroupName << ", nick: " << gxsChatItem.mMeta.mAuthorId.toStdString() << ", last msg: " << gxsChatItem.localMsgInfo.msg << ", last date:  " << gxsChatItem.localMsgInfo.update_ts << ", unread number: " << gxsChatItem.localMsgInfo.unreadMsgIds.size() <<std::endl;
 
         QString presenceForChat = "no-status"; //for groupchat
 
         QImage avatar(IMAGE_PUBLIC);    //default is public group chat avatar for UnseenP2P
 
-        bool isAdmin      = IS_GROUP_ADMIN(chatItem.subscribeFlags);
-        bool isSubscribed = IS_GROUP_SUBSCRIBED(chatItem.subscribeFlags);
+        bool isAdmin      =  IS_GROUP_ADMIN(gxsChatItem.mMeta.mSubscribeFlags); // IS_GROUP_ADMIN(chatItem.subscribeFlags);
+        bool isSubscribed =  IS_GROUP_SUBSCRIBED(gxsChatItem.mMeta.mSubscribeFlags); // IS_GROUP_SUBSCRIBED(chatItem.subscribeFlags);
 
         if (isAdmin)      //if this is a group chat that I created
         {
@@ -151,7 +168,7 @@ QVariant UnseenGxsSmartListModel::data(const QModelIndex &index, int role) const
         // if msg older than 7 days, choose "Jan 21"
         QString timedateForMsgResult;
         //QDateTime dateTime =  QDateTime::fromTime_t(chatItem.lastMsgDatetime);
-        QDateTime dateTime = chatItem.lastpost;
+        QDateTime dateTime = QDateTime::fromTime_t(gxsChatItem.mMeta.mLastPost); // chatItem.lastpost;
         QString timedateForMsg = dateTime.toString();
         qint64 secondsOfDatetime = dateTime.toSecsSinceEpoch();
 
@@ -181,17 +198,31 @@ QVariant UnseenGxsSmartListModel::data(const QModelIndex &index, int role) const
         }
 
         //GET LAST MSG from html format
-        QString lastMsgQstr = QString::fromStdString(chatItem.lastMessage);
+        //QString lastMsgQstr = QString::fromStdString(chatItem.localMsgInfo.msg);
+        QString lastMsgQstr = QString::fromStdString(gxsChatItem.localMsgInfo.msg);
         QDomDocument docCheck;
         QString temp = lastMsgQstr;
         QString lastMsg;
-        if (chatItem.type == RsGxsChatGroup::GROUPCHAT)
+        RsGxsId gxs_id = gxsChatItem.mMeta.mAuthorId;
+        RsIdentityDetails details;
+        //get nickname from member list instead of getIdDetails
+         bool incomming = !rsIdentity->isOwnId(gxsChatItem.mMeta.mAuthorId);
+        QString nickname = "Unknown";
+        if (!incomming) nickname = "You";
+        else if (rsIdentity->getIdDetails(gxsChatItem.mMeta.mAuthorId, details))
+        {
+            nickname = QString::fromStdString(details.mNickname);
+        }
+        //if (chatItem.type == RsGxsChatGroup::GROUPCHAT)
+        if (gxsChatItem.type == RsGxsChatGroup::GROUPCHAT)
         {
             if (docCheck.setContent(temp))
-                lastMsg =QString::fromStdString(chatItem.nickInGroupChat) + ": " + readMsgFromXml(temp);
+                lastMsg =nickname + ": " + readMsgFromXml(temp);
+                //lastMsg =QString::fromStdString(chatItem.nickInGroupChat) + ": " + readMsgFromXml(temp);
             else
             {
-                lastMsg =QString::fromStdString(chatItem.nickInGroupChat) + ": " + lastMsgQstr;
+                lastMsg = nickname + ": " + lastMsgQstr;
+                //lastMsg =QString::fromStdString(chatItem.nickInGroupChat) + ": " + lastMsgQstr;
             }
         }
         else
@@ -204,7 +235,8 @@ QVariant UnseenGxsSmartListModel::data(const QModelIndex &index, int role) const
 
         //TODO: GET status of last msg, check if the last msg is "You" or other?
 
-        QString lastMsgStatus =  (chatItem.isOtherLastMsg? "": "sent");
+
+        QString lastMsgStatus = (incomming? "": "sent" ); //  (chatItem.isOtherLastMsg? "": "sent");
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -220,7 +252,8 @@ QVariant UnseenGxsSmartListModel::data(const QModelIndex &index, int role) const
             case Role::DisplayName:
             case Qt::DisplayRole:
             {
-                return QVariant(chatItem.name);
+                return QVariant(QString::fromStdString(gxsChatItem.mMeta.mGroupName));
+                //return QVariant(chatItem.name);
             }
             case Role::DisplayID:
             {
@@ -235,7 +268,8 @@ QVariant UnseenGxsSmartListModel::data(const QModelIndex &index, int role) const
                 return QVariant(QString::fromStdString("unseenp2p.com"));
             }
             case Role::UnreadMessagesCount:
-                return QVariant(chatItem.UnreadMessagesCount);
+                //return QVariant(static_cast<int>(chatItem.localMsgInfo.unreadMsgIds.size()));
+                return QVariant(static_cast<int>(gxsChatItem.localMsgInfo.unreadMsgIds.size()));
             case Role::LastInteractionDate:
             {
                 return QVariant(timedateForMsgResult);
@@ -284,8 +318,7 @@ Qt::ItemFlags UnseenGxsSmartListModel::flags(const QModelIndex &index) const
     return flags;
 }
 
-void
-UnseenGxsSmartListModel::setAccount(const std::string& accId)
+void UnseenGxsSmartListModel::setAccount(const std::string& accId)
 {
     beginResetModel();
     accId_ = accId;
@@ -303,9 +336,25 @@ void UnseenGxsSmartListModel::setFilterGxsGroupListAndMode(std::vector<UnseenGro
         filterGxsGroupList = allList;
 }
 
+void UnseenGxsSmartListModel::setFilterGxsChatGroupListAndMode(std::vector<RsGxsChatGroup> allList, uint32_t mode)
+{
+    conversationMode = mode;
+    if (conversationMode == 0x0000)
+    {
+        allGxsChatGroupList = allList;
+    }
+    else if (conversationMode == 0x0001)
+        filteredGxsChatGroupList = allList;
+}
+
 void UnseenGxsSmartListModel::setGxsGroupList(std::vector<UnseenGroupItemInfo> allList)
 {
     allGxsGroupList = allList;
+}
+
+void UnseenGxsSmartListModel::setGxsChatGroupList(std::vector<RsGxsChatGroup> allList)
+{
+    allGxsChatGroupList = allList;
 }
 
 std::vector<UnseenGroupItemInfo> UnseenGxsSmartListModel::getGxsGroupList()
@@ -318,9 +367,23 @@ std::vector<UnseenGroupItemInfo> UnseenGxsSmartListModel::getGxsGroupList()
         return filterGxsGroupList;
 }
 
+std::vector<RsGxsChatGroup> UnseenGxsSmartListModel::getGxsChatGroupList()
+{
+    if (conversationMode == 0x0000)
+    {
+        return allGxsChatGroupList;
+    }
+    else if (conversationMode == 0x0001)
+        return filteredGxsChatGroupList;
+}
+
 void UnseenGxsSmartListModel::sortGxsConversationListByRecentTime()
 {
-    std::sort(allGxsGroupList.begin(), allGxsGroupList.end(),
-              [] (UnseenGroupItemInfo const& a, UnseenGroupItemInfo const& b)
-    { return a.lastMsgDatetime > b.lastMsgDatetime; });
+//    std::sort(allGxsGroupList.begin(), allGxsGroupList.end(),
+//              [] (UnseenGroupItemInfo const& a, UnseenGroupItemInfo const& b)
+//    { return a.lastMsgDatetime > b.lastMsgDatetime; });
+
+    std::sort(allGxsChatGroupList.begin(), allGxsChatGroupList.end(),
+              [] (RsGxsChatGroup const& a, RsGxsChatGroup const& b)
+    { return a.mMeta.mLastPost > b.mMeta.mLastPost; });
 }
