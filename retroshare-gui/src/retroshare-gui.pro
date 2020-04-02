@@ -20,16 +20,19 @@ libresapihttpserver {
 !include("../../libretroshare/src/use_libretroshare.pri"):error("Including")
 
 FORMS   += TorControl/TorControlWindow.ui \
+    gui/BrowserPage.ui \
     gui/gxs/UnseenGxsGroupFrameDialog.ui \
     gui/gxschats/UnseenGxsChatLobbyDialog.ui \
     gui/gxs/UnseenGxsGroupDialog.ui \
     gui/common/UnseenFriendSelectionWidget.ui
 SOURCES += gui/common/UnseenFriendSelectionWidget.cpp \
+    gui/BrowserPage.cpp \
     gui/common/UnseenContactSmartlistview.cpp \
     gui/common/UnseenContactSmartlistmodel.cpp \
     gui/UnseenContactItemdelegate.cpp \
     gui/common/UnseenFriendSelectionDialog.cpp
 HEADERS += gui/common/UnseenFriendSelectionWidget.h \
+    gui/BrowserPage.h \
     gui/common/UnseenContactSmartlistview.h \
     gui/common/UnseenContactSmartlistmodel.h \
     gui/UnseenContactItemdelegate.h \

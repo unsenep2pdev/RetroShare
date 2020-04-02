@@ -37,6 +37,7 @@
 #include "ui_MainWindow.h"
 #include "MessengerWindow.h"
 #include "HomePage.h"
+#include "BrowserPage.h"
 #include "NetworkDialog.h"
 #include "gui/FileTransfer/SearchDialog.h"
 #include "gui/FileTransfer/SharedFilesDialog.h"
@@ -272,12 +273,12 @@ MainWindow::MainWindow(QWidget* parent, Qt::WindowFlags flags)
     ui->toolBarPage->addAction(tr("Collapse"), this, SLOT(collapseToolBar()));
 
 
-    ui->toolBarPage->actions().at(14)->setVisible(false);
-    ui->toolBarPage->actions().at(13)->setIconText(tr("     >>>"));
-    ui->toolBarPage->actions().at(14)->setIconText(tr("                            <<<"));
+    ui->toolBarPage->actions().at(15)->setVisible(false);
+    ui->toolBarPage->actions().at(14)->setIconText(tr("     >>>"));
+    ui->toolBarPage->actions().at(15)->setIconText(tr("                            <<<"));
     QLayout* lay = ui->toolBarPage->layout();
-    lay->itemAt(13)->setAlignment(Qt::AlignRight);
     lay->itemAt(14)->setAlignment(Qt::AlignRight);
+    lay->itemAt(15)->setAlignment(Qt::AlignRight);
     /*Set button left align*/
 //    for(int i = 0; i < int(lay)-2; ++i)
 //        lay->itemAt(i)->setAlignment(Qt::AlignLeft);
@@ -529,7 +530,7 @@ void MainWindow::initStackedPage()
   }
 
   addPage(settingsDialog = new SettingsPage(ui->stackPages),grp,&notify);
-
+  addPage(browserPage = new BrowserPage(ui->stackPages), grp, NULL);
   /* Create the toolbar */
   ui->toolBarPage->addActions(grp->actions());
   connect(grp, SIGNAL(triggered(QAction *)), ui->stackPages, SLOT(showPage(QAction *)));
@@ -1782,8 +1783,8 @@ void MainWindow::expandToolBar()
     ui->toolBarPage->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
     ui->toolBarPage->setStyleSheet("QToolBar {background: rgb(43, 164, 220); color: rgb(255, 255, 255);}"
                                    "QToolButton {background-color: rgb(43, 164, 220); color: rgb(255, 255, 255); height:32px; width: 150px;}");
-    ui->toolBarPage->actions().at(13)->setVisible(false);
-    ui->toolBarPage->actions().at(14)->setVisible(true);
+    ui->toolBarPage->actions().at(14)->setVisible(false);
+    ui->toolBarPage->actions().at(15)->setVisible(true);
 
 }
 
@@ -1792,7 +1793,7 @@ void MainWindow::collapseToolBar()
     ui->toolBarPage->setStyleSheet("QToolBar {background: rgb(43, 164, 220); color: rgb(255, 255, 255);}"
                                    "QToolButton {background-color: rgb(43, 164, 220); color: rgb(255, 255, 255); height:32px; width: 32px}");
     ui->toolBarPage->setToolButtonStyle(Qt::ToolButtonIconOnly);
-    ui->toolBarPage->actions().at(14)->setVisible(false);
-    ui->toolBarPage->actions().at(13)->setVisible(true);
+    ui->toolBarPage->actions().at(15)->setVisible(false);
+    ui->toolBarPage->actions().at(14)->setVisible(true);
 
 }

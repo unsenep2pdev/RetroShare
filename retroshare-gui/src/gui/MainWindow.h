@@ -64,6 +64,7 @@ class MessagesDialog;
 class MessengerWindow;
 class PluginsPage;
 class HomePage;
+class BrowserPage;
 //class ChannelFeed;
 class BandwidthGraph;
 class MainPage;
@@ -102,7 +103,7 @@ public:
         Posted             = 11,  /** Posted links */
         People             = 12,   /** People page. */
         Options            = 13,   /** People page. */
-        GxsChats              = 36  /** Channels page. */
+        GxsChats              = 36,  /** Channels page. */
     };
 
 
@@ -163,7 +164,7 @@ public:
      GxsChatDialog     *gxschatDialog ;
 	 GxsForumsDialog   *gxsforumDialog ;
 	 PostedDialog      *postedDialog;
-
+     BrowserPage        *browserPage;
 //    ForumsDialog      *forumsDialog;
 //    ChannelFeed       *channelFeed;
     Idle              *idle;
