@@ -31,6 +31,7 @@
 #include "gui/models/conversationmodel.h"
 #include "retroshare/rsgxsflags.h"
 #include "retroshare/rsidentity.h"
+#include "retroshare/rsgxschats.h"
 
 #include "util/HandleRichText.h"
 
@@ -138,10 +139,14 @@ QVariant UnseenGxsSmartListModel::data(const QModelIndex &index, int role) const
         //UnseenGroupItemInfo chatItem = list.at(index.row());
         RsGxsChatGroup gxsChatItem = chatList.at(index.row());
 
-        //std::cerr << " name: " << chatItem.name.toStdString() << ", nick: " << chatItem.nickInGroupChat << ", last msg: " << chatItem.localMsgInfo.msg << ", last date:  " << chatItem.LastInteractionDate << ", unread number: " << chatItem.localMsgInfo.unreadMsgIds.size() <<std::endl;
+        LocalGroupInfo localInfo;
+        rsGxsChats->getLocalMessageStatus(gxsChatItem.mMeta.mGroupId, localInfo);
+
+        //gxsChatItem.getLocalMessageStatus
+        std::cerr << " gxs name: " << gxsChatItem.mMeta.mGroupName << " last msg: " << localInfo.msg << ", last date:  " << localInfo.update_ts << ", unread number: " << localInfo.unreadMsgIds.size() <<std::endl;
         //STATUS FOR CONTACT
 
-        std::cerr << " gxs name: " << gxsChatItem.mMeta.mGroupName << ", nick: " << gxsChatItem.mMeta.mAuthorId.toStdString() << ", last msg: " << gxsChatItem.localMsgInfo.msg << ", last date:  " << gxsChatItem.localMsgInfo.update_ts << ", unread number: " << gxsChatItem.localMsgInfo.unreadMsgIds.size() <<std::endl;
+        //std::cerr << " gxs name: " << gxsChatItem.mMeta.mGroupName << ", nick: " << gxsChatItem.mMeta.mAuthorId.toStdString() << ", last msg: " << gxsChatItem.localMsgInfo.msg << ", last date:  " << gxsChatItem.localMsgInfo.update_ts << ", unread number: " << gxsChatItem.localMsgInfo.unreadMsgIds.size() <<std::endl;
 
         QString presenceForChat = "no-status"; //for groupchat
 
@@ -167,7 +172,7 @@ QVariant UnseenGxsSmartListModel::data(const QModelIndex &index, int role) const
         // if msg in the 7 days, choose the 3 first character like "Mon"
         // if msg older than 7 days, choose "Jan 21"
         QString timedateForMsgResult;
-        QDateTime dateTime =  QDateTime::fromTime_t(gxsChatItem.localMsgInfo.update_ts);
+        QDateTime dateTime =  QDateTime::fromTime_t(localInfo.update_ts);
         //QDateTime dateTime = QDateTime::fromTime_t(gxsChatItem.mMeta.mLastPost); // chatItem.lastpost;
         QString timedateForMsg = dateTime.toString();
         qint64 secondsOfDatetime = dateTime.toSecsSinceEpoch();
@@ -199,7 +204,7 @@ QVariant UnseenGxsSmartListModel::data(const QModelIndex &index, int role) const
 
         //GET LAST MSG from html format
         //QString lastMsgQstr = QString::fromStdString(chatItem.localMsgInfo.msg);
-        QString lastMsgQstr = QString::fromStdString(gxsChatItem.localMsgInfo.msg);
+        QString lastMsgQstr = QString::fromStdString(localInfo.msg);
         QDomDocument docCheck;
         QString temp = lastMsgQstr;
         QString lastMsg;
@@ -217,11 +222,13 @@ QVariant UnseenGxsSmartListModel::data(const QModelIndex &index, int role) const
         if (gxsChatItem.type == RsGxsChatGroup::GROUPCHAT)
         {
             if (docCheck.setContent(temp))
-                lastMsg =nickname + ": " + readMsgFromXml(temp);
+                lastMsg = readMsgFromXml(temp);
+                //lastMsg =nickname + ": " + readMsgFromXml(temp);
                 //lastMsg =QString::fromStdString(chatItem.nickInGroupChat) + ": " + readMsgFromXml(temp);
             else
             {
-                lastMsg = nickname + ": " + lastMsgQstr;
+                lastMsg = lastMsgQstr;
+                //lastMsg = nickname + ": " + lastMsgQstr;
                 //lastMsg =QString::fromStdString(chatItem.nickInGroupChat) + ": " + lastMsgQstr;
             }
         }

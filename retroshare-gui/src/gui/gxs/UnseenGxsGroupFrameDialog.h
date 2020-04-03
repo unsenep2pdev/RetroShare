@@ -110,6 +110,8 @@ public:
     QString itemIdAt(QPoint &point);
     UnseenGroupItemInfo groupItemIdAt(QPoint &point);
     UnseenGroupItemInfo groupItemIdAt(QString groupId);
+    RsGxsChatGroup gxsGroupItemIdAt(QPoint &point);
+
     void sortGxsConversationListByRecentTime();
 
     //unseenp2p - overload with the parent
@@ -244,7 +246,7 @@ private:
     std::vector<RsGxsChatGroup> getSearchFilteredGxsChatGroupList();
     std::string getSelectedId();
     void UnseenGroupItemInfoToRsGxsChatGroup( RsGxsChatGroup &groupInfo, const UnseenGroupItemInfo &groupItemInfo);
-
+    void removeGxsChatGroup(RsGxsGroupId groupId);
 protected:
 	bool mCountChildMsgs; // Count unread child messages?
 
@@ -293,6 +295,8 @@ private:
 
     std::vector<RsGxsChatGroup> allGxsChatGroupList;
     std::vector<RsGxsChatGroup> filteredGxsChatGroupList;
+
+    bool isRunOnlyOnce;
 
 };
 
