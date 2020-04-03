@@ -51,7 +51,7 @@
 RsGxsChats *rsGxsChats = NULL;
 
 //cache delay
-#define DELAY_BETWEEN_CONFIG_UPDATES   300
+#define DELAY_BETWEEN_CONFIG_UPDATES   30
 
 #define GXSCHAT_STOREPERIOD	(3600 * 24 * 30)  // 30 days store
 
@@ -1728,27 +1728,15 @@ void p3GxsChats::setMessageReadStatus( uint32_t& token,
                 mKnownChats[msgId.first].msg = shortMsg;
                 mKnownChats[msgId.first].update_ts = time(NULL);
 
-                slowIndicateConfigChanged();
+                slowIndicateConfigChanged();                
+        }else{
+            std::cerr <<"Not found groupPair"<<std::endl;
+            std::cerr<<"PairGroup(): "<<msgId.first<< " and msgId: "<<msgId.second <<std::endl;
+            std::cerr<<"Msg : "<<shortMsg <<std::endl;
         }
     }
     setMsgStatusFlags(token, msgId, status, mask);
 
-#ifdef GXSCHATS_DEBUG
-            std::cerr<< "p3GxsChats::setMessageReadStatus() "<<std::endl;
-            for(auto its = mKnownChats.begin(); its !=mKnownChats.end(); its++){
-                LocalGroupInfo localInfo = its->second;
-                std::cerr <<"GroupId:"<<its->first<<std::endl;
-                std::cerr <<"   LocalInfo Msg:"<<localInfo.msg;
-                std::cerr <<"   LastTimestamp: "<<localInfo.update_ts ;
-                std::cerr <<"   IsSubscribed: "<<localInfo.isSubscribed ;
-                std::cerr <<"   Unread Count:" <<localInfo.unreadMsgIds.size() <<std::endl;
-                if(localInfo.unreadMsgIds.size()>0){
-                    for(auto it = localInfo.unreadMsgIds.begin(); it !=localInfo.unreadMsgIds.end(); it++){
-                        std::cerr <<"MessageId:" <<*it <<std::endl;
-                    }
-                }
-            }
-#endif
 }
 
 void p3GxsChats::setLocalMessageStatus(const RsGxsGrpMsgIdPair& msgId, const std::string msg){
@@ -1766,21 +1754,6 @@ void p3GxsChats::setLocalMessageStatus(const RsGxsGrpMsgIdPair& msgId, const std
         slowIndicateConfigChanged();
     }
 
-#ifdef GXSCHATS_DEBUG
-            for(auto its = mKnownChats.begin(); its !=mKnownChats.end(); its++){
-                LocalGroupInfo localInfo = its->second;
-                std::cerr <<"GroupId:"<<its->first<<std::endl;
-                std::cerr <<"   LocalInfo Msg:"<<localInfo.msg;
-                std::cerr <<"   LastTimestamp: "<<localInfo.update_ts ;
-                std::cerr <<"   IsSubscribed: "<<localInfo.isSubscribed ;
-                std::cerr <<"   Unread Count:" <<localInfo.unreadMsgIds.size() <<std::endl;
-                if(localInfo.unreadMsgIds.size()>0){
-                    for(auto it = localInfo.unreadMsgIds.begin(); it !=localInfo.unreadMsgIds.end(); it++){
-                        std::cerr <<"MessageId:" <<*it <<std::endl;
-                    }
-                }
-            }
-#endif
 }
 
 bool  p3GxsChats::getLocalMessageStatus(const RsGxsGroupId& groupId, LocalGroupInfo &localInfo){
@@ -1800,7 +1773,7 @@ void p3GxsChats::slowIndicateConfigChanged()
     if(mLastConfigUpdate + DELAY_BETWEEN_CONFIG_UPDATES < now)
     {
         IndicateConfigChanged() ;
-    mLastConfigUpdate = now ;
+        mLastConfigUpdate = now ;
     }
 }
 
