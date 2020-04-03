@@ -880,10 +880,21 @@ void p3GxsChats::publishBounceNotifyMessage(RsNxsNotifyChat * notifyMsg){
 #ifdef GXSCHATS_DEBUG
     std::cerr << "p3GxsChats::publishBounceNotifyMessage()  : " << std::endl;
 #endif
+    if(ownChatId==NULL)
+        initChatId();
+
     auto mit = grpMembers.find(notifyMsg->grpId);
     if (mit == grpMembers.end()) return;
 
     ChatInfo cinfo = mit->second;
+
+#ifdef GXSCHATS_DEBUG
+    RsGxsPersonPair personIdPair = notifyMsg->sendFrom.first;
+    std::string personName = notifyMsg->sendFrom.second;
+    std::cerr <<"GroupId: "<<notifyMsg->grpId << " and MsgId: "<<notifyMsg->msgId<<std::endl;
+    std::cerr <<"Sender: "<< personName << " and pair(sslid:"<<personIdPair.first<<", gxsid:"<< personIdPair.second<<") "<<std::endl;
+#endif
+
      //one2one or channel notification, drop off, final destination!
     switch(cinfo.first){
         case RsGxsChatGroup::ONE2ONE:  break;
@@ -909,8 +920,8 @@ void p3GxsChats::publishBounceNotifyMessage(RsNxsNotifyChat * notifyMsg){
         }else{
             //privateGroup. sending to only membership, except the sender.
             for (auto sit=cinfo.second.begin(); sit !=cinfo.second.end(); sit++){
-                if( sit->chatPeerId != sender || sit->chatPeerId  != ownChatId->chatPeerId ){
-                    if (rsPeers->isOnline(sit->chatPeerId))
+                if( sit->chatPeerId != sender ){
+                    if ( sit->chatPeerId  != ownChatId->chatPeerId && rsPeers->isOnline(sit->chatPeerId))
                         tempSendList.push_back(sit->chatPeerId);
                 }
             }
@@ -1123,7 +1134,7 @@ bool p3GxsChats::getGroupData(const uint32_t &token, std::vector<RsGxsChatGroup>
                     localMsg.update_ts = time(NULL);
                     localMsg.isSubscribed = true;
                     grp.localMsgInfo = localMsg;
-                    mKnownChats[item->meta.mGroupId] =  localMsg;
+                    mKnownChats[RsGxsGroupId(item->meta.mGroupId)] =  localMsg;
                 }
                 groups.push_back(grp);
                 loadChatsMembers(grp);

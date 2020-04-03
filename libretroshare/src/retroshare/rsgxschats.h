@@ -111,7 +111,7 @@ public:
     }
     void clear(){
         unreadMsgIds.clear();
-        update_ts = time(NULL); //set the latest timestamp
+        //update_ts = time(NULL); //set the latest timestamp
     }
     virtual void serial_process( RsGenericSerializer::SerializeJob j,
                              RsGenericSerializer::SerializeContext& ctx )
