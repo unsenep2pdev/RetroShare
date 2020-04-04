@@ -1265,28 +1265,15 @@ void UnseenGxsGroupFrameDialog::insertGroupsData2(const std::map<RsGxsGroupId,Rs
 
 void UnseenGxsGroupFrameDialog::updateMessageSummaryList(RsGxsGroupId groupId)
 {
-//	if (!mInitialized) {
-//		return;
-//	}
+    if (!mInitialized) {
+        return;
+    }
+
     if (groupId.isNull())
     {
-        requestGroupStatistics(groupId);
-//		QTreeWidgetItem *items[2] = { mYourGroups, mSubscribedGroups };
-//		for (int item = 0; item < 2; ++item)
-//        {
-//			int child;
-//			int childCount = items[item]->childCount();
-//			for (child = 0; child < childCount; ++child)
-//            {
-//				QTreeWidgetItem *childItem = items[item]->child(child);
-//				QString childId = ui->groupTreeWidget->itemId(childItem);
-//				if (childId.isEmpty()) {
-//					continue;
-//				}
+        //maybe we can scan all gxschat list here?
+        //requestGroupStatistics(groupId);
 
-//				requestGroupStatistics(RsGxsGroupId(childId.toLatin1().constData()));
-//			}
-//		}
     } else {
         requestGroupStatistics(groupId);
     }
@@ -1442,10 +1429,13 @@ void UnseenGxsGroupFrameDialog::loadGroupStatistics(const uint32_t &token)
 	GxsGroupStatistic stats;
 	mInterface->getGroupStatistic(token, stats);
 
-    UnseenGroupItemInfo item = groupItemIdAt(QString::fromStdString(stats.mGrpId.toStdString()));
-    if (item.id.length() == 0) {
+    //UnseenGroupItemInfo item = groupItemIdAt(QString::fromStdString(stats.mGrpId.toStdString()));
+    RsGxsChatGroup groupItem = gxsGroupItemIdAt(stats.mGrpId);
+    if (groupItem.mMeta.mGroupId.toStdString().length() == 0) {
 		return;
 	}
+
+    //Need to update the unread number here on the gxschat list
 
     //ui->unseenGroupTreeWidget->setUnreadCount(item, mCountChildMsgs ? (stats.mNumThreadMsgsUnread + stats.mNumChildMsgsUnread) : stats.mNumThreadMsgsUnread);
 }
@@ -1691,6 +1681,19 @@ UnseenGroupItemInfo UnseenGxsGroupFrameDialog::groupItemIdAt(QString groupId)
     }
     else return UnseenGroupItemInfo();
 }
+
+RsGxsChatGroup UnseenGxsGroupFrameDialog::gxsGroupItemIdAt(RsGxsGroupId groupId)
+{
+    std::vector<RsGxsChatGroup> iteminfoList = smartListModel_->getGxsChatGroupList();
+
+    for (std::vector<RsGxsChatGroup>::iterator it = iteminfoList.begin(); it != iteminfoList.end(); ++it)
+    if (it->mMeta.mGroupId == groupId)
+    {
+        return *it;
+    }
+    else return RsGxsChatGroup();
+}
+
 
 void UnseenGxsGroupFrameDialog::sortGxsConversationListByRecentTime()
 {

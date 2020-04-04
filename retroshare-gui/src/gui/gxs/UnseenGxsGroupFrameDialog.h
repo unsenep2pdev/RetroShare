@@ -111,7 +111,7 @@ public:
     UnseenGroupItemInfo groupItemIdAt(QPoint &point);
     UnseenGroupItemInfo groupItemIdAt(QString groupId);
     RsGxsChatGroup gxsGroupItemIdAt(QPoint &point);
-
+    RsGxsChatGroup gxsGroupItemIdAt(RsGxsGroupId groupId);
     void sortGxsConversationListByRecentTime();
 
     //unseenp2p - overload with the parent
@@ -247,6 +247,7 @@ private:
     std::string getSelectedId();
     void UnseenGroupItemInfoToRsGxsChatGroup( RsGxsChatGroup &groupInfo, const UnseenGroupItemInfo &groupItemInfo);
     void removeGxsChatGroup(RsGxsGroupId groupId);
+
 protected:
 	bool mCountChildMsgs; // Count unread child messages?
 
