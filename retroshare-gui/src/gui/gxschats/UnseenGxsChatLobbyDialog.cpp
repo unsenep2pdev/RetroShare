@@ -1420,7 +1420,7 @@ void UnseenGxsChatLobbyDialog::insertGxsChatPosts(std::vector<RsGxsChatMsg> &pos
         editor.setHtml(mmsg);
         QString notifyMsg = nickname + ": " + editor.toPlainText();
 
-        if(incomming)
+        if(incomming && msgType == ChatWidget::MSGTYPE_NORMAL)
         {
             if(notifyMsg.length() > 30)
                 MainWindow::displayLobbySystrayMsg(tr("Group chat") + ": " + mGroupName, notifyMsg.left(30) + QString("..."));
