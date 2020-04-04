@@ -208,7 +208,7 @@ private:
 	void processSettings(bool load);
 
 	// New Request/Response Loading Functions.
-	void insertGroupsData(const std::map<RsGxsGroupId, RsGroupMetaData> &groupList, const RsUserdata *userdata);
+    //void insertGroupsData(const std::map<RsGxsGroupId, RsGroupMetaData> &groupList, const RsUserdata *userdata);
     void insertGroupsData2(const std::map<RsGxsGroupId,RsGxsChatGroup> &groupList, const RsUserdata *userdata);
 
     void requestGroupSummary();

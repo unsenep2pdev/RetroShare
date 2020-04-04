@@ -1355,7 +1355,8 @@ void ChatWidget::addChatMsg(bool incoming, const QString &name, const RsGxsChatM
 
     resetStatusBar();
 
-    if (incoming && chatType == MSGTYPE_NORMAL) {
+    if (incoming && chatType == MSGTYPE_NORMAL)
+    {
         emit newMessage(this);
 
         if (!isActive()) {
@@ -1379,6 +1380,12 @@ void ChatWidget::addChatMsg(bool incoming, const QString &name, const RsGxsChatM
             emit NotifyQt::getInstance()->newGxsChatMessageReceive(this->getGxsChatId(), gxsChatMsg, name.toStdString(), current_time, message.toStdString(), false);
         }
         /* meiyousixin - need to update the recent time and sort the chat list */
+
+    }
+    else if(chatType == MSGTYPE_HISTORY && this->chatType() == CHATTYPE_GXSGROUPCHAT)
+    {
+        //with the history msg, we just show without any checking incomming or not
+        //go here, the msg already added to browser, but we can update the last msg on the left list?
 
     }
 }

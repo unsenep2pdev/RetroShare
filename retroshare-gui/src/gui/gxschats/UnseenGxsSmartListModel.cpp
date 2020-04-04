@@ -140,8 +140,10 @@ QVariant UnseenGxsSmartListModel::data(const QModelIndex &index, int role) const
         RsGxsChatGroup gxsChatItem = chatList.at(index.row());
 
         LocalGroupInfo localInfo;
-        rsGxsChats->getLocalMessageStatus(gxsChatItem.mMeta.mGroupId, localInfo);
+        //which one we will choose?
+        //rsGxsChats->getLocalMessageStatus(gxsChatItem.mMeta.mGroupId, localInfo);
 
+        localInfo = gxsChatItem.localMsgInfo;
         //gxsChatItem.getLocalMessageStatus
         std::cerr << " gxs name: " << gxsChatItem.mMeta.mGroupName << " last msg: " << localInfo.msg << ", last date:  " << localInfo.update_ts << ", unread number: " << localInfo.unreadMsgIds.size() <<std::endl;
         //STATUS FOR CONTACT

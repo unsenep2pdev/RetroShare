@@ -1356,7 +1356,7 @@ void UnseenGxsChatLobbyDialog::insertGxsChatPosts(std::vector<RsGxsChatMsg> &pos
             posts[i].mMeta.mOrigMsgId.clear();
 
 #ifdef DEBUG_CHAT
-        //std::cerr << "  " << i << ": msg_id=" << posts[i].mMeta.mMsgId <<" : msg timestamp= " << posts[i].mMeta.mPublishTs << " : msg = " << posts[i].mMsg << std::endl;
+        std::cerr << "  " << i << ": msg_id=" << posts[i].mMeta.mMsgId <<" : msg timestamp= " << posts[i].mMeta.mPublishTs << " : msg = " << posts[i].mMsg << std::endl;
 #endif
 
         if(!posts[i].mMeta.mOrigMsgId.isNull())
@@ -1364,7 +1364,7 @@ void UnseenGxsChatLobbyDialog::insertGxsChatPosts(std::vector<RsGxsChatMsg> &pos
 
         //unseenp2p - try to add msg into chat content
         QDateTime sendTime = QDateTime::fromSecsSinceEpoch(posts[i].mMeta.mPublishTs);
-        QDateTime recvTime =QDateTime::currentDateTime();
+        QDateTime recvTime = QDateTime::fromSecsSinceEpoch(posts[i].mMeta.mPublishTs);
         RsGxsId gxs_id = posts[i].mMeta.mAuthorId;
         QString mmsg = QString::fromUtf8(posts[i].mMsg.c_str());
         bool incomming = !rsIdentity->isOwnId(gxs_id);
@@ -1393,7 +1393,26 @@ void UnseenGxsChatLobbyDialog::insertGxsChatPosts(std::vector<RsGxsChatMsg> &pos
 
         //uneenp2p - need to check if these are files sharing, need to show "Download" link
         //ui.chatWidget->addChatMsg(incomming, nickname, gxs_id, sendTime, recvTime, mmsg, ChatWidget::MSGTYPE_NORMAL);
-        ui.chatWidget->addChatMsg(incomming, nickname, posts[i], sendTime, recvTime, mmsg, ChatWidget::MSGTYPE_NORMAL);
+        //Need to separate the HISTORY MSG and CURRENT MSG HERE: using timestamp:
+        // to separate 2 msg type ChatWidget::MSGTYPE_HISTORY and ChatWidget::MSGTYPE_NORMAL
+        // need to save the timestamp of the latest history msg,
+        // if the current msg go here need to compare with that timestamp of latest history msg (latestHistoryMsgTimetamp)
+        // at first the latestHistoryMsgTimetamp of every chat will be the timestamp of latest recent msg
+        // if the sendTime (posts[i].mMeta.mPublishTs) < latestHistoryMsgTimetamp then it will be HISTORY msg
+        // else it will be the current (NORMAL) msg
+        ChatWidget::MsgType msgType;
+        if (posts[i].mMeta.mPublishTs <= mLatestHistoryMsgTimestamp)
+        {
+            msgType = ChatWidget::MSGTYPE_HISTORY;
+            recvTime = QDateTime::fromSecsSinceEpoch(posts[i].mMeta.mPublishTs);
+        }
+        else
+        {
+            msgType = ChatWidget::MSGTYPE_NORMAL;
+            recvTime = QDateTime::currentDateTime();
+        }
+
+        ui.chatWidget->addChatMsg(incomming, nickname, posts[i], sendTime, recvTime, mmsg, msgType);
         emit gxsMessageReceived(posts[i], incomming, gxsChatId(groupId()), sendTime, nickname, mmsg) ;
 
         // This is a trick to translate HTML into text.
@@ -1539,7 +1558,7 @@ void UnseenGxsChatLobbyDialog::updateDisplay(bool complete)
         if (!showAllPostOnlyOnce)   //we get all msg only once, the next time will not show all again!
         {
             requestGroupData();
-            requestAllPosts();
+            requestAllPosts(); // get all messages here!!! --> Here we can get only 25 recent msgs
             showAllPostOnlyOnce = true;
         }
 
@@ -1880,7 +1899,31 @@ void UnseenGxsChatLobbyDialog::loadRequest(const TokenQueue *queue, const TokenR
         }
 
         if (req.mUserType == mTokenTypeAllPosts) {
-            loadAllPosts(req.mToken);
+            //loadAllPosts(req.mToken);
+            std::vector<RsGxsChatMsg> msgs;
+            std::list<RsGxsGroupId> list;
+            list.push_back(groupId());
+            rsGxsChats->getChatsContent(list, msgs, 1);
+            //Here we can set the latestHistoryMsgTimestamp for msgs[0]
+
+            // show the msg info here for checking:
+            std::cerr << "Here is 24 msgs we want to check: " << std::endl;
+
+            for (uint32_t i=0;i<msgs.size();++i)
+            {
+                if(msgs[i].mMeta.mOrigMsgId == msgs[i].mMeta.mMsgId)
+                    msgs[i].mMeta.mOrigMsgId.clear();
+
+        #ifdef DEBUG_CHAT
+                std::cerr << "  " << i << ": msg_id=" << msgs[i].mMeta.mMsgId <<" : msg timestamp= " << msgs[i].mMeta.mPublishTs << " : msg = " << msgs[i].mMsg << std::endl;
+        #endif
+            }
+
+            sortGxsMsgChat(msgs);
+            mLatestHistoryMsgTimestamp = msgs[msgs.size() - 1].mMeta.mPublishTs;
+            std::cerr <<  "mLatestHistoryMsgTimestamp: " << mLatestHistoryMsgTimestamp << std::endl;
+            insertGxsChatPosts(msgs, NULL, true);
+
             return;
         }
 

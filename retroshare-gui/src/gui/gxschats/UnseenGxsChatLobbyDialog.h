@@ -210,6 +210,7 @@ private:
     RsGxsIfaceHelper *mInterfaceHelper;
     bool showAllPostOnlyOnce;
     std::set<RsGxsMessageId> allDownloadedMsgs;
+    rstime_t      mLatestHistoryMsgTimestamp;
 //END of copy from RsGxsUpdateBroadcastWidget
 
 

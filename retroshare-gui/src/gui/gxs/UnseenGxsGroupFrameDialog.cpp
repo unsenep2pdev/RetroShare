@@ -1132,78 +1132,78 @@ void UnseenGxsGroupFrameDialog::addChatPage(UnseenGxsChatLobbyDialog *d)
     }
 }
 
-void UnseenGxsGroupFrameDialog::insertGroupsData(const std::map<RsGxsGroupId,RsGroupMetaData> &groupList, const RsUserdata *userdata)
-{
-	if (!mInitialized) {
-		return;
-	}
+//void UnseenGxsGroupFrameDialog::insertGroupsData(const std::map<RsGxsGroupId,RsGroupMetaData> &groupList, const RsUserdata *userdata)
+//{
+//	if (!mInitialized) {
+//		return;
+//	}
 
-	mInFill = true;
+//	mInFill = true;
 
-    QList<UnseenGroupItemInfo> adminList;
-    QList<UnseenGroupItemInfo> subList;
-    QList<UnseenGroupItemInfo> popList;
-    QList<UnseenGroupItemInfo> otherList;
-    //QList<GroupItemInfo> allGxsGroupList; //unseenp2p - allGxsGroupList = adminList + subList
+//    QList<UnseenGroupItemInfo> adminList;
+//    QList<UnseenGroupItemInfo> subList;
+//    QList<UnseenGroupItemInfo> popList;
+//    QList<UnseenGroupItemInfo> otherList;
+//    //QList<GroupItemInfo> allGxsGroupList; //unseenp2p - allGxsGroupList = adminList + subList
 
-    std::multimap<uint32_t, UnseenGroupItemInfo> popMap;
+//    std::multimap<uint32_t, UnseenGroupItemInfo> popMap;
 
-    allGxsGroupList.clear();
-	for (auto it = groupList.begin(); it != groupList.end(); ++it) {
-		/* sort it into Publish (Own), Subscribed, Popular and Other */
-		uint32_t flags = it->second.mSubscribeFlags;
+//    allGxsGroupList.clear();
+//	for (auto it = groupList.begin(); it != groupList.end(); ++it) {
+//		/* sort it into Publish (Own), Subscribed, Popular and Other */
+//		uint32_t flags = it->second.mSubscribeFlags;
 
-        UnseenGroupItemInfo groupItemInfo;
-        groupInfoToUnseenGroupItemInfo(it->second, groupItemInfo, userdata);
+//        UnseenGroupItemInfo groupItemInfo;
+//        groupInfoToUnseenGroupItemInfo(it->second, groupItemInfo, userdata);
 
-		if (IS_GROUP_SUBSCRIBED(flags))
-		{
-			if (IS_GROUP_ADMIN(flags))
-			{
-				adminList.push_back(groupItemInfo);
-			}
-			else
-			{
-				/* subscribed group */
-				subList.push_back(groupItemInfo);
-			}
-            allGxsGroupList.push_back(groupItemInfo);
-		}
-		else
-		{
-			//popMap.insert(std::make_pair(it->mPop, groupItemInfo)); /* rate the others by popularity */
-			popMap.insert(std::make_pair(it->second.mLastPost, groupItemInfo)); /* rate the others by time of last post */
-		}
-	}
+//		if (IS_GROUP_SUBSCRIBED(flags))
+//		{
+//			if (IS_GROUP_ADMIN(flags))
+//			{
+//				adminList.push_back(groupItemInfo);
+//			}
+//			else
+//			{
+//				/* subscribed group */
+//				subList.push_back(groupItemInfo);
+//			}
+//            allGxsGroupList.push_back(groupItemInfo);
+//		}
+//		else
+//		{
+//			//popMap.insert(std::make_pair(it->mPop, groupItemInfo)); /* rate the others by popularity */
+//			popMap.insert(std::make_pair(it->second.mLastPost, groupItemInfo)); /* rate the others by time of last post */
+//		}
+//	}
 
-	/* iterate backwards through popMap - take the top 5 or 10% of list */
-	uint32_t popCount = 5;
-	if (popCount < popMap.size() / 10)
-	{
-		popCount = popMap.size() / 10;
-	}
+//	/* iterate backwards through popMap - take the top 5 or 10% of list */
+//	uint32_t popCount = 5;
+//	if (popCount < popMap.size() / 10)
+//	{
+//		popCount = popMap.size() / 10;
+//	}
 
-	uint32_t i = 0;
-    std::multimap<uint32_t, GroupItemInfo>::reverse_iterator rit;
+//	uint32_t i = 0;
+//    std::multimap<uint32_t, GroupItemInfo>::reverse_iterator rit;
 
-	/* now we can add them in as a tree! */
+//	/* now we can add them in as a tree! */
 
-    // We can update to MVC GUI here from the all list
+//    // We can update to MVC GUI here from the all list
 
-    // How to use the SmartListView + SmartListModel to show here? Need to use another MVC ?!
-    // Here only take the first 2 list: admin list + subscribed list only, because the popular list is still not subscribe anyway
-    smartListModel_->setGxsGroupList(allGxsGroupList);
-    emit ui->unseenGroupTreeWidget->model()->layoutChanged();
+//    // How to use the SmartListView + SmartListModel to show here? Need to use another MVC ?!
+//    // Here only take the first 2 list: admin list + subscribed list only, because the popular list is still not subscribe anyway
+//    smartListModel_->setGxsGroupList(allGxsGroupList);
+//    emit ui->unseenGroupTreeWidget->model()->layoutChanged();
 
-#ifdef DEBUG_GROUPFRAMEDIALOG
-    std::cerr << " Show all Gxs Group Chat : " << std::endl;
-    for (std::vector<UnseenGroupItemInfo>::iterator it2 = allGxsGroupList.begin(); it2!= allGxsGroupList.end(); ++it2)
-    {
-        std::cerr << " GxsChat Id: " << (*it2).id.toStdString() << " : " << (*it2).name.toStdString() << std::endl;
-    }
-#endif
+//#ifdef DEBUG_GROUPFRAMEDIALOG
+//    std::cerr << " Show all Gxs Group Chat : " << std::endl;
+//    for (std::vector<UnseenGroupItemInfo>::iterator it2 = allGxsGroupList.begin(); it2!= allGxsGroupList.end(); ++it2)
+//    {
+//        std::cerr << " GxsChat Id: " << (*it2).id.toStdString() << " : " << (*it2).name.toStdString() << std::endl;
+//    }
+//#endif
 
-}
+//}
 
 void UnseenGxsGroupFrameDialog::insertGroupsData2(const std::map<RsGxsGroupId,RsGxsChatGroup> &groupList, const RsUserdata *userdata)
 {
@@ -1435,7 +1435,8 @@ void UnseenGxsGroupFrameDialog::loadGroupStatistics(const uint32_t &token)
 		return;
 	}
 
-    //Need to update the unread number here on the gxschat list
+    //Need to update the unread number here on the gxschat list, and the last message?
+
 
     //ui->unseenGroupTreeWidget->setUnreadCount(item, mCountChildMsgs ? (stats.mNumThreadMsgsUnread + stats.mNumChildMsgsUnread) : stats.mNumThreadMsgsUnread);
 }
@@ -1703,7 +1704,7 @@ void UnseenGxsGroupFrameDialog::sortGxsConversationListByRecentTime()
 
     std::sort(allGxsChatGroupList.begin(), allGxsChatGroupList.end(),
               [] (RsGxsChatGroup const& a, RsGxsChatGroup const& b)
-    { return a.mMeta.mLastPost > b.mMeta.mLastPost; });
+    { return a.localMsgInfo.update_ts > b.localMsgInfo.update_ts; });
 
 }
 
@@ -1983,18 +1984,13 @@ void UnseenGxsGroupFrameDialog::updateRecentTimeAndUnreadNumber(const RsGxsGroup
     bool isRead = true;
     if (isReset)
     {
-
     }
     else
     {
         if( isOtherMsg)     //when receive new msg, need to insert into the unreadMsgIds
         {
-            //allGxsChatGroupList[i].localMsgInfo.unreadMsgIds.insert(gxsChatMsg.mMeta.mMsgId);
             isRead = false;
         }
-//        allGxsChatGroupList[i].localMsgInfo.update_ts = lastMsgDatetime;
-//        allGxsChatGroupList[i].localMsgInfo.msg = textmsg;
-
     }
 
     uint32_t token;
@@ -2003,50 +1999,40 @@ void UnseenGxsGroupFrameDialog::updateRecentTimeAndUnreadNumber(const RsGxsGroup
     {
         //this is when we send chat
         rsGxsChats->setMessageReadStatus(token, msgPair, textmsg, false);
+
     }
-    rsGxsChats->setMessageReadStatus(token, msgPair, textmsg, isRead);
+    uint32_t token2;
+    rsGxsChats->setLocalMessageStatus(msgPair, textmsg);
+    rsGxsChats->setMessageReadStatus(token2, msgPair, textmsg, isRead);
 
-//    for (unsigned int i = 0; i < allGxsChatGroupList.size(); i++ )
-//    {
-//        if (allGxsChatGroupList[i].mMeta.mGroupId == groupId)
-//        {
+    //still need to update in the allGxsChatGroupList for GUI, sorting,... for example
+    for (unsigned int i = 0; i < allGxsChatGroupList.size(); i++ )
+    {
+        if (allGxsChatGroupList[i].mMeta.mGroupId == groupId)
+        {
+            //isReset = true, that mean clear all read number (clear unreadMsgIds), set as already read, there is no update last msg, last date
+            //only isReset= true: when user click on the groupItem with unread number > 0, else: isReset = false
+            // isReset = false, we have 2 option: + when user sendMsg: isOtherMsg = false,
+            //                                    + when user receive Msg: isOtherMsg = true
+            bool isRead = true;
+            if (isReset)
+            {
+                allGxsChatGroupList[i].localMsgInfo.unreadMsgIds.clear();
+            }
+            else
+            {
+                if( isOtherMsg)     //when receive new msg, need to insert into the unreadMsgIds
+                {
+                    allGxsChatGroupList[i].localMsgInfo.unreadMsgIds.insert(gxsChatMsg.mMeta.mMsgId);
+                }
 
-//            //isReset = true, that mean clear all read number (clear unreadMsgIds), set as already read, there is no update last msg, last date
-//            //only isReset= true: when user click on the groupItem with unread number > 0, else: isReset = false
-//            // isReset = false, we have 2 option: + when user sendMsg: isOtherMsg = false,
-//            //                                    + when user receive Msg: isOtherMsg = true
-//            bool isRead = true;
-//            if (isReset)
-//            {
-//                allGxsChatGroupList[i].localMsgInfo.unreadMsgIds.clear();
+                allGxsChatGroupList[i].localMsgInfo.update_ts = lastMsgDatetime;
+                allGxsChatGroupList[i].localMsgInfo.msg = textmsg;
 
-//            }
-//            else
-//            {
-//                if( isOtherMsg)     //when receive new msg, need to insert into the unreadMsgIds
-//                {
-//                    allGxsChatGroupList[i].localMsgInfo.unreadMsgIds.insert(gxsChatMsg.mMeta.mMsgId);
-//                    isRead = false;
-//                }
-
-//                allGxsChatGroupList[i].localMsgInfo.update_ts = lastMsgDatetime;
-//                allGxsChatGroupList[i].localMsgInfo.msg = textmsg;
-
-//            }
-
-////            std::list<RsGxsId> ownIds;
-////            rsIdentity->getOwnIds(ownIds);
-////            if (ownIds.size() > 0) allGxsChatGroupList[i].mMeta.mAuthorId = ownIds.front();
-
-//            //allGxsChatGroupList[i].mMeta.mAuthorId = gxsChatMsg.mMeta.mAuthorId;
-
-//            uint32_t token;
-//            RsGxsGrpMsgIdPair msgPair = std::make_pair(allGxsChatGroupList[i].mMeta.mGroupId,gxsChatMsg.mMeta.mMsgId);
-//            rsGxsChats->setMessageReadStatus(token, msgPair, textmsg, isRead);
-
-//            break;
-//        }
-//    }
+            }
+            break;
+        }
+    }
 }
 
 void UnseenGxsGroupFrameDialog::setConversationListMode(uint32_t mode)
