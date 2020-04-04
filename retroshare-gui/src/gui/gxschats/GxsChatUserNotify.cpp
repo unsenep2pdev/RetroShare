@@ -50,12 +50,12 @@ bool GxsChatUserNotify::hasSetting(QString *name, QString *group)
 
 QIcon GxsChatUserNotify::getIcon()
 {
-    return QIcon(":/home/img/face_icon/youtube-play-button_128.png");
+    return QIcon(":/home/img/face_icon/groupchat_tr.png");
 }
 
 QIcon GxsChatUserNotify::getMainIcon(bool hasNew)
 {
-    return hasNew ? QIcon(":/home/img/face_icon/youtube-play-button_v_128.png") : QIcon(":/home/img/face_icon/youtube-play-button_128.png");
+    return hasNew ? QIcon(":/home/img/face_icon/groupchat_v.png") : QIcon(":/home/img/face_icon/groupchat_tr.png");
 }
 
 void GxsChatUserNotify::iconClicked()
