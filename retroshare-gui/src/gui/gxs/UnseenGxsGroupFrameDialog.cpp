@@ -1229,7 +1229,7 @@ void UnseenGxsGroupFrameDialog::insertGroupsData2(const std::map<RsGxsGroupId,Rs
     }
     // We can update to MVC GUI here from the all list, need to check whenever will update the GUI,
     // if not it will refresh the list very frequently and work wrong (for ex. clear the unread number)!
-    if(!isRunOnlyOnce)
+    //if(!isRunOnlyOnce)
     {
         smartListModel_->setGxsChatGroupList(allGxsChatGroupList);
         emit ui->unseenGroupTreeWidget->model()->layoutChanged();

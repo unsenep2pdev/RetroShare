@@ -1920,7 +1920,8 @@ void UnseenGxsChatLobbyDialog::loadRequest(const TokenQueue *queue, const TokenR
             }
 
             sortGxsMsgChat(msgs);
-            mLatestHistoryMsgTimestamp = msgs[msgs.size() - 1].mMeta.mPublishTs;
+            if (msgs.size()> 0)
+                mLatestHistoryMsgTimestamp = msgs[msgs.size() - 1].mMeta.mPublishTs;
             std::cerr <<  "mLatestHistoryMsgTimestamp: " << mLatestHistoryMsgTimestamp << std::endl;
             insertGxsChatPosts(msgs, NULL, true);
 
