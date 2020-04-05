@@ -1348,7 +1348,7 @@ void UnseenGxsChatLobbyDialog::insertGxsChatPosts(std::vector<RsGxsChatMsg> &pos
     std::cerr << "After sorting..." << std::endl;
 #endif
 
-    sortGxsMsgChat(posts);
+    //sortGxsMsgChat(posts);
     std::vector<uint32_t> new_versions ;
     for (uint32_t i=0;i<posts.size();++i)
     {
@@ -1919,7 +1919,7 @@ void UnseenGxsChatLobbyDialog::loadRequest(const TokenQueue *queue, const TokenR
         #endif
             }
 
-            sortGxsMsgChat(msgs);
+            //sortGxsMsgChat(msgs);
             if (msgs.size()> 0)
                 mLatestHistoryMsgTimestamp = msgs[msgs.size() - 1].mMeta.mPublishTs;
             std::cerr <<  "mLatestHistoryMsgTimestamp: " << mLatestHistoryMsgTimestamp << std::endl;

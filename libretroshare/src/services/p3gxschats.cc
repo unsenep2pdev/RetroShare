@@ -1214,6 +1214,8 @@ bool p3GxsChats::getPostData(const uint32_t &token, std::vector<RsGxsChatMsg> &m
     GxsMsgDataMap msgData;
     bool ok = RsGenExchange::getMsgData(token, msgData);
 
+    std::set<RsGxsChatMsg> results; //try to put timestamp order
+
     if(ok)
     {
         GxsMsgDataMap::iterator mit = msgData.begin();
@@ -1231,7 +1233,7 @@ bool p3GxsChats::getPostData(const uint32_t &token, std::vector<RsGxsChatMsg> &m
                 {
                     RsGxsChatMsg msg;
                     postItem->toChatPost(msg, true);
-                    msgs.push_back(msg);
+                    results.insert(msg);
                     RsGxsGrpMsgIdPair GrpMsgPair = std::make_pair(postItem->meta.mGroupId, postItem->meta.mMsgId);
                     uint32_t size = mSerialiser->size(*vit) ;
                     {
@@ -1278,6 +1280,10 @@ bool p3GxsChats::getPostData(const uint32_t &token, std::vector<RsGxsChatMsg> &m
     {
         std::cerr << "p3GxsChats::getPostData() ERROR in request";
         std::cerr << std::endl;
+    }
+
+    for(auto nit= results.begin(); nit !=results.end(); nit++){
+         msgs.push_back(*nit);
     }
 
     return ok;

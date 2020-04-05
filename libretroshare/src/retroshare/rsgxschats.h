@@ -185,6 +185,21 @@ class RsGxsChatMsg : RsSerializable
 
     RsGxsImage mThumbnail;
 
+    bool operator<(const RsGxsChatMsg bMsg) const{
+        return mMeta.mPublishTs < bMsg.mMeta.mPublishTs;
+    }
+    bool operator()(const RsGxsChatMsg bMsg){
+        return mMeta.mPublishTs < bMsg.mMeta.mPublishTs;
+    }
+
+    void operator=(const RsGxsChatMsg bMsg){
+        mMeta = bMsg.mMeta;
+        mOlderVersions = bMsg.mOlderVersions;
+        mMsg = bMsg.mMsg;
+        mCount = bMsg.mCount;
+        mSize   = bMsg.mSize;
+        mThumbnail = bMsg.mThumbnail;
+    }
 
     /// @see RsSerializable
     virtual void serial_process( RsGenericSerializer::SerializeJob j,

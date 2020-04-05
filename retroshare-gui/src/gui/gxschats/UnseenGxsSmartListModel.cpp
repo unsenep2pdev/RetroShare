@@ -145,7 +145,7 @@ QVariant UnseenGxsSmartListModel::data(const QModelIndex &index, int role) const
 
         localInfo = gxsChatItem.localMsgInfo;
         //gxsChatItem.getLocalMessageStatus
-        std::cerr << " gxs name: " << gxsChatItem.mMeta.mGroupName << " last msg: " << localInfo.msg << ", last date:  " << localInfo.update_ts << ", unread number: " << localInfo.unreadMsgIds.size() <<std::endl;
+        //std::cerr << " gxs name: " << gxsChatItem.mMeta.mGroupName << " last msg: " << localInfo.msg << ", last date:  " << localInfo.update_ts << ", unread number: " << localInfo.unreadMsgIds.size() <<std::endl;
         //STATUS FOR CONTACT
 
         //std::cerr << " gxs name: " << gxsChatItem.mMeta.mGroupName << ", nick: " << gxsChatItem.mMeta.mAuthorId.toStdString() << ", last msg: " << gxsChatItem.localMsgInfo.msg << ", last date:  " << gxsChatItem.localMsgInfo.update_ts << ", unread number: " << gxsChatItem.localMsgInfo.unreadMsgIds.size() <<std::endl;
