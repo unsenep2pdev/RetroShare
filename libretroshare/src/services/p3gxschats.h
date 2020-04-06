@@ -52,6 +52,8 @@ class p3GxsChats: public RsGenExchange,  public RsGxsChats,
 public:
     p3GxsChats( RsGeneralDataService* gds, RsNetworkExchangeService* nes,
                    RsGixs* gixs);
+    ~p3GxsChats();
+
     virtual RsServiceInfo getServiceInfo();
 
     virtual void service_tick();

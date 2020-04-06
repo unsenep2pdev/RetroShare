@@ -97,6 +97,12 @@ p3GxsChats::p3GxsChats(RsGeneralDataService *gds, RsNetworkExchangeService *nes,
     initChatId();
 }
 
+p3GxsChats::~p3GxsChats(){
+    std::cerr <<"p3GxsChats::~p3GxsChats()"<<std::endl;
+   IndicateConfigChanged() ;   //sync before shutdown
+   std::this_thread::sleep_for(std::chrono::milliseconds(1000*15)); //waiting 15s before shutdown.
+}
+
 const std::string GXS_CHATS_APP_NAME = "gxschats";
 const uint16_t GXS_CHATS_APP_MAJOR_VERSION  =       1;
 const uint16_t GXS_CHATS_APP_MINOR_VERSION  =       0;
@@ -1776,11 +1782,11 @@ void p3GxsChats::slowIndicateConfigChanged()
 {
     rstime_t now = time(NULL) ;
 
-    if(mLastConfigUpdate + DELAY_BETWEEN_CONFIG_UPDATES < now)
-    {
+    //if(mLastConfigUpdate + DELAY_BETWEEN_CONFIG_UPDATES < now)
+    //{
         IndicateConfigChanged() ;
         mLastConfigUpdate = now ;
-    }
+    //}
 }
 
 /********************************************************************************************/
