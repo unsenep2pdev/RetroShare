@@ -1730,24 +1730,29 @@ void p3GxsChats::setMessageReadStatus( uint32_t& token,
         if (read) {
             status = 0;
             if(found !=mKnownChats.end()){
+                for(auto it=mKnownChats[msgId.first].unreadMsgIds.begin(); it!=mKnownChats[msgId.first].unreadMsgIds.end(); it++){
+                    RsGxsGrpMsgIdPair msgPair = std::make_pair(msgId.first,*it);
+                    setMsgStatusFlags(token, msgPair, status, mask);
+                }
                 mKnownChats[msgId.first].clear();  //clear all the unread messageId
                 mKnownChats[msgId.first].msg = shortMsg;
 
-                slowIndicateConfigChanged();
+                slowIndicateConfigChanged();             
             }
         }else if(found !=mKnownChats.end()){
                 mKnownChats[msgId.first].unreadMsgIds.insert(msgId.second);
                 mKnownChats[msgId.first].msg = shortMsg;
                 mKnownChats[msgId.first].update_ts = time(NULL);
 
-                slowIndicateConfigChanged();                
+                setMsgStatusFlags(token, msgId, status, mask);
+                slowIndicateConfigChanged();
+
         }else{
             std::cerr <<"Not found groupPair"<<std::endl;
             std::cerr<<"PairGroup(): "<<msgId.first<< " and msgId: "<<msgId.second <<std::endl;
             std::cerr<<"Msg : "<<shortMsg <<std::endl;
         }
     }
-    setMsgStatusFlags(token, msgId, status, mask);
 
 }
 
