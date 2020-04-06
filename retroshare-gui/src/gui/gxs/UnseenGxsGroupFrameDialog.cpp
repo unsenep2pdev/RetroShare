@@ -63,6 +63,7 @@
 //#define TOKEN_TYPE_SUBSCRIBE_CHANGE 2
 //#define TOKEN_TYPE_CURRENTGROUP     3
 #define TOKEN_TYPE_STATISTICS       4
+#define TOKEN_TYPE_LAST_MSG_OF_GROUP   5
 
 #define MAX_COMMENT_TITLE 32
 
@@ -277,6 +278,7 @@ void UnseenGxsGroupFrameDialog::updateDisplay(bool complete)
 		std::map<RsGxsGroupId, std::set<RsGxsMessageId> > msgIds;
 		getAllMsgIds(msgIds);
 
+
         for (auto msgIt = msgIds.begin(); msgIt != msgIds.end(); ++msgIt)
         {
             std::cerr << " ****** groupId :  "  << (*msgIt).first.toStdString() << std::endl;
@@ -290,8 +292,16 @@ void UnseenGxsGroupFrameDialog::updateDisplay(bool complete)
                 _unseenGxsGroup_infos[msgIt->first].dialog->updateDisplay(false);
             else
             {
-                //unseenp2p - try to create chat dialog when we receive the new msg when we still not have the dialog
-                ChatDialog::chatFriend(gxsChatId(msgIt->first),false) ;
+                //here is when we receive the new msg but still not have chat window for this
+                //so, just show the unread nunmber on the chat list and sort the list
+
+                if(msgIt->second.size() > 0 )
+                {
+                    requestLastMsgOfGroup(msgIt->first, msgIt->second);
+
+                }
+
+
             }
         }
 	}
@@ -1283,6 +1293,41 @@ void UnseenGxsGroupFrameDialog::updateMessageSummaryList(RsGxsGroupId groupId)
 /** Request / Response of Data ********************************/
 /*********************** **** **** **** ***********************/
 
+void UnseenGxsGroupFrameDialog::requestLastMsgOfGroup(RsGxsGroupId groupId, const std::set<RsGxsMessageId> &msgIds)
+{
+    mStateHelper->setLoading(TOKEN_TYPE_LAST_MSG_OF_GROUP, true);
+
+#ifdef DEBUG_GROUPFRAMEDIALOG
+    std::cerr << "UnseenGxsGroupFrameDialog::requestLastMsgOfGroup()";
+    std::cerr << std::endl;
+#endif
+
+    mTokenQueue->cancelActiveRequestTokens(TOKEN_TYPE_LAST_MSG_OF_GROUP);
+
+    RsTokReqOptions opts;
+    opts.mReqType = GXS_REQUEST_TYPE_MSG_DATA;
+
+    uint32_t token;
+    GxsMsgReq requestMsgIds;
+    requestMsgIds[groupId] = msgIds;
+    //mTokenQueue->requestMsgInfo(token, RS_TOKREQ_ANSTYPE_DATA, opts, requestMsgIds, mTokenTypePosts);
+
+    //uint32_t token;
+    mTokenQueue->requestMsgInfo(token, RS_TOKREQ_ANSTYPE_DATA, opts, requestMsgIds, TOKEN_TYPE_LAST_MSG_OF_GROUP);
+}
+
+void UnseenGxsGroupFrameDialog::loadPosts(const uint32_t &token)
+{
+    std::vector<RsGxsChatMsg> msgs;
+    rsGxsChats->getPostData(token, msgs);
+    long long mPublishTs = QDateTime::currentSecsSinceEpoch();
+    for(auto chatMsg = msgs.begin(); chatMsg != msgs.end(); ++chatMsg)
+    {
+         updateRecentTimeAndUnreadNumber((*chatMsg).mMeta.mGroupId, *chatMsg, "", mPublishTs, (*chatMsg).mMsg, true, 1, false  );
+    }
+
+}
+
 void UnseenGxsGroupFrameDialog::requestGroupSummary()
 {
 	mStateHelper->setLoading(TOKEN_TYPE_GROUP_SUMMARY, true);
@@ -1471,6 +1516,9 @@ void UnseenGxsGroupFrameDialog::loadRequest(const TokenQueue *queue, const Token
 		case TOKEN_TYPE_STATISTICS:
 			loadGroupStatistics(req.mToken);
 			break;
+        case TOKEN_TYPE_LAST_MSG_OF_GROUP:
+            loadPosts(req.mToken);
+            break;
 
 		default:
             std::cerr << "UnseenGxsGroupFrameDialog::loadRequest() ERROR: INVALID TYPE";
@@ -2024,6 +2072,62 @@ void UnseenGxsGroupFrameDialog::updateRecentTimeAndUnreadNumber(const RsGxsGroup
                 if( isOtherMsg)     //when receive new msg, need to insert into the unreadMsgIds
                 {
                     allGxsChatGroupList[i].localMsgInfo.unreadMsgIds.insert(gxsChatMsg.mMeta.mMsgId);
+                }
+
+                allGxsChatGroupList[i].localMsgInfo.update_ts = lastMsgDatetime;
+                allGxsChatGroupList[i].localMsgInfo.msg = textmsg;
+
+            }
+            break;
+        }
+    }
+}
+
+void UnseenGxsGroupFrameDialog::updateRecentTimeAndUnreadNumber(const RsGxsGroupId &groupId, const RsGxsMessageId& chatMsgId, std::string nickInGroupChat, long long lastMsgDatetime, std::string textmsg, bool isOtherMsg, unsigned int unreadNumber, bool isReset)
+{
+    bool isRead = true;
+    if (isReset)
+    {
+    }
+    else
+    {
+        if( isOtherMsg)     //when receive new msg, need to insert into the unreadMsgIds
+        {
+            isRead = false;
+        }
+    }
+
+    uint32_t token;
+    RsGxsGrpMsgIdPair msgPair = std::make_pair(groupId,chatMsgId);
+    if(!isOtherMsg)
+    {
+        //this is when we send chat
+        rsGxsChats->setMessageReadStatus(token, msgPair, textmsg, false);
+
+    }
+    uint32_t token2;
+    rsGxsChats->setLocalMessageStatus(msgPair, textmsg);
+    rsGxsChats->setMessageReadStatus(token2, msgPair, textmsg, isRead);
+
+    //still need to update in the allGxsChatGroupList for GUI, sorting,... for example
+    for (unsigned int i = 0; i < allGxsChatGroupList.size(); i++ )
+    {
+        if (allGxsChatGroupList[i].mMeta.mGroupId == groupId)
+        {
+            //isReset = true, that mean clear all read number (clear unreadMsgIds), set as already read, there is no update last msg, last date
+            //only isReset= true: when user click on the groupItem with unread number > 0, else: isReset = false
+            // isReset = false, we have 2 option: + when user sendMsg: isOtherMsg = false,
+            //                                    + when user receive Msg: isOtherMsg = true
+            bool isRead = true;
+            if (isReset)
+            {
+                allGxsChatGroupList[i].localMsgInfo.unreadMsgIds.clear();
+            }
+            else
+            {
+                if( isOtherMsg)     //when receive new msg, need to insert into the unreadMsgIds
+                {
+                    allGxsChatGroupList[i].localMsgInfo.unreadMsgIds.insert(chatMsgId);
                 }
 
                 allGxsChatGroupList[i].localMsgInfo.update_ts = lastMsgDatetime;

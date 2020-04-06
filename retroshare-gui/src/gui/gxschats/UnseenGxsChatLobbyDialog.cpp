@@ -1620,27 +1620,6 @@ void UnseenGxsChatLobbyDialog::updateDisplay(bool complete)
 
 
             }
-//            auto mit = msgs.find(groupId());
-//            std::set<RsGxsMessageId> &msgIdV = mit->second;
-//            if (mit != msgs.end())
-//            {
-//                //std::set<RsGxsMessageId> &msgIdV = mit->second;
-
-//                if(msgIdV.size() > 0)
-//                {
-//                    std::set<RsGxsMessageId>::iterator msgIdIt;
-//                    for (msgIdIt = msgIdV.begin(); msgIdIt != msgIdV.end(); ++msgIdIt)
-//                    {
-//                        if (allDownloadedMsgs.find(*msgIdIt) != allDownloadedMsgs.end())
-//                        {
-//                            mit->second.erase(*msgIdIt);
-//                        }
-//                    }
-//                }
-//                if(msgIdV.size() > 0) requestPosts(msgIdV);
-//                    //requestPosts(mit->second);
-//                else return;
-//            }
         }
     }
 

@@ -32,6 +32,7 @@
 #include "retroshare/rsgxsflags.h"
 #include "retroshare/rsidentity.h"
 #include "retroshare/rsgxschats.h"
+#include "retroshare/rsgxscircles.h"
 
 #include "util/HandleRichText.h"
 
@@ -134,35 +135,46 @@ QVariant UnseenGxsSmartListModel::data(const QModelIndex &index, int role) const
         }
 
         //Get avatar for groupchat or contact item
-         //if (list.size() == 0 || index.row() >= static_cast<int>(list.size())) return QVariant();
           if (chatList.size() == 0 || index.row() >= static_cast<int>(chatList.size())) return QVariant();
-        //UnseenGroupItemInfo chatItem = list.at(index.row());
         RsGxsChatGroup gxsChatItem = chatList.at(index.row());
 
         LocalGroupInfo localInfo;
         //which one we will choose?
-        //rsGxsChats->getLocalMessageStatus(gxsChatItem.mMeta.mGroupId, localInfo);
+        rsGxsChats->getLocalMessageStatus(gxsChatItem.mMeta.mGroupId, localInfo);
 
-        localInfo = gxsChatItem.localMsgInfo;
-        //gxsChatItem.getLocalMessageStatus
+        if (localInfo.msg.length() == 0)
+            localInfo = gxsChatItem.localMsgInfo;
         //std::cerr << " gxs name: " << gxsChatItem.mMeta.mGroupName << " last msg: " << localInfo.msg << ", last date:  " << localInfo.update_ts << ", unread number: " << localInfo.unreadMsgIds.size() <<std::endl;
+
         //STATUS FOR CONTACT
-
-        //std::cerr << " gxs name: " << gxsChatItem.mMeta.mGroupName << ", nick: " << gxsChatItem.mMeta.mAuthorId.toStdString() << ", last msg: " << gxsChatItem.localMsgInfo.msg << ", last date:  " << gxsChatItem.localMsgInfo.update_ts << ", unread number: " << gxsChatItem.localMsgInfo.unreadMsgIds.size() <<std::endl;
-
         QString presenceForChat = "no-status"; //for groupchat
 
         QImage avatar(IMAGE_PUBLIC);    //default is public group chat avatar for UnseenP2P
 
+
+
         bool isAdmin      =  IS_GROUP_ADMIN(gxsChatItem.mMeta.mSubscribeFlags); // IS_GROUP_ADMIN(chatItem.subscribeFlags);
         bool isSubscribed =  IS_GROUP_SUBSCRIBED(gxsChatItem.mMeta.mSubscribeFlags); // IS_GROUP_SUBSCRIBED(chatItem.subscribeFlags);
 
-        if (isAdmin)      //if this is a group chat that I created
+        if (gxsChatItem.type == RsGxsChatGroup::GROUPCHAT)      //if this is a group chat that I created
         {
-            avatar = QImage(IMAGE_PRIVATE);
+            if (gxsChatItem.mMeta.mCircleType == GXS_CIRCLE_TYPE_YOUR_FRIENDS_ONLY)
+                avatar = QImage(IMAGE_PRIVATE); // IMAGE_PRIVATE = green
+            else if (gxsChatItem.mMeta.mCircleType == GXS_CIRCLE_TYPE_PUBLIC)
+                avatar =  QImage(IMAGE_PUBLIC); // IMAGE_PUBLIC = public
+
         }
-        else if (isSubscribed)
-                avatar = QImage(IMAGE_PUBLIC);
+        else if (gxsChatItem.type == RsGxsChatGroup::CHANNEL)
+        {
+            if (gxsChatItem.mMeta.mCircleType == GXS_CIRCLE_TYPE_YOUR_FRIENDS_ONLY)
+                avatar = QImage(IMAGE_PRIVATE); // IMAGE_PRIVATE = green
+            else if (gxsChatItem.mMeta.mCircleType == GXS_CIRCLE_TYPE_PUBLIC)
+                avatar =  QImage(IMAGE_PUBLIC); // IMAGE_PUBLIC = public
+        }
+        else if (gxsChatItem.type == RsGxsChatGroup::ONE2ONE)
+        {
+            //avatar = get avatar for that contact here
+        }
 
 
         ////////////////////////////////////////////
