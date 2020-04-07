@@ -161,35 +161,35 @@
          <property name="maximumSize">
           <size>
            <width>1000</width>
-           <height>40</height>
+           <height>35</height>
           </size>
          </property>
          <property name="styleSheet">
           <string notr="true"/>
          </property>
          <property name="frameShape">
-          <enum>QFrame::StyledPanel</enum>
+          <enum>QFrame::NoFrame</enum>
          </property>
          <property name="frameShadow">
-          <enum>QFrame::Raised</enum>
+          <enum>QFrame::Plain</enum>
+         </property>
+         <property name="lineWidth">
+          <number>1</number>
          </property>
          <layout class="QGridLayout" name="toolBarFrameGLayout_2">
           <property name="leftMargin">
            <number>2</number>
           </property>
           <property name="topMargin">
-           <number>1</number>
+           <number>0</number>
           </property>
           <property name="rightMargin">
            <number>12</number>
           </property>
           <property name="bottomMargin">
-           <number>1</number>
+           <number>0</number>
           </property>
-          <property name="horizontalSpacing">
-           <number>6</number>
-          </property>
-          <property name="verticalSpacing">
+          <property name="spacing">
            <number>0</number>
           </property>
           <item row="0" column="0">
@@ -204,6 +204,12 @@
              <size>
               <width>146</width>
               <height>0</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>16777215</width>
+              <height>27</height>
              </size>
             </property>
             <property name="baseSize">
