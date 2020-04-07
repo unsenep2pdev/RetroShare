@@ -294,9 +294,24 @@ void UnseenGxsGroupFrameDialog::updateDisplay(bool complete)
             {
                 //here is when we receive the new msg but still not have chat window for this
                 //so, just show the unread nunmber on the chat list and sort the list
-
                 if(msgIt->second.size() > 0 )
                 {
+//                    LocalGroupInfo localInfo;
+//                    rsGxsChats->getLocalMessageStatus(msgIt->first, localInfo);
+//                    if (localInfo.msg.length() > 0)
+//                    {
+//                        long long mPublishTs = QDateTime::currentSecsSinceEpoch();
+//                        //for(auto chatMsg = msgs.begin(); chatMsg != msgs.end(); ++chatMsg)
+//                        for(auto msgId = (*msgIt).second.begin(); msgId != (*msgIt).second.end(); ++msgId)
+//                        {
+//                             updateRecentTimeAndUnreadNumber(msgIt->first, *msgId , "", mPublishTs, localInfo.msg, true, 1, false  );
+//                        }
+
+//                        smartListModel_->setGxsChatGroupList(allGxsChatGroupList);
+//                        emit ui->unseenGroupTreeWidget->model()->layoutChanged();
+//                    }
+
+                    //Using token request from this list dialog to get the last msg: cost performance?
                     requestLastMsgOfGroup(msgIt->first, msgIt->second);
 
                 }
@@ -1326,6 +1341,8 @@ void UnseenGxsGroupFrameDialog::loadPosts(const uint32_t &token)
          updateRecentTimeAndUnreadNumber((*chatMsg).mMeta.mGroupId, *chatMsg, "", mPublishTs, (*chatMsg).mMsg, true, 1, false  );
     }
 
+    smartListModel_->setGxsChatGroupList(allGxsChatGroupList);
+    emit ui->unseenGroupTreeWidget->model()->layoutChanged();
 }
 
 void UnseenGxsGroupFrameDialog::requestGroupSummary()
@@ -2103,10 +2120,9 @@ void UnseenGxsGroupFrameDialog::updateRecentTimeAndUnreadNumber(const RsGxsGroup
     {
         //this is when we send chat
         rsGxsChats->setMessageReadStatus(token, msgPair, textmsg, false);
-
     }
     uint32_t token2;
-    rsGxsChats->setLocalMessageStatus(msgPair, textmsg);
+    //rsGxsChats->setLocalMessageStatus(msgPair, textmsg);
     rsGxsChats->setMessageReadStatus(token2, msgPair, textmsg, isRead);
 
     //still need to update in the allGxsChatGroupList for GUI, sorting,... for example
