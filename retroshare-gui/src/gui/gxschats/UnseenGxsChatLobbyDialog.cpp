@@ -1431,7 +1431,7 @@ void UnseenGxsChatLobbyDialog::insertGxsChatPosts(std::vector<RsGxsChatMsg> &pos
                 MainWindow::displayLobbySystrayMsg(tr("Group chat") + ": " + mGroupName, notifyMsg);
         }
 
-        updateParticipantsList();
+        //updateParticipantsList();
     }
 
 #ifdef DEBUG_CHAT
@@ -1512,36 +1512,36 @@ void UnseenGxsChatLobbyDialog::insertGxsChatPosts(std::vector<RsGxsChatMsg> &pos
     std::cerr << "Now adding posts..." << std::endl;
 #endif
 
-    for (std::vector<RsGxsChatMsg>::const_reverse_iterator it = posts.rbegin(); it != posts.rend(); ++it)
-    {
-#ifdef DEBUG_CHAT
-        std::cerr << "  adding post: " << (*it).mMeta.mMsgId ;
-#endif
+//    for (std::vector<RsGxsChatMsg>::const_reverse_iterator it = posts.rbegin(); it != posts.rend(); ++it)
+//    {
+//#ifdef DEBUG_CHAT
+//        std::cerr << "  adding post: " << (*it).mMeta.mMsgId ;
+//#endif
 
-        if(!(*it).mMeta.mMsgId.isNull())
-        {
-#ifdef DEBUG_CHAT
-            std::cerr << " added" << std::endl;
-#endif
+//        if(!(*it).mMeta.mMsgId.isNull())
+//        {
+//#ifdef DEBUG_CHAT
+//            std::cerr << " added" << std::endl;
+//#endif
 
-            if (thread && thread->stopped())
-                break;
+//            if (thread && thread->stopped())
+//                break;
 
-            if (thread)
-                thread->emitAddPost(qVariantFromValue(*it), related, ++pos, count);
-            else
-                createPostItem(*it, related);
-        }
-#ifdef DEBUG_CHAT
-        else
-            std::cerr << " skipped" << std::endl;
-#endif
-    }
+//            if (thread)
+//                thread->emitAddPost(qVariantFromValue(*it), related, ++pos, count);
+//            else
+//                createPostItem(*it, related);
+//        }
+//#ifdef DEBUG_CHAT
+//        else
+//            std::cerr << " skipped" << std::endl;
+//#endif
+//    }
 
-    if (!thread) {
-        //TODO: GUI
-        //ui->feedWidget->setSortingEnabled(true);
-    }
+//    if (!thread) {
+//        //TODO: GUI
+//        //ui->feedWidget->setSortingEnabled(true);
+//    }
 }
 
 void UnseenGxsChatLobbyDialog::insertAllPosts(const uint32_t &token, GxsMessageFramePostThread2 *thread)
