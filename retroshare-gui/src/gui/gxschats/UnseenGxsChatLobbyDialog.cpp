@@ -99,6 +99,9 @@ UnseenGxsChatLobbyDialog::UnseenGxsChatLobbyDialog( const RsGxsGroupId& id, QWid
 
     connect(ui.filterLineEdit, SIGNAL(textChanged(QString)), this, SLOT(filterChanged(QString)));
 
+    //Hide Search list
+    ui.toolBarFrame->hide();
+
         int S = QFontMetricsF(font()).height() ;
     ui.participantsList->setIconSize(QSize(1.4*S,1.4*S));
 
