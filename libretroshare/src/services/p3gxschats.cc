@@ -1744,7 +1744,6 @@ void p3GxsChats::setMessageReadStatus( uint32_t& token,
                 mKnownChats[msgId.first].msg = shortMsg;
                 mKnownChats[msgId.first].update_ts = time(NULL);
 
-                setMsgStatusFlags(token, msgId, status, mask);
                 slowIndicateConfigChanged();
 
         }else{
@@ -1753,6 +1752,8 @@ void p3GxsChats::setMessageReadStatus( uint32_t& token,
             std::cerr<<"Msg : "<<shortMsg <<std::endl;
         }
     }
+    setMsgStatusFlags(token, msgId, status, mask);
+
 
 }
 
