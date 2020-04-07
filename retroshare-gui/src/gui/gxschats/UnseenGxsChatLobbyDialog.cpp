@@ -189,48 +189,6 @@ UnseenGxsChatLobbyDialog::UnseenGxsChatLobbyDialog( const RsGxsGroupId& id, QWid
     connect(ui.chatWidget, SIGNAL(textBrowserAskContextMenu(QMenu*,QString,QPoint)), this, SLOT(textBrowserAskContextMenu(QMenu*,QString,QPoint)));
 //    connect(ownIdChooser,SIGNAL(currentIndexChanged(int)),this,SLOT(changeNickname())) ;
 
-// Add a members List Button
-    membersListButton = new QToolButton ;
-    membersListButton->setMinimumSize(icon_size);
-    membersListButton->setMaximumSize(icon_size);
-    membersListButton->setText(QString()) ;
-    membersListButton->setAutoRaise(true) ;
-    membersListButton->setToolTip(tr("Show members list"));
-
-    {
-    QIcon icon ;
-    icon.addPixmap(QPixmap(":/icons/png/memberslist.png")) ;
-    membersListButton->setIcon(icon) ;
-    membersListButton->setIconSize(icon_size);
-    }
-
-    getChatWidget()->addTitleBarWidget(membersListButton) ;
-
-    membersListButton2 = new QToolButton ;
-    membersListButton2->setMinimumSize(icon_size);
-    membersListButton2->setMaximumSize(icon_size);
-    membersListButton2->setText(QString()) ;
-    membersListButton2->setAutoRaise(true) ;
-    membersListButton2->setToolTip(tr("Hide members list"));
-
-    {
-    QIcon icon ;
-    icon.addPixmap(QPixmap(":/icons/png/memberslist2.png")) ;
-    membersListButton2->setIcon(icon) ;
-    membersListButton2->setIconSize(icon_size);
-    }
-
-    getChatWidget()->addTitleBarWidget(membersListButton2) ;
-
-    ui.participantsFrame->hide();
-    this->membersListButton2->hide();
-    connect(membersListButton, SIGNAL(clicked()), membersListButton  , SLOT(hide()));
-    connect(membersListButton, SIGNAL(clicked()), membersListButton2 , SLOT(show()));
-    connect(membersListButton, SIGNAL(clicked()), ui.participantsFrame , SLOT(show()));
-
-    connect(membersListButton2, SIGNAL(clicked()), membersListButton2  , SLOT(hide()));
-    connect(membersListButton2, SIGNAL(clicked()), membersListButton , SLOT(show()));
-    connect(membersListButton2, SIGNAL(clicked()), ui.participantsFrame , SLOT(hide()));
 
 
 // Add a  Unsubscribe Button
@@ -248,6 +206,8 @@ UnseenGxsChatLobbyDialog::UnseenGxsChatLobbyDialog( const RsGxsGroupId& id, QWid
     unsubscribeButton->setIconSize(icon_size);
     }
 
+
+
     /* Initialize splitter */
     ui.splitter->setStretchFactor(0, 1);
     ui.splitter->setStretchFactor(1, 0);
@@ -264,6 +224,51 @@ UnseenGxsChatLobbyDialog::UnseenGxsChatLobbyDialog( const RsGxsGroupId& id, QWid
     //////////////////////////////////////////////////////////////////////////////
     /// //END of Keep for UnseenGxsChatLobbyDialog
     //////////////////////////////////////////////////////////////////////////////
+
+    // Add a members List Button
+        membersListButton = new QToolButton ;
+        membersListButton->setMinimumSize(icon_size);
+        membersListButton->setMaximumSize(icon_size);
+        membersListButton->setText(QString()) ;
+        membersListButton->setAutoRaise(true) ;
+        membersListButton->setToolTip(tr("Show members list"));
+
+            {
+            QIcon icon ;
+            icon.addPixmap(QPixmap(":/icons/png/showmemberslist.png")) ;
+            membersListButton->setIcon(icon) ;
+            membersListButton->setIconSize(icon_size);
+            }
+
+            getChatWidget()->addTitleBarWidget(membersListButton) ;
+
+            membersListButton2 = new QToolButton ;
+            membersListButton2->setMinimumSize(icon_size);
+            membersListButton2->setMaximumSize(icon_size);
+            membersListButton2->setText(QString()) ;
+            membersListButton2->setAutoRaise(true) ;
+            membersListButton2->setToolTip(tr("Hide members list"));
+
+            {
+            QIcon icon ;
+            icon.addPixmap(QPixmap(":/icons/png/closememberslist.png")) ;
+            membersListButton2->setIcon(icon) ;
+            membersListButton2->setIconSize(icon_size);
+            }
+
+            getChatWidget()->addTitleBarWidget(membersListButton2) ;
+
+            ui.participantsFrame->hide();
+            this->membersListButton2->hide();
+            connect(membersListButton, SIGNAL(clicked()), membersListButton  , SLOT(hide()));
+            connect(membersListButton, SIGNAL(clicked()), membersListButton2 , SLOT(show()));
+            connect(membersListButton, SIGNAL(clicked()), ui.participantsFrame , SLOT(show()));
+
+            connect(membersListButton2, SIGNAL(clicked()), membersListButton2  , SLOT(hide()));
+            connect(membersListButton2, SIGNAL(clicked()), membersListButton , SLOT(show()));
+            connect(membersListButton2, SIGNAL(clicked()), ui.participantsFrame , SLOT(hide()));
+
+
 
 
     //////////////////////////////////////////////////////////////////////////////
