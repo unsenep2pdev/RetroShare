@@ -1355,6 +1355,10 @@ void UnseenGxsChatLobbyDialog::insertGxsChatPosts(std::vector<RsGxsChatMsg> &pos
         if(posts[i].mMeta.mOrigMsgId == posts[i].mMeta.mMsgId)
             posts[i].mMeta.mOrigMsgId.clear();
 
+        //save all the msgId to set, to avoid the duplication when request/load or show:
+        if(allDownloadedMsgs.find(posts[i].mMeta.mMsgId) != allDownloadedMsgs.end()) continue;
+        else allDownloadedMsgs.insert(posts[i].mMeta.mMsgId);
+
 #ifdef DEBUG_CHAT
         std::cerr << "  " << i << ": msg_id=" << posts[i].mMeta.mMsgId <<" : msg timestamp= " << posts[i].mMeta.mPublishTs << " : msg = " << posts[i].mMsg << std::endl;
 #endif
@@ -1388,8 +1392,7 @@ void UnseenGxsChatLobbyDialog::insertGxsChatPosts(std::vector<RsGxsChatMsg> &pos
             fi.mHash = fit->mHash;
             fileList.push_back(fi);
         }
-        //save all the msgId to set, to avoid the duplication when request/load or show:
-        allDownloadedMsgs.insert(posts[i].mMeta.mMsgId);
+
 
         //uneenp2p - need to check if these are files sharing, need to show "Download" link
         //ui.chatWidget->addChatMsg(incomming, nickname, gxs_id, sendTime, recvTime, mmsg, ChatWidget::MSGTYPE_NORMAL);
