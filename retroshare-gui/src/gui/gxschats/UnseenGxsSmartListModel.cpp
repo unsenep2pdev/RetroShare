@@ -28,6 +28,9 @@
 #include <QtXml>
 #include <QDomComment>
 
+#include <QMessageBox>
+#include <QWidget>
+
 #include "gui/models/conversationmodel.h"
 #include "retroshare/rsgxsflags.h"
 #include "retroshare/rsidentity.h"
@@ -151,8 +154,6 @@ QVariant UnseenGxsSmartListModel::data(const QModelIndex &index, int role) const
         QString presenceForChat = "no-status"; //for groupchat
 
         QImage avatar(IMAGE_PUBLIC);    //default is public group chat avatar for UnseenP2P
-
-
 
         bool isAdmin      =  IS_GROUP_ADMIN(gxsChatItem.mMeta.mSubscribeFlags); // IS_GROUP_ADMIN(chatItem.subscribeFlags);
         bool isSubscribed =  IS_GROUP_SUBSCRIBED(gxsChatItem.mMeta.mSubscribeFlags); // IS_GROUP_SUBSCRIBED(chatItem.subscribeFlags);

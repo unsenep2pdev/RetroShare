@@ -123,6 +123,7 @@ UnseenGxsGroupFrameDialog::UnseenGxsGroupFrameDialog(RsGxsIfaceHelper *ifaceImpl
     ui->unseenGroupTreeWidget->setContextMenuPolicy(Qt::CustomContextMenu) ;
     ui->unseenGroupTreeWidget->header()->hide();
 
+    allGxsChatGroupList.clear();
     isRunOnlyOnce = false;
     conversationListMode = GXSCONVERSATION_MODE_WITHOUT_FILTER;
     smartListModel_->setFilterGxsChatGroupListAndMode(allGxsChatGroupList, conversationListMode);
@@ -1237,25 +1238,29 @@ void UnseenGxsGroupFrameDialog::insertGroupsData2(const std::map<RsGxsGroupId,Rs
     }
 
     mInFill = true;
-
-    allGxsChatGroupList.clear();
     std::cerr << std::endl;
+    allGxsChatGroupList.clear();
     for (auto it = groupList.begin(); it != groupList.end(); ++it) {
         /* sort it into Publish (Own), Subscribed, Popular and Other */
         uint32_t flags = it->second.mMeta.mSubscribeFlags;
 
         if (IS_GROUP_SUBSCRIBED(flags))
         {
-            std::cerr << " name: " << it->second.mMeta.mGroupName  << ", last msg: " << it->second.localMsgInfo.msg << ", last date:  " << it->second.mMeta.mLastPost <<  ", unread number: " << it->second.localMsgInfo.unreadMsgIds.size() << std::endl;
-
-            allGxsChatGroupList.push_back(it->second);
+//            std::cerr << " name: " << it->second.mMeta.mGroupName  << ", last msg: " << it->second.localMsgInfo.msg << ", last date:  " << it->second.mMeta.mLastPost <<  ", unread number: " << it->second.localMsgInfo.unreadMsgIds.size() << std::endl;
+             // how to update the RsGxsChatGroup into the existing gxsChat List (allGxsChatGroupList)?
+//             LocalGroupInfo localInfo;
+//             RsGxsChatGroup temp = it->second;
+//             rsGxsChats->getLocalMessageStatus(it->first, localInfo);\
+//             temp.localMsgInfo = localInfo;
+             allGxsChatGroupList.push_back(it->second);
         }
-
     }
+
     // We can update to MVC GUI here from the all list, need to check whenever will update the GUI,
     // if not it will refresh the list very frequently and work wrong (for ex. clear the unread number)!
     //if(!isRunOnlyOnce)
     {
+        sortGxsConversationListByRecentTime();
         smartListModel_->setGxsChatGroupList(allGxsChatGroupList);
         emit ui->unseenGroupTreeWidget->model()->layoutChanged();
         isRunOnlyOnce= true;
@@ -1341,6 +1346,7 @@ void UnseenGxsGroupFrameDialog::loadPosts(const uint32_t &token)
          updateRecentTimeAndUnreadNumber((*chatMsg).mMeta.mGroupId, *chatMsg, "", mPublishTs, (*chatMsg).mMsg, true, 1, false  );
     }
 
+    sortGxsConversationListByRecentTime();
     smartListModel_->setGxsChatGroupList(allGxsChatGroupList);
     emit ui->unseenGroupTreeWidget->model()->layoutChanged();
 }
@@ -1391,6 +1397,10 @@ void UnseenGxsGroupFrameDialog::loadGroupSummary(const uint32_t &token)
 	RsUserdata *userdata = NULL;
     //loadGroupSummaryToken(token, groupInfo, userdata);
     loadGroupSummaryToken2(token, groupInfo2, userdata);
+
+    //here we can sync the std::vector<RsGxsChatGroup> allGxsChatGroupList with this groupInfo2?
+    //check if the new info in the groupInfo2, if the
+
 
 	mCachedGroupMetas.clear();
     mCachedChatGroupData.clear();
