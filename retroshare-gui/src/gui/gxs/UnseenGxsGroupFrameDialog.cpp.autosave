@@ -1937,6 +1937,8 @@ void UnseenGxsGroupFrameDialog::unsubscribeGxsGroupChat(RsGxsGroupId id)
     ChatDialog::closeChat(gxsChatId(id));
     //if(allGxsChatGroupList.erase(id))
 
+    uint32_t token2;
+    rsGxsChats->updateGroup(token2, );
     uint32_t token;
     mInterface->subscribeToGroup(token, id, false);
     removeGxsChatGroup(id);

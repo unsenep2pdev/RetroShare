@@ -145,6 +145,15 @@ QVariant UnseenGxsSmartListModel::data(const QModelIndex &index, int role) const
         //which one we will choose?
         rsGxsChats->getLocalMessageStatus(gxsChatItem.mMeta.mGroupId, localInfo);
 
+        if (localInfo.msg.length() == 0)
+        {
+            //uint32_t token;
+            //RsGxsGrpMsgIdPair msgPair = std::make_pair(gxsChatItem.mMeta.mGroupId,gxsChatMsg.mMeta.mMsgId);
+
+            //rsGxsChats->setMessageReadStatus(gxsChatItem.mMeta.mGroupId, )
+            std::cerr << " HERE IS THE EMPTY MSG ISSUE!!! gxs name: " << gxsChatItem.mMeta.mGroupName << " last msg: " << localInfo.msg << ", last date:  " << localInfo.update_ts <<std::endl;
+        }
+
         currentLocalInfo = gxsChatItem.localMsgInfo;
         if(currentLocalInfo.update_ts > localInfo.update_ts || localInfo.msg.length() == 0)
             localInfo = currentLocalInfo;

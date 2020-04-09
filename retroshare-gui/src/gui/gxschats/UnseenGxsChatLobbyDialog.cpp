@@ -1416,7 +1416,10 @@ void UnseenGxsChatLobbyDialog::insertGxsChatPosts(std::vector<RsGxsChatMsg> &pos
         }
 
         ui.chatWidget->addChatMsg(incomming, nickname, posts[i], sendTime, recvTime, mmsg, msgType);
-        emit gxsMessageReceived(posts[i], incomming, gxsChatId(groupId()), sendTime, nickname, mmsg) ;
+        if(posts[i].mMsg.length() > 0)
+        {
+            emit gxsMessageReceived(posts[i], incomming, gxsChatId(groupId()), sendTime, nickname, mmsg) ;
+        }
 
         // This is a trick to translate HTML into text.
         QTextEdit editor;
