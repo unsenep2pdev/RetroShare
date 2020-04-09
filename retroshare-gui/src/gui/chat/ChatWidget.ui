@@ -164,7 +164,7 @@
               <string/>
              </property>
              <property name="pixmap">
-              <pixmap>:/images/info16.png</pixmap>
+              <pixmap resource="../images.qrc">:/images/info16.png</pixmap>
              </property>
              <property name="alignment">
               <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
@@ -894,7 +894,7 @@ p, li { white-space: pre-wrap; }
   </action>
   <action name="actionClearChatHistory">
    <property name="icon">
-    <iconset>
+    <iconset resource="../images.qrc">
      <normaloff>:/images/edit-clear-history.png</normaloff>:/images/edit-clear-history.png</iconset>
    </property>
    <property name="text">
@@ -911,7 +911,7 @@ p, li { white-space: pre-wrap; }
   </action>
   <action name="actionSaveChatHistory">
    <property name="icon">
-    <iconset>
+    <iconset resource="../images.qrc">
      <normaloff>:/images/document_save.png</normaloff>:/images/document_save.png</iconset>
    </property>
    <property name="text">
@@ -931,7 +931,7 @@ p, li { white-space: pre-wrap; }
   </action>
   <action name="actionDeleteChatHistory">
    <property name="icon">
-    <iconset>
+    <iconset resource="../images.qrc">
      <normaloff>:/images/edit-clear-history.png</normaloff>:/images/edit-clear-history.png</iconset>
    </property>
    <property name="text">
@@ -1015,7 +1015,7 @@ p, li { white-space: pre-wrap; }
   </action>
   <action name="actionSave_image">
    <property name="icon">
-    <iconset>
+    <iconset resource="../images.qrc">
      <normaloff>:/images/document_save.png</normaloff>:/images/document_save.png</iconset>
    </property>
    <property name="text">
@@ -1027,7 +1027,7 @@ p, li { white-space: pre-wrap; }
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset>
+    <iconset resource="../images.qrc">
      <normaloff>:/images/SimpleText.png</normaloff>:/images/SimpleText.png</iconset>
    </property>
    <property name="text">
@@ -1042,7 +1042,7 @@ p, li { white-space: pre-wrap; }
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset>
+    <iconset resource="../images.qrc">
      <normaloff>:/images/SmileyText.png</normaloff>:/images/SmileyText.png</iconset>
    </property>
    <property name="text">
@@ -1102,8 +1102,9 @@ p, li { white-space: pre-wrap; }
   </customwidget>
  </customwidgets>
  <resources>
-  <include location="../icons.qrc"/>
   <include location="../WikiPoos/Wiki_images.qrc"/>
+  <include location="../icons.qrc"/>
+  <include location="../images.qrc"/>
  </resources>
  <connections/>
 </ui>

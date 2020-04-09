@@ -22,20 +22,20 @@ HeaderFrame > QFrame#frame > QLabel#headerLabel {
 GenCertDialog QLabel#genprofileinfo_label, QLabel#header_label, QLabel#entropy_label
 {
         border: 1px solid #DCDC41;
-        border-radius: 6px;
+        border-radius: 0px;
         background: #2ba4dc;
         background-color: #2ba4dc;
 }
 
 GenCertDialog QLabel#label_hiddenaddr {
         border: 1px solid #50FF5B;
-        border-radius: 6px;
+        border-radius: 0px;
         background: #2ba4dc;
         background-color: #2ba4dc;
 }
 GenCertDialog QLabel#no_node_label, GenCertDialog QLabel#no_gpg_key_label {
         border: 1px solid #FFC550;
-        border-radius: 6px;
+        border-radius: 0px;
         background: #2ba4dc;
         background-color: #2ba4dc;
 	padding: 4px;
@@ -66,7 +66,7 @@ ConnectFriendWizard {
 FriendsDialog QFrame#headFrame {
         background-color: #2ba4dc;
         border: 1px;
-        border-radius: 4px;
+        border-radius: 0px;
 }
 
 FriendsDialog QFrame#headFrame > QLabel#nicknameLabel {
@@ -102,14 +102,14 @@ CreateChannelMsg QFrame#fileFrame {
 ForumsDialog QLabel#forumName, ForumsDialog QLabel#threadTitle
 {
         border: 2px solid #CCCCCC;
-        border-radius:6px;
+        border-radius:0px;
         background: white;
 }
 
 ForumsDialog2 QLabel#forumName, ForumsDialog2 QLabel#threadTitle
 {
         border: 2px solid #CCCCCC;
-        border-radius:6px;
+        border-radius:0px;
         background: white;
 }
 
@@ -134,7 +134,7 @@ MessengerWindow QFrame#messengerframetop{
 CreateMsgLinkDialog QLabel#distantchatinfo_label
 {
 	border: 1px solid #DCDC41;
-	border-radius: 6px;
+	border-radius: 0px;
 	background: #FFFFD7;
 	background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #FFFFD7, stop:1 #FFFFB2);
 }
@@ -144,7 +144,7 @@ CreateMsgLinkDialog QLabel#distantchatinfo_label
 ChatLobbyWidget QLabel#lobbyinfo_label
 {
         border: 0px solid #DCDC41;
-	border-radius: 6px;
+        border-radius: 0px;
         background: #FFFFD7;
         background-color: #ffffff;
 }
@@ -153,7 +153,7 @@ ChatLobbyWidget QGroupBox#lobbyinfo_groupBox
 { 
 
         background-color: #2ba4dc;
-	border-radius: 6px;
+        border-radius: 0px;
 	border: 1px solid #CCCCCC;
 	padding: 14 6px;
 	font-size: 12px;
@@ -170,7 +170,7 @@ ChatLobbyWidget QGroupBox::title#lobbyinfo_groupBox
 
 ChatLobbyWidget QLabel#lobbyInfoLabel {
 	border: 1px solid #DCDC41;
-	border-radius: 6px;
+	border-radius: 0px;
         background: #FFFFD7;
         background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #FFFFD7, stop:1 #FFFFB2);
 }
@@ -182,31 +182,31 @@ ChatLobbyDialog QFrame#participantsFrame {
 
 ChatLobbyDialog QListWidget#participantsList {
 	border: 1px solid #B8B6B1;
-	border-radius: 6px;
+	border-radius: 0px;
         background: white;
 }
 
 CreateLobbyDialog QFrame#roomFrame {
 	border: 2px solid #CCCCCC;
-	border-radius:6px;
+	border-radius: 0px;
 	background: white;
 }
 
 CreateLobbyDialog QLabel#lobbyInfoLabel {
         border: 0px solid #DCDC41;
-	border-radius: 6px;
+        border-radius: 0px;
 	background: #FFFFD7;
 	background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #FFFFD7, stop:1 #FFFFB2);
 }
 
 ChatWidget QTextEdit#chatTextEdit {
         border: 1px solid #0099cc;
-	border-radius: 6px;
+        border-radius: 0px;
         background: white;
 }
 ChatWidget QTextBrowser#textBrowser {
         border: 1px solid #0099cc;
-        border-radius: 6px;
+        border-radius: 0px;
         background-size: contain;
         background-attachment: fixed;
         background-image: url(:/home/img/mountain3-1.jpg);
@@ -217,7 +217,7 @@ ChatWidget QTextBrowser#textBrowser {
 
 ChatWidget QFrame#infoFrame {
         border: 1px solid #DCDC41;
-	border-radius: 6px;
+        border-radius: 0px;
         background: #FFFFD7;
 }
 /*
