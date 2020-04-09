@@ -202,7 +202,7 @@ ChatWidget::ChatWidget(QWidget *parent)
 	connect(ui->chatTextEdit, SIGNAL(textChanged()), this, SLOT(updateLenOfChatTextEdit()));
 
 	ui->infoFrame->setVisible(false);
-	ui->statusMessageLabel->hide();
+//	ui->statusMessageLabel->hide();
 
 	setAcceptDrops(true);
 	ui->chatTextEdit->setAcceptDrops(false);
@@ -1470,8 +1470,8 @@ void ChatWidget::chatCharFormatChanged()
 
 void ChatWidget::resetStatusBar()
 {
-        ui->typingLabel_2->clear();
-        ui->typingPixmapLabel_2->clear();
+        ui->typingLabel->clear();
+        ui->typingPixmapLabel->clear();
 
 	typing = false;
 
@@ -2271,34 +2271,34 @@ void ChatWidget::updateTitle()
 
 }
 
-void ChatWidget::updatePeersCustomStateString(const QString& /*peer_id*/, const QString& /*status_string*/)
+void ChatWidget::updatePeersCustomStateString(const QString& peer_id, const QString& status_string)
 {
 	QString status_text;
 
     // TODO: fix peer_id and types and eveyrhing
-    /*
-    if (RsPeerId(peer_id.toStdString()) == peerId) {
-		// the peers status string has changed
-		if (status_string.isEmpty()) {
-			ui->statusMessageLabel->hide();
-			ui->titleLabel->setAlignment ( Qt::AlignTop );
-			ui->statusLabel->setAlignment ( Qt::AlignTop );
 
-		} else {
-			ui->statusMessageLabel->show();
-			status_text = RsHtml().formatText(NULL, status_string, RSHTML_FORMATTEXT_EMBED_SMILEYS | RSHTML_FORMATTEXT_EMBED_LINKS);
-			ui->statusMessageLabel->setText(status_text);
-			ui->titleLabel->setAlignment ( Qt::AlignVCenter );
-			ui->statusLabel->setAlignment ( Qt::AlignVCenter );
-		}
-	}
-    */
+    if (RsPeerId(peer_id.toStdString()) == getChatId().toPeerId()) {
+        // the peers status string has changed
+        if (status_string.isEmpty()) {
+            ui->statusMessageLabel->hide();
+            ui->titleLabel->setAlignment ( Qt::AlignTop );
+            ui->statusLabel->setAlignment ( Qt::AlignTop );
+
+        } else {
+            ui->statusMessageLabel->show();
+            status_text = RsHtml().formatText(NULL, status_string, RSHTML_FORMATTEXT_EMBED_SMILEYS | RSHTML_FORMATTEXT_EMBED_LINKS);
+            ui->statusMessageLabel->setText(status_text);
+            ui->titleLabel->setAlignment ( Qt::AlignVCenter );
+            ui->statusLabel->setAlignment ( Qt::AlignVCenter );
+        }
+    }
+
 }
 
 void ChatWidget::updateStatusString(const QString &statusMask, const QString &statusString, bool permanent)
 {
-        ui->typingLabel_2->setText(QString(statusMask).arg(trUtf8(statusString.toUtf8()))); // displays info for 5 secs.
-    ui->typingPixmapLabel_2->setPixmap(QPixmap(":/images/typing.png") );
+        ui->typingLabel->setText(QString(statusMask).arg(trUtf8(statusString.toUtf8()))); // displays info for 5 secs.
+    ui->typingPixmapLabel->setPixmap(QPixmap(":/images/typing.png") );
 
 	if (statusString == "is typing...") {
 		typing = true;
