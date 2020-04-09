@@ -32,40 +32,40 @@
 
 // This code has been further modified to fit Retroshare context.
 
-#ifndef TORMANAGER_H
-#define TORMANAGER_H
+#ifndef BROWSERMANAGER_H
+#define BROWSERMANAGER_H
 
 #include <QObject>
 #include <QStringList>
 #include <QHostAddress>
 
-namespace Browser
+namespace Browser 
 {
 
-class TorProcess;
-class TorControl;
-class TorManagerPrivate;
+class BrowserProcess;
+//class TorControl;
+class BrowserManagerPrivate;
 
 /* Run/connect to an instance of Tor according to configuration, and manage
  * UI interaction, first time configuration, etc. */
-class TorManager : public QObject
+class BrowserManager : public QObject
 {
     Q_OBJECT
 
     Q_PROPERTY(bool configurationNeeded READ configurationNeeded NOTIFY configurationNeededChanged)
     Q_PROPERTY(QStringList logMessages READ logMessages CONSTANT)
-    Q_PROPERTY(Tor::TorProcess* process READ process CONSTANT)
-    Q_PROPERTY(Tor::TorControl* control READ control CONSTANT)
+    Q_PROPERTY(Browser::BrowserProcess* process READ process CONSTANT)
+    //Q_PROPERTY(Tor::TorControl* control READ control CONSTANT)
     Q_PROPERTY(bool hasError READ hasError NOTIFY errorChanged)
     Q_PROPERTY(QString errorMessage READ errorMessage NOTIFY errorChanged)
     Q_PROPERTY(QString torDataDirectory READ torDataDirectory WRITE setTorDataDirectory)
 
 public:
     static bool isTorAvailable() ;
-    static TorManager *instance();
+    static BrowserManager *instance();
 
-    TorProcess *process();
-    TorControl *control();
+    BrowserProcess *process();
+    //TorControl *control();
 
 
     QString torDataDirectory() const;
@@ -75,7 +75,7 @@ public:
     void setHiddenServiceDirectory(const QString &path);
 
 	// Starts a hidden service, loading it from the config directory that has been set earlier.
-	bool setupHiddenService() ;
+    //bool setupHiddenService() ;
 
     // True on first run or when the Tor configuration wizard needs to be shown
     bool configurationNeeded() const;
@@ -85,23 +85,23 @@ public:
     bool hasError() const;
     QString errorMessage() const;
 
-	bool getHiddenServiceInfo(QString& service_id,QString& service_onion_address,uint16_t& service_port, QHostAddress& service_target_address,uint16_t& target_port);
+    //bool getHiddenServiceInfo(QString& service_id,QString& service_onion_address,uint16_t& service_port, QHostAddress& service_target_address,uint16_t& target_port);
 	bool getProxyServerInfo(QHostAddress& proxy_server_adress,uint16_t& proxy_server_port);
 
 public slots:
     bool start();
 
 private slots:
-	void hiddenServicePrivateKeyChanged();
-	void hiddenServiceStatusChanged(int old_status,int new_status);
+    //void hiddenServicePrivateKeyChanged();
+    //void hiddenServiceStatusChanged(int old_status,int new_status);
 
 signals:
     void configurationNeededChanged();
     void errorChanged();
 
 private:
-    explicit TorManager(QObject *parent = 0);
-    TorManagerPrivate *d;
+    explicit BrowserManager(QObject *parent = 0);
+    BrowserManagerPrivate *d;
 };
 
 }
