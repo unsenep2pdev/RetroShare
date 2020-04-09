@@ -326,6 +326,15 @@ RsGenExchange::ServiceCreate_Return p3GxsChats::service_CreateGroup(RsGxsGrpItem
         return SERVICE_CREATE_FAIL;
     }
 
+
+//    auto found = mKnownChats.find(RsGxsGroupId(item->meta.mGroupId));
+//    if( found == mKnownChats.end()){
+//        RS_STACK_MUTEX(mChatMtx);
+//        LocalGroupInfo localGrp;
+//        localGrp.msg="New";
+//        mKnownChats.insert(std::make_pair(RsGxsGroupId(item->meta.mGroupId),localGrp)) ;
+//    }
+
     return SERVICE_CREATE_SUCCESS;
 }
 
@@ -1133,15 +1142,15 @@ bool p3GxsChats::getGroupData(const uint32_t &token, std::vector<RsGxsChatGroup>
                 if( found != mKnownChats.end()){
                     grp.localMsgInfo = mKnownChats[RsGxsGroupId(item->meta.mGroupId)];
                 }
-//                else{
-//                    RS_STACK_MUTEX(mChatMtx);
-//                    LocalGroupInfo localMsg;
-//                    localMsg.msg ="New Join";
-//                    localMsg.update_ts = time(NULL);
-//                    localMsg.isSubscribed = true;
-//                    grp.localMsgInfo = localMsg;
-//                    mKnownChats[RsGxsGroupId(item->meta.mGroupId)] =  localMsg;
-//                }
+                else{
+                    RS_STACK_MUTEX(mChatMtx);
+                    LocalGroupInfo localMsg;
+                    localMsg.msg ="New";
+                    localMsg.update_ts = time(NULL);
+                    localMsg.isSubscribed = true;
+                    grp.localMsgInfo = localMsg;
+                    mKnownChats[RsGxsGroupId(item->meta.mGroupId)] =  localMsg;
+                }
                 groups.push_back(grp);
                 loadChatsMembers(grp);
 

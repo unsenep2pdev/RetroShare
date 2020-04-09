@@ -88,7 +88,6 @@ protected:
 
 
     //p3chatservice callback to process gxs messages/groups
-
     virtual void receiveNewChatMesesage(std::vector<GxsNxsChatMsgItem*>& messages);
     virtual void receiveNewChatGroup(std::vector<GxsNxsChatGroupItem*>& groups);
     virtual void receiveNotifyMessages(std::vector<RsNxsNotifyChat*>& notifyMessages);
