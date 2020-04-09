@@ -246,7 +246,6 @@ private:
     void setConversationListMode(uint32_t mode);
     uint32_t getConversationListMode();
     void setSearchFilter(const std::string &filtertext);
-    std::vector<UnseenGroupItemInfo> getSearchFilteredGxsGroupList();
     std::vector<RsGxsChatGroup> getSearchFilteredGxsChatGroupList();
     std::string getSelectedId();
     void UnseenGroupItemInfoToRsGxsChatGroup( RsGxsChatGroup &groupInfo, const UnseenGroupItemInfo &groupItemInfo);
@@ -290,10 +289,6 @@ private:
 
     //unseenp2p GUI
     GxsChatUserNotify* myGxsChatUserNotify;
-
-    std::vector<UnseenGroupItemInfo> allGxsGroupList; //allGxsGroupList = adminList + subList
-
-    std::vector<UnseenGroupItemInfo> filteredGxsGroupList;
     uint32_t conversationListMode ; // CONVERSATION_MODE_WITHOUT_FILTER  or
                                     // CONVERSATION_MODE_WITH_SEARCH_FILTER
     std::string filter_text;

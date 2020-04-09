@@ -304,8 +304,4 @@ std::vector<RsGxsGroupId> UnseenContactSmartListModel::getAllIdentities()
 
 void UnseenContactSmartListModel::sortGxsConversationListByRecentTime()
 {
-
-//    std::sort(allGxsGroupList.begin(), allGxsGroupList.end(),
-//              [] (UnseenGroupItemInfo const& a, UnseenGroupItemInfo const& b)
-//    { return a.lastMsgDatetime > b.lastMsgDatetime; });
 }

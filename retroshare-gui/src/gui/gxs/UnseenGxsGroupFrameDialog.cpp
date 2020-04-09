@@ -1158,79 +1158,6 @@ void UnseenGxsGroupFrameDialog::addChatPage(UnseenGxsChatLobbyDialog *d)
     }
 }
 
-//void UnseenGxsGroupFrameDialog::insertGroupsData(const std::map<RsGxsGroupId,RsGroupMetaData> &groupList, const RsUserdata *userdata)
-//{
-//	if (!mInitialized) {
-//		return;
-//	}
-
-//	mInFill = true;
-
-//    QList<UnseenGroupItemInfo> adminList;
-//    QList<UnseenGroupItemInfo> subList;
-//    QList<UnseenGroupItemInfo> popList;
-//    QList<UnseenGroupItemInfo> otherList;
-//    //QList<GroupItemInfo> allGxsGroupList; //unseenp2p - allGxsGroupList = adminList + subList
-
-//    std::multimap<uint32_t, UnseenGroupItemInfo> popMap;
-
-//    allGxsGroupList.clear();
-//	for (auto it = groupList.begin(); it != groupList.end(); ++it) {
-//		/* sort it into Publish (Own), Subscribed, Popular and Other */
-//		uint32_t flags = it->second.mSubscribeFlags;
-
-//        UnseenGroupItemInfo groupItemInfo;
-//        groupInfoToUnseenGroupItemInfo(it->second, groupItemInfo, userdata);
-
-//		if (IS_GROUP_SUBSCRIBED(flags))
-//		{
-//			if (IS_GROUP_ADMIN(flags))
-//			{
-//				adminList.push_back(groupItemInfo);
-//			}
-//			else
-//			{
-//				/* subscribed group */
-//				subList.push_back(groupItemInfo);
-//			}
-//            allGxsGroupList.push_back(groupItemInfo);
-//		}
-//		else
-//		{
-//			//popMap.insert(std::make_pair(it->mPop, groupItemInfo)); /* rate the others by popularity */
-//			popMap.insert(std::make_pair(it->second.mLastPost, groupItemInfo)); /* rate the others by time of last post */
-//		}
-//	}
-
-//	/* iterate backwards through popMap - take the top 5 or 10% of list */
-//	uint32_t popCount = 5;
-//	if (popCount < popMap.size() / 10)
-//	{
-//		popCount = popMap.size() / 10;
-//	}
-
-//	uint32_t i = 0;
-//    std::multimap<uint32_t, GroupItemInfo>::reverse_iterator rit;
-
-//	/* now we can add them in as a tree! */
-
-//    // We can update to MVC GUI here from the all list
-
-//    // How to use the SmartListView + SmartListModel to show here? Need to use another MVC ?!
-//    // Here only take the first 2 list: admin list + subscribed list only, because the popular list is still not subscribe anyway
-//    smartListModel_->setGxsGroupList(allGxsGroupList);
-//    emit ui->unseenGroupTreeWidget->model()->layoutChanged();
-
-//#ifdef DEBUG_GROUPFRAMEDIALOG
-//    std::cerr << " Show all Gxs Group Chat : " << std::endl;
-//    for (std::vector<UnseenGroupItemInfo>::iterator it2 = allGxsGroupList.begin(); it2!= allGxsGroupList.end(); ++it2)
-//    {
-//        std::cerr << " GxsChat Id: " << (*it2).id.toStdString() << " : " << (*it2).name.toStdString() << std::endl;
-//    }
-//#endif
-
-//}
-
 void UnseenGxsGroupFrameDialog::insertGroupsData2(const std::map<RsGxsGroupId,RsGxsChatGroup> &groupList, const RsUserdata *userdata)
 {
     if (!mInitialized) {
@@ -1246,12 +1173,6 @@ void UnseenGxsGroupFrameDialog::insertGroupsData2(const std::map<RsGxsGroupId,Rs
 
         if (IS_GROUP_SUBSCRIBED(flags))
         {
-//            std::cerr << " name: " << it->second.mMeta.mGroupName  << ", last msg: " << it->second.localMsgInfo.msg << ", last date:  " << it->second.mMeta.mLastPost <<  ", unread number: " << it->second.localMsgInfo.unreadMsgIds.size() << std::endl;
-             // how to update the RsGxsChatGroup into the existing gxsChat List (allGxsChatGroupList)?
-//             LocalGroupInfo localInfo;
-//             RsGxsChatGroup temp = it->second;
-//             rsGxsChats->getLocalMessageStatus(it->first, localInfo);\
-//             temp.localMsgInfo = localInfo;
              allGxsChatGroupList.push_back(it->second);
         }
     }
@@ -1267,7 +1188,7 @@ void UnseenGxsGroupFrameDialog::insertGroupsData2(const std::map<RsGxsGroupId,Rs
     }
 #ifdef DEBUG_GROUPFRAMEDIALOG
     std::cerr << " Show all Gxs Group Chat : " << std::endl;
-    for (std::vector<UnseenGroupItemInfo>::iterator it2 = allGxsGroupList.begin(); it2!= allGxsGroupList.end(); ++it2)
+    for (std::vector<UnseenGroupItemInfo>::iterator it2 = allGxsChatGroupList.begin(); it2!= allGxsChatGroupList.end(); ++it2)
     {
         std::cerr << " GxsChat Id: " << (*it2).id.toStdString() << " : " << (*it2).name.toStdString() << std::endl;
         std::set<GxsChatMember> list = (*it2).members;
@@ -1672,7 +1593,6 @@ void UnseenGxsGroupFrameDialog::selectConversation(const QModelIndex& index)
 
         updateRecentTimeAndUnreadNumber(gxsChatGroupItem.mMeta.mGroupId, RsGxsChatMsg(), "", 0, gxsChatGroupItem.localMsgInfo.msg, false, 1, true);
 
-        //smartListModel_->setFilterGxsGroupListAndMode(allGxsGroupList, GXSCONVERSATION_MODE_WITHOUT_FILTER);
         smartListModel_->setFilterGxsChatGroupListAndMode(allGxsChatGroupList, GXSCONVERSATION_MODE_WITHOUT_FILTER);
 
         //to mark it as read
@@ -1760,10 +1680,6 @@ RsGxsChatGroup UnseenGxsGroupFrameDialog::gxsGroupItemIdAt(RsGxsGroupId groupId)
 
 void UnseenGxsGroupFrameDialog::sortGxsConversationListByRecentTime()
 {
-//    std::sort(allGxsGroupList.begin(), allGxsGroupList.end(),
-//              [] (UnseenGroupItemInfo const& a, UnseenGroupItemInfo const& b)
-//    { return a.lastMsgDatetime > b.lastMsgDatetime; });
-
     std::sort(allGxsChatGroupList.begin(), allGxsChatGroupList.end(),
               [] (RsGxsChatGroup const& a, RsGxsChatGroup const& b)
     { return a.localMsgInfo.update_ts > b.localMsgInfo.update_ts; });
@@ -1877,7 +1793,6 @@ void UnseenGxsGroupFrameDialog::updateNewGxsMsg(const gxsChatId & gxsChatId, con
      //after update the unread msg, need to sort the list and update the unread notification on the item
      sortGxsConversationListByRecentTime();
 
-     //smartListModel_->setGxsGroupList(allGxsGroupList);
      smartListModel_->setGxsChatGroupList(allGxsChatGroupList);
      //reselect the seletion (because the list already sorted, the selection is still keeping the index
      ui->unseenGroupTreeWidget->selectionModel()->clearSelection();
@@ -1899,7 +1814,6 @@ void UnseenGxsGroupFrameDialog::updateNewGxsMsg(const gxsChatId & gxsChatId, con
          updateRecentTimeAndUnreadNumber(gxsChatId.toGxsGroupId(), RsGxsChatMsg(), nickInGroupChat, current_time, textmsg, true, 1, true);
 
          //after update the unread msg, need to sort the list and update the unread notification on the item
-         //smartListModel_->setGxsGroupList(allGxsGroupList);
          smartListModel_->setGxsChatGroupList(allGxsChatGroupList);
          emit ui->unseenGroupTreeWidget->model()->layoutChanged();
          //to mark it as read
@@ -1926,16 +1840,7 @@ void UnseenGxsGroupFrameDialog::unsubscribeGxsGroupChat(RsGxsGroupId id)
         _unseenGxsGroup_infos.erase(it) ;
     }
     //remove item from conversations list, using the MVC now
-//    std::string uId = std::to_string(id);
-//    if (rsMsgs->isChatIdInConversationList(uId))
-//    {
-//        rsMsgs->removeContactOrGroupChatFromModelData(uId);
-//        emit ui->lobbyTreeWidget->model()->layoutChanged();
-//    }
-
-    // Unsubscribe the chat lobby
     ChatDialog::closeChat(gxsChatId(id));
-    //if(allGxsChatGroupList.erase(id))
 
     uint32_t token;
     mInterface->subscribeToGroup(token, id, false);
@@ -2009,21 +1914,8 @@ bool UnseenGxsGroupFrameDialog::isGroupIdInGxsConversationList(std::string uId)
 
 void UnseenGxsGroupFrameDialog::saveGxsGroupChatInfoToModelData(const RsGxsChatGroup gxsGroupInfo, std::string nickInGroupChat, unsigned int UnreadMessagesCount, unsigned int lastMsgDatetime, std::string lastMessage, bool isOtherLastMsg )
 {
-//    UnseenGroupItemInfo entry;
-//    RsUserdata* userdata;
-//    groupInfoToUnseenGroupItemInfo2(gxsGroupInfo, entry, userdata);
-
-//    entry.nickInGroupChat = nickInGroupChat;
-//    entry.UnreadMessagesCount = UnreadMessagesCount;
-//    entry.lastMsgDatetime = lastMsgDatetime;
-//    entry.lastMessage = lastMessage;
-//    entry.isOtherLastMsg = isOtherLastMsg;
-
-//    allGxsGroupList.push_back(entry);
-
     allGxsChatGroupList.push_back(gxsGroupInfo);
 
-//    smartListModel_->setGxsGroupList(allGxsGroupList);
     smartListModel_->setGxsChatGroupList(allGxsChatGroupList);
     emit ui->unseenGroupTreeWidget->model()->layoutChanged();
 
@@ -2034,7 +1926,6 @@ int UnseenGxsGroupFrameDialog::getIndexFromUId(std::string uId)
     int index = -1;
     for (unsigned int i = 0; i < allGxsChatGroupList.size(); i++ )
     {
-        //if (allGxsGroupList[i].id.toStdString() == uId)
         if (allGxsChatGroupList[i].mMeta.mGroupId.toStdString() == uId)
         {
             index = static_cast<int>(i);
@@ -2105,22 +1996,15 @@ void UnseenGxsGroupFrameDialog::setConversationListMode(uint32_t mode)
     conversationListMode = mode;
     if (conversationListMode == GXSCONVERSATION_MODE_WITHOUT_FILTER)
     {
-        //smartListModel_->setFilterGxsGroupListAndMode(allGxsGroupList, conversationListMode);
         smartListModel_->setFilterGxsChatGroupListAndMode(allGxsChatGroupList, conversationListMode);
     }
     else if (conversationListMode == GXSCONVERSATION_MODE_WITH_SEARCH_FILTER)
-        //smartListModel_->setFilterGxsGroupListAndMode(filteredGxsGroupList, conversationListMode);
         smartListModel_->setFilterGxsChatGroupListAndMode(filteredGxsChatGroupList, conversationListMode);
 }
 
 uint32_t UnseenGxsGroupFrameDialog::getConversationListMode()
 {
     return conversationListMode;
-}
-
-std::vector<UnseenGroupItemInfo> UnseenGxsGroupFrameDialog::getSearchFilteredGxsGroupList()
-{
-     return filteredGxsGroupList;
 }
 
 std::vector<RsGxsChatGroup> UnseenGxsGroupFrameDialog::getSearchFilteredGxsChatGroupList()
@@ -2132,9 +2016,7 @@ void UnseenGxsGroupFrameDialog::setSearchFilter(const std::string &filtertext)
 {
     filter_text = filtertext;
 
-    filteredGxsGroupList.clear();
     filteredGxsChatGroupList.clear();
-    //for (const UnseenGroupItemInfo& item : allGxsGroupList)
     for (const RsGxsChatGroup& item : allGxsChatGroupList)
     {
         std::string nameforsearch = item.mMeta.mGroupName;
@@ -2147,7 +2029,6 @@ void UnseenGxsGroupFrameDialog::setSearchFilter(const std::string &filtertext)
 
         if (std::size_t found = nameforsearch.find(filtertext2) !=std::string::npos)
         {
-            //filteredGxsGroupList.push_back(item);
             filteredGxsChatGroupList.push_back(item);
         }
    }
