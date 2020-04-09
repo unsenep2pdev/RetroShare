@@ -164,7 +164,7 @@
               <string/>
              </property>
              <property name="pixmap">
-              <pixmap>:/images/info16.png</pixmap>
+              <pixmap resource="../images.qrc">:/images/info16.png</pixmap>
              </property>
              <property name="alignment">
               <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
@@ -266,64 +266,6 @@ p, li { white-space: pre-wrap; }
             <property name="spacing">
              <number>0</number>
             </property>
-            <item>
-             <layout class="QHBoxLayout" name="typingHLayout">
-              <property name="sizeConstraint">
-               <enum>QLayout::SetFixedSize</enum>
-              </property>
-              <item>
-               <widget class="QLabel" name="typingPixmapLabel">
-                <property name="minimumSize">
-                 <size>
-                  <width>18</width>
-                  <height>18</height>
-                 </size>
-                </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>18</width>
-                  <height>18</height>
-                 </size>
-                </property>
-                <property name="text">
-                 <string notr="true">T</string>
-                </property>
-                <property name="alignment">
-                 <set>Qt::AlignCenter</set>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QLabel" name="typingLabel">
-                <property name="maximumSize">
-                 <size>
-                  <width>400</width>
-                  <height>18</height>
-                 </size>
-                </property>
-                <property name="margin">
-                 <number>0</number>
-                </property>
-                <property name="indent">
-                 <number>3</number>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <spacer name="typingHSpacer">
-                <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>40</width>
-                  <height>20</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
-             </layout>
-            </item>
             <item>
              <widget class="QSplitter" name="chatTextEditHSplitter">
               <property name="minimumSize">
@@ -597,7 +539,7 @@ p, li { white-space: pre-wrap; }
     </layout>
    </item>
    <item row="0" column="0">
-    <layout class="QHBoxLayout" name="titleBarMainHLayout">
+    <layout class="QVBoxLayout" name="verticalLayout">
      <property name="sizeConstraint">
       <enum>QLayout::SetMaximumSize</enum>
      </property>
@@ -689,6 +631,76 @@ p, li { white-space: pre-wrap; }
            </widget>
           </item>
          </layout>
+        </item>
+        <item>
+         <widget class="QFrame" name="frame">
+          <property name="frameShape">
+           <enum>QFrame::NoFrame</enum>
+          </property>
+          <property name="frameShadow">
+           <enum>QFrame::Raised</enum>
+          </property>
+          <layout class="QHBoxLayout" name="horizontalLayout">
+           <item>
+            <layout class="QHBoxLayout" name="typingHLayout_2">
+             <property name="sizeConstraint">
+              <enum>QLayout::SetFixedSize</enum>
+             </property>
+             <item>
+              <widget class="QLabel" name="typingPixmapLabel_2">
+               <property name="minimumSize">
+                <size>
+                 <width>18</width>
+                 <height>18</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>18</width>
+                 <height>18</height>
+                </size>
+               </property>
+               <property name="text">
+                <string notr="true">T</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="typingLabel_2">
+               <property name="maximumSize">
+                <size>
+                 <width>400</width>
+                 <height>18</height>
+                </size>
+               </property>
+               <property name="margin">
+                <number>0</number>
+               </property>
+               <property name="indent">
+                <number>3</number>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <spacer name="typingHSpacer_2">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>40</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+            </layout>
+           </item>
+          </layout>
+         </widget>
         </item>
         <item>
          <spacer name="titleBarHSpacer">
@@ -894,7 +906,7 @@ p, li { white-space: pre-wrap; }
   </action>
   <action name="actionClearChatHistory">
    <property name="icon">
-    <iconset>
+    <iconset resource="../images.qrc">
      <normaloff>:/images/edit-clear-history.png</normaloff>:/images/edit-clear-history.png</iconset>
    </property>
    <property name="text">
@@ -911,7 +923,7 @@ p, li { white-space: pre-wrap; }
   </action>
   <action name="actionSaveChatHistory">
    <property name="icon">
-    <iconset>
+    <iconset resource="../images.qrc">
      <normaloff>:/images/document_save.png</normaloff>:/images/document_save.png</iconset>
    </property>
    <property name="text">
@@ -931,7 +943,7 @@ p, li { white-space: pre-wrap; }
   </action>
   <action name="actionDeleteChatHistory">
    <property name="icon">
-    <iconset>
+    <iconset resource="../images.qrc">
      <normaloff>:/images/edit-clear-history.png</normaloff>:/images/edit-clear-history.png</iconset>
    </property>
    <property name="text">
@@ -1015,7 +1027,7 @@ p, li { white-space: pre-wrap; }
   </action>
   <action name="actionSave_image">
    <property name="icon">
-    <iconset>
+    <iconset resource="../images.qrc">
      <normaloff>:/images/document_save.png</normaloff>:/images/document_save.png</iconset>
    </property>
    <property name="text">
@@ -1027,7 +1039,7 @@ p, li { white-space: pre-wrap; }
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset>
+    <iconset resource="../images.qrc">
      <normaloff>:/images/SimpleText.png</normaloff>:/images/SimpleText.png</iconset>
    </property>
    <property name="text">
@@ -1042,7 +1054,7 @@ p, li { white-space: pre-wrap; }
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset>
+    <iconset resource="../images.qrc">
      <normaloff>:/images/SmileyText.png</normaloff>:/images/SmileyText.png</iconset>
    </property>
    <property name="text">
@@ -1102,8 +1114,9 @@ p, li { white-space: pre-wrap; }
   </customwidget>
  </customwidgets>
  <resources>
-  <include location="../icons.qrc"/>
   <include location="../WikiPoos/Wiki_images.qrc"/>
+  <include location="../icons.qrc"/>
+  <include location="../images.qrc"/>
  </resources>
  <connections/>
 </ui>
