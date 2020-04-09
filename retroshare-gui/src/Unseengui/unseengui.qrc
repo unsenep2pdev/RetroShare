@@ -227,5 +227,7 @@
         <file>home/img/face_icon/groupchat_v.png</file>
         <file>home/img/face_icon/groupchat_x.PNG</file>
         <file>home/img/face_icon/groupchat_xu.png</file>
+        <file>chat/img/channel-private.png</file>
+        <file>chat/img/channel-public.png</file>
     </qresource>
 </RCC>
