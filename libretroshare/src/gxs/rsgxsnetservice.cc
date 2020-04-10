@@ -366,7 +366,7 @@ static std::ostream& gxsnetdebug(const RsPeerId& peer_id,const RsGxsGroupId& grp
 
 #endif
 
-const uint32_t RsGxsNetService::FRAGMENT_SIZE = 15000000;
+const uint32_t RsGxsNetService::FRAGMENT_SIZE = 5000000;
 
 RsGxsNetService::RsGxsNetService(uint16_t servType, RsGeneralDataService *gds,
                                  RsNxsNetMgr *netMgr, RsNxsObserver *nxsObs,
