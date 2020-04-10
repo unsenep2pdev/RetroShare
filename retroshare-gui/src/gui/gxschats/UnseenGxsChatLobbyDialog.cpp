@@ -62,6 +62,8 @@
 #include "gui/gxschats/CreateGxsChatMsg.h"
 #include "gui/common/UnseenFriendSelectionDialog.h"
 
+#include "gui/notifyqt.h"
+
 #define COLUMN_NAME      0
 #define COLUMN_ACTIVITY  1
 #define COLUMN_ID        2
@@ -98,6 +100,10 @@ UnseenGxsChatLobbyDialog::UnseenGxsChatLobbyDialog( const RsGxsGroupId& id, QWid
     connect(ui.participantsList, SIGNAL(itemDoubleClicked(QTreeWidgetItem*,int)), this, SLOT(participantsTreeWidgetDoubleClicked(QTreeWidgetItem*,int)));
 
     connect(ui.filterLineEdit, SIGNAL(textChanged(QString)), this, SLOT(filterChanged(QString)));
+
+    //notify when receive the gxschat typing
+    //QObject::connect(NotifyQt::getInstance(), SIGNAL(notifyReceiveGxsChatTyping(const RsGxsGroupId, const QString, const RsPeerId, const RsGxsId)), this, SLOT(updateReceiveGxsChatTyping(const RsGxsGroupId, const QString, const RsPeerId, const RsGxsId)));
+    QObject::connect(NotifyQt::getInstance(), SIGNAL(notifyReceiveGxsChatTyping3(const QString, const RsPeerId, const RsGxsId)), this, SLOT(updateReceiveGxsChatTyping3( const QString, const RsPeerId, const RsGxsId)));
 
     //Hide Search list
     ui.toolBarFrame->hide();
@@ -1179,6 +1185,33 @@ void UnseenGxsChatLobbyDialog::filterIds()
     ui.participantsList->filterItems(filterColumn, text);
 }
 
+
+void UnseenGxsChatLobbyDialog::updateReceiveGxsChatTyping(const RsGxsGroupId groupId, const QString nickname, const RsPeerId sslId, const RsGxsId gxsId)
+{
+    QString status = nickname  + " is typing...";
+    ui.chatWidget->updateStatusString(nickname + " %1", "is typing...");
+
+    ui.chatWidget->updateCustomStateStringInGroup(status, false);
+
+}
+
+void UnseenGxsChatLobbyDialog::updateReceiveGxsChatTyping3(const QString nickname,  const RsPeerId sslId, const RsGxsId gxsId)
+{
+    QString status = nickname  + " is typing...";
+    ui.chatWidget->updateStatusString(nickname + " %1", "is typing...");
+
+    ui.chatWidget->updateCustomStateStringInGroup(status, false);
+
+}
+
+void UnseenGxsChatLobbyDialog::updateReceiveGxsChatTyping2(const QString nickname)
+{
+    QString status = nickname + " is typing...";
+    ui.chatWidget->updateStatusString(nickname + " %1", "is typing...");
+
+    ui.chatWidget->updateCustomStateStringInGroup(status, false);
+
+}
 //////////////////////////////////////////////////////////////////////////////////////////////////
 /// ALL FROM RsGxsUpdateBroadcastWidget                                                       ////
 //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1187,6 +1220,7 @@ void UnseenGxsChatLobbyDialog::fillComplete()
 {
     mBase->fillComplete();
 }
+
 
 void UnseenGxsChatLobbyDialog::setUpdateWhenInvisible(bool update)
 {

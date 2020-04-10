@@ -258,5 +258,8 @@ public:
 
 	virtual bool askForPassword                   (const std::string& /* title     */, const std::string& /* key_details     */, bool               /* prev_is_bad */, std::string& /* password */,bool& /* cancelled */ ) { return false ;}
 	virtual bool askForPluginConfirmation         (const std::string& /* plugin_filename */, const std::string& /* plugin_file_hash */,bool /* first_time */) { return false ;}
+
+    //unseenp2p - gxs notify
+    virtual void receiveGxsChatTyping(const RsGxsGroupId, const std::string, const RsPeerId, const RsGxsId ){}
 };
 #endif

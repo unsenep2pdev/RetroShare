@@ -1318,3 +1318,19 @@ void NotifyQt::runningTick()
 	}
 }
 
+void NotifyQt::receiveGxsChatTyping(const RsGxsGroupId groupId, const std::string nickname, const RsPeerId sslId, const RsGxsId gxsId)
+{
+    {
+        QMutexLocker m(&_mutex) ;
+        if(!_enabled)
+            return ;
+    }
+
+    //Here if we try to emit something related to groupId (RsGxsGroupId), even we try to convert to std::string
+    // It can emit, but the slot function can not be called
+    //emit notifyReceiveGxsChatTyping(groupId, QString::fromStdString(nickname), sslId,gxsId) ;
+    std::cerr << "This is the groupId string: " << groupId.toStdString() << std::endl;
+
+    emit notifyReceiveGxsChatTyping3(QString::fromStdString(nickname),  sslId,gxsId) ;
+
+}

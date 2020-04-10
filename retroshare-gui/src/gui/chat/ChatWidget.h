@@ -141,11 +141,14 @@ public:
 	const QList<ChatWidgetHolder*> &chatWidgetHolderList() { return mChatWidgetHolder; }
 
     void disableTextInbox();
+    void updateCustomStateStringInGroup( const QString& status_string, bool permanent);
+
 
 public slots:
 	void updateStatus(const QString &peer_id, int status);
 	void setUseCMark(const bool bUseCMark);
 	void updateCMPreview();
+    void updatePeersCustomStateString(const QString& peer_id, const QString& status_string) ;
 
 private slots:
 	//void pasteCreateMsgLink() ;
@@ -153,6 +156,7 @@ private slots:
 	void deleteChatHistory();
 	void messageHistory();
 	void resetStatusBar() ;
+    void resetStatusStringInGroup();
 
 signals:
 	void infoChanged(ChatWidget*);
@@ -204,8 +208,6 @@ private slots:
 	void updateLenOfChatTextEdit();
 	void sendChat();
 
-	void updatePeersCustomStateString(const QString& peer_id, const QString& status_string) ;
-
 	bool fileSave();
 	bool fileSaveAs();
 
@@ -228,6 +230,8 @@ private:
 
 	void completeNickname(bool reverse);
     QAbstractItemModel *modelFromPeers();
+
+    QString getStatusForThisGroup();
 
    // bool convertFromAttachmentsToGxsFiles( std::list<RsGxsFile>& files);
 

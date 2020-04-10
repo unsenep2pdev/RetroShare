@@ -38,6 +38,7 @@
 #include "gui/gxschats/UnseenGxsChatLobbyDialog.h"
 //unseenp2p
 #include "gui/gxs/UnseenGxsGroupDialog.h"
+#include "retroshare/rsnotify.h"
 
 //unseenp2p - using SmartListView and SmartListModel
 #include "gui/common/GroupTreeWidget.h"
@@ -94,12 +95,16 @@ UnseenGxsGroupFrameDialog::UnseenGxsGroupFrameDialog(RsGxsIfaceHelper *ifaceImpl
 	mOtherGroups = NULL;
 	mMessageWidget = NULL;
 
+   // QObject::connect(NotifyQt::getInstance(), SIGNAL(notifyReceiveGxsChatTyping2(const QString)), this, SLOT(updateGxsMsgTyping2(const QString)));
+
     QObject::connect( NotifyQt::getInstance(), SIGNAL(alreadySendChat(const gxsChatId&, const RsGxsChatMsg&, std::string, long long, std::string, bool)), this, SLOT(updateRecentTime(const gxsChatId&, const RsGxsChatMsg&, std::string, long long, std::string, bool)));
     QObject::connect( NotifyQt::getInstance(), SIGNAL(newGxsChatMessageReceive(const gxsChatId&, const RsGxsChatMsg&, std::string, long long, std::string, bool)), this, SLOT(updateNewGxsMsg(const gxsChatId&, const RsGxsChatMsg&, std::string, long long, std::string, bool)));
 
     connect(ui->filterLineEdit, SIGNAL(textChanged(const QString &)), this, SLOT(filterGxsItems(const QString &)));
     connect(ui->filterLineEdit, SIGNAL(filterChanged(int)), this, SLOT(filterColumnChanged(int)));
     QObject::connect( ui->createGxsGroupChatButton, SIGNAL(clicked()), this, SLOT(newGroup()));
+
+    //QObject::connect(NotifyQt::getInstance(), SIGNAL(notifyReceiveGxsChatTyping(const RsGxsGroupId&, const QString, const RsPeerId&, const RsGxsId&)), this, SLOT(updateGxsMsgTyping(const RsGxsGroupId&, const QString, const RsPeerId&, const RsGxsId&)));
 
     /* add filter actions */
     ui->filterLineEdit->setPlaceholderText("Search ");
@@ -1896,6 +1901,15 @@ void UnseenGxsGroupFrameDialog::updateGxsMsgNotify(RsGxsChatMsg gxsChatMsg, gxsC
     }
 }
 
+//void UnseenGxsGroupFrameDialog::updateGxsMsgTyping(const RsGxsGroupId& groupId, const QString nickname, const RsPeerId& sslId, const RsGxsId& gxsId)
+//{
+//    //QMessageBox::warning(NULL, "UnseenP2P", "Yes, someone is typing....");
+
+//    if(_unseenGxsGroup_infos.find(groupId) != _unseenGxsGroup_infos.end())
+//    {
+//        _unseenGxsGroup_infos[groupId].dialog->updateReceiveGxsChatTyping(groupId,nickname, sslId, gxsId);
+//    }
+//}
 
 
 bool UnseenGxsGroupFrameDialog::isGroupIdInGxsConversationList(std::string uId)

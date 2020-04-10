@@ -180,6 +180,8 @@ private slots:
     void updateGxsMessageChanged(RsGxsChatMsg gxsChatMsg, bool incoming, RsGxsGroupId id, QDateTime time, QString senderName, QString msg);
     void updateGxsMsgNotify(RsGxsChatMsg gxsChatMsg, gxsChatId id, unsigned int count);
 
+    //void updateGxsMsgTyping(const RsGxsGroupId& groupId, const QString nickname, const RsPeerId& sslId, const RsGxsId& gxsId);
+
     void filterGxsItems(const QString &text);
     void filterColumnChanged(int);
 private:

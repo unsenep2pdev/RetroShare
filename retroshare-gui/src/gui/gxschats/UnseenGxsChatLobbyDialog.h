@@ -83,6 +83,13 @@ public:
     RsGxsGroupId groupId() const {return mGroupId; }
 
     void updateTitle(QString title);
+public slots:
+    //unseenp2p - gxschat typing slot
+    void updateReceiveGxsChatTyping(const RsGxsGroupId groupId, const QString nickname, const RsPeerId sslId, const RsGxsId gxsId) ;
+    void updateReceiveGxsChatTyping3( const QString nickname, const RsPeerId sslId, const RsGxsId gxsId) ;
+
+    void updateReceiveGxsChatTyping2( const QString nickname) ;
+
 private slots:
 	void participantsTreeWidgetCustomPopupMenu( QPoint point );
 	void textBrowserAskContextMenu(QMenu* contextMnu, QString anchorForPosition, const QPoint point);
@@ -90,6 +97,8 @@ private slots:
     void leaveGxsGroupChat() ;
 	void filterChanged(const QString &text);
     void showInPeopleTab();
+
+
 signals:
     void gxsGroupLeave(RsGxsGroupId) ;
 	void typingEventReceived(ChatLobbyId) ;

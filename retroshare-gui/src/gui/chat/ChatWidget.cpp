@@ -457,6 +457,8 @@ void ChatWidget::init(const gxsChatId &chat_id, const QString &title)
     colorChanged();
     setColorAndFont(true);
 
+    resetStatusStringInGroup();
+
     // load style
 //    PeerSettings->getStyle(chatId, "ChatWidget", style);
 
@@ -1485,6 +1487,43 @@ void ChatWidget::resetStatusBar()
 	emit infoChanged(this);
 }
 
+QString ChatWidget::getStatusForThisGroup()
+{
+    std::list<RsGxsGroupId> groupIdList;
+    groupIdList.push_back(getGxsChatId().toGxsGroupId());
+    std::vector<RsGxsChatGroup> chatInfos;
+    int memberNumber = 2;
+    int count = 0;
+    if (rsGxsChats->getChatsInfo(groupIdList, chatInfos))
+    {
+        if(chatInfos.size() > 0)
+        {
+            memberNumber = (int) chatInfos[0].members.size();
+
+            for(std::set<GxsChatMember>::iterator it = chatInfos[0].members.begin(); it != chatInfos[0].members.end(); ++it)
+            {
+                  if((*it).chatPeerId != rsPeers->getOwnId() && rsPeers->isOnline( (*it).chatPeerId)) ++count;
+            }
+
+        }
+    }
+
+    QString text = QString("%1 members, %2 online").arg(memberNumber).arg(count+1);
+    return text;
+}
+
+void ChatWidget::resetStatusStringInGroup()
+{
+    QString status_text = getStatusForThisGroup();
+    ui->statusMessageLabel->setText(status_text);
+
+    ui->titleLabel->setAlignment ( Qt::AlignVCenter );
+    ui->statusLabel->setAlignment ( Qt::AlignVCenter );
+
+    typing = false;
+
+}
+
 void ChatWidget::updateStatusTyping()
 {
 	if(Settings->getChatDoNotSendIsTyping())
@@ -1494,14 +1533,22 @@ void ChatWidget::updateStatusTyping()
 #ifdef ONLY_FOR_LINGUIST
 		tr("is typing...");
 #endif
-		rsMsgs->sendStatusString(chatId, "is typing...");
-        RsGxsGroupId groupId = mGxsChatId.toGxsGroupId();
-        std::pair<std::string, std::string> commandForTyping;
-        RsPeerId thisPeer = rsPeers->getOwnId();
+        if(!chatId.isNotSet())
+        {
+            rsMsgs->sendStatusString(chatId, "is typing...");
 
-//        commandForTyping = {thisPeer.toStdString(),"typing"};
-//        if (rsGxsChats)
-//            rsGxsChats->publishNotifyMessage(groupId,commandForTyping);
+        }
+        else if (chatType() == CHATTYPE_GXSGROUPCHAT)
+        {
+            RsGxsGroupId groupId = mGxsChatId.toGxsGroupId();
+            std::pair<std::string, std::string> commandForTyping;
+            RsPeerId thisPeer = rsPeers->getOwnId();
+
+            commandForTyping = {thisPeer.toStdString(),"typing"};
+            if (rsGxsChats)
+                rsGxsChats->publishNotifyMessage(groupId,commandForTyping);
+        }
+
 		lastStatusSendTime = time(NULL) ;
 	}
 }
@@ -2302,9 +2349,23 @@ void ChatWidget::updatePeersCustomStateString(const QString& peer_id, const QStr
 
 }
 
+void ChatWidget::updateCustomStateStringInGroup( const QString& status_string, bool permanent)
+{
+    QString status_text;
+
+    ui->statusMessageLabel->show();
+    status_text = RsHtml().formatText(NULL, status_string, RSHTML_FORMATTEXT_EMBED_SMILEYS | RSHTML_FORMATTEXT_EMBED_LINKS);
+    ui->statusMessageLabel->setText(status_text);
+    ui->titleLabel->setAlignment ( Qt::AlignVCenter );
+    ui->statusLabel->setAlignment ( Qt::AlignVCenter );
+
+    if(!permanent)
+        QTimer::singleShot(5000, this, SLOT(resetStatusStringInGroup())) ;
+}
+
 void ChatWidget::updateStatusString(const QString &statusMask, const QString &statusString, bool permanent)
 {
-        ui->typingLabel->setText(QString(statusMask).arg(trUtf8(statusString.toUtf8()))); // displays info for 5 secs.
+    ui->typingLabel->setText(QString(statusMask).arg(trUtf8(statusString.toUtf8()))); // displays info for 5 secs.
     ui->typingPixmapLabel->setPixmap(QPixmap(":/images/typing.png") );
 
 	if (statusString == "is typing...") {

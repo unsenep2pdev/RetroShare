@@ -818,6 +818,9 @@ void p3GxsChats::processRecvBounceNotify(){
 #ifdef GXSCHATS_DEBUG
     std::cerr << "p3GxsChats::processRecvBounceNotify() Nofify ->Sender:"<< sender << " command:"<<command<< std::endl;
 #endif
+        //unseenp2p - meiyousixin - add Notify from notifyQt
+        //emit NotifyQ
+        RsServer::notify()->receiveGxsChatTyping(msgnotify->grpId, personName, personIdPair.first, personIdPair.second );
         //send notification to application and GUI Layer.
         notify->AddFeedItem(RS_FEED_ITEM_CHATS_NOTIFY, msgnotify->grpId.toStdString(), sender,command);
         //bounce this message if it's groupchat public/private only.
