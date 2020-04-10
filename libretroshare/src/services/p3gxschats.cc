@@ -191,25 +191,6 @@ bool p3GxsChats::saveList(bool &cleanup, std::list<RsItem *>&saveList)
 
     saveList.push_back(item) ;
 
-#ifdef GXSCHATS_DEBUG
-    for(auto it = mKnownChats.begin(); it !=mKnownChats.end(); it++) {
-        LocalGroupInfo localInfo = it->second;
-
-        std::cerr<<"GroupId: "<<it->first ;
-        std::cerr <<"   LocalInfo Msg:"<<localInfo.msg;
-        std::cerr <<"   LastTimestamp: "<<localInfo.update_ts ;
-        std::cerr <<"   IsSubscribed: "<<localInfo.isSubscribed ;
-        std::cerr <<"   Unread Count:" <<localInfo.unreadMsgIds.size() <<std::endl;
-
-        if(localInfo.unreadMsgIds.size()>0){
-            for(auto it = localInfo.unreadMsgIds.begin(); it !=localInfo.unreadMsgIds.end(); it++){
-                std::cerr <<"MessageId:" <<*it <<std::endl;
-            }
-        }
-
-    }
-#endif
-
     return true;
 }
 
@@ -243,21 +224,6 @@ bool p3GxsChats::loadList(std::list<RsItem *>& loadList)
 
             }
 
-#ifdef GXSCHATS_DEBUG
-            for(auto its = mKnownChats.begin(); its !=mKnownChats.end(); its++){
-                LocalGroupInfo localInfo = its->second;
-                std::cerr <<"GroupId:"<<its->first<<std::endl;
-                std::cerr <<"   LocalInfo Msg:"<<localInfo.msg;
-                std::cerr <<"   LastTimestamp: "<<localInfo.update_ts ;
-                std::cerr <<"   IsSubscribed: "<<localInfo.isSubscribed ;
-                std::cerr <<"   Unread Count:" <<localInfo.unreadMsgIds.size() <<std::endl;
-                if(localInfo.unreadMsgIds.size()>0){
-                    for(auto it = localInfo.unreadMsgIds.begin(); it !=localInfo.unreadMsgIds.end(); it++){
-                        std::cerr <<"MessageId:" <<*it <<std::endl;
-                    }
-                }
-            }
-#endif
         }
 
         delete item ;
@@ -326,14 +292,6 @@ RsGenExchange::ServiceCreate_Return p3GxsChats::service_CreateGroup(RsGxsGrpItem
         return SERVICE_CREATE_FAIL;
     }
 
-
-//    auto found = mKnownChats.find(RsGxsGroupId(item->meta.mGroupId));
-//    if( found == mKnownChats.end()){
-//        RS_STACK_MUTEX(mChatMtx);
-//        LocalGroupInfo localGrp;
-//        localGrp.msg="New";
-//        mKnownChats.insert(std::make_pair(RsGxsGroupId(item->meta.mGroupId),localGrp)) ;
-//    }
 
     return SERVICE_CREATE_SUCCESS;
 }
