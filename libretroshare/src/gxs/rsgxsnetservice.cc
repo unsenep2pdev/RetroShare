@@ -2054,7 +2054,7 @@ void RsGxsNetService::data_tick()
         //Start waiting as nothing to do in runup
         rstime::rs_usleep((int) (timeDelta * 1000 * 1000)); // timeDelta sec
 
-        if(mUpdateCounter >= 120) // 60 seconds
+        if(mUpdateCounter >= mSYNC_PERIOD*2) // mSYNC_PERIOD seconds
         {
             updateServerSyncTS();
 #ifdef TO_REMOVE

@@ -84,6 +84,10 @@ public:
     virtual uint32_t getDefaultSyncAge() =0;
     virtual uint32_t getDefaultKeepAge() =0;
 
+    virtual uint32_t setSynchronizationInterval(uint32_t interval)=0;
+    virtual uint32_t getSynchronizationInterval()=0;
+
+
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ///                                          DISTANT SEARCH FUNCTIONS                                           ///
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
