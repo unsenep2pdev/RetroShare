@@ -26,6 +26,7 @@
 #include "ui_NotifyPage.h"
 
 #include "gui/chat/ChatLobbyUserNotify.h"
+#include "gui/gxschats/GxsChatUserNotify.h"
 
 class UserNotify;
 class FeedNotify;
@@ -106,6 +107,7 @@ private:
 	uint getNewsFlags();
 	uint getNotifyFlags();
 	ChatLobbyUserNotify* mChatLobbyUserNotify;
+    GxsChatUserNotify* mGxsChatUserNotify;
 
     QList<FeedNotifySetting> mFeedNotifySettingList;
     QList<ToasterNotifySetting> mToasterNotifySettingList;

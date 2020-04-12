@@ -36,16 +36,69 @@ static std::map<gxsChatId, int> waitingChats;
 GxsChatUserNotify::GxsChatUserNotify(RsGxsIfaceHelper *ifaceImpl, QObject *parent) :
     GxsUserNotify(ifaceImpl, parent)
 {
-    connect(NotifyQt::getInstance(), SIGNAL(chatMessageReceived(ChatMessage)), this, SLOT(chatMessageReceived(ChatMessage)));
+    //connect(NotifyQt::getInstance(), SIGNAL(chatMessageReceived(ChatMessage)), this, SLOT(chatMessageReceived(ChatMessage)));
+    //QObject::connect( NotifyQt::getInstance(), SIGNAL(newGxsChatMessageReceive(const gxsChatId&, const RsGxsChatMsg&, std::string, long long, std::string, bool)), this, SLOT(notifyGxsChatMessageReceive(const gxsChatId&, const RsGxsChatMsg&, std::string, long long, std::string, bool)));
+
+    _bCheckForNickName = Settings->valueFromGroup(_group, "CheckForNickName", true).toBool();
+    _bCountUnRead = Settings->valueFromGroup(_group, "CountUnRead", true).toBool();
+    _bCountSpecificText = Settings->valueFromGroup(_group, "CountSpecificText", false).toBool();
+    _textToNotify = Settings->valueFromGroup(_group, "TextToNotify").toStringList();
+    _bTextCaseSensitive = Settings->valueFromGroup(_group, "TextCaseSensitive", false).toBool();
 }
 
 
 bool GxsChatUserNotify::hasSetting(QString *name, QString *group)
 {
-    if (name) *name = tr("GxsChats Post");
-    if (group) *group = "GxsChats";
+    if (name) *name = tr("New Chats");
+    if (group) *group = "New Chats";
 
     return true;
+}
+
+void GxsChatUserNotify::setCheckForNickName(bool value)
+{
+    if (_bCheckForNickName != value) {
+        _bCheckForNickName = value;
+        Settings->setValueToGroup(_group, "CheckForNickName", value);
+    }
+}
+
+void GxsChatUserNotify::setCountUnRead(bool value)
+{
+    if (_bCountUnRead != value) {
+        _bCountUnRead = value;
+        Settings->setValueToGroup(_group, "CountUnRead", value);
+    }
+}
+
+void GxsChatUserNotify::setCountSpecificText(bool value)
+{
+    if (_bCountSpecificText != value) {
+        _bCountSpecificText = value;
+        Settings->setValueToGroup(_group, "CountSpecificText", value);
+    }
+}
+void GxsChatUserNotify::setTextToNotify(QStringList value)
+{
+    if (_textToNotify != value) {
+        _textToNotify = value;
+        Settings->setValueToGroup(_group, "TextToNotify", value);
+    }
+}
+
+void GxsChatUserNotify::setTextToNotify(QString value)
+{
+    while(value.contains("\n\n")) value.replace("\n\n","\n");
+    QStringList list = value.split("\n");
+    setTextToNotify(list);
+}
+
+void GxsChatUserNotify::setTextCaseSensitive(bool value)
+{
+    if (_bTextCaseSensitive != value) {
+        _bTextCaseSensitive = value;
+        Settings->setValueToGroup(_group, "TextCaseSensitive", value);
+    }
 }
 
 QIcon GxsChatUserNotify::getIcon()
@@ -62,7 +115,7 @@ void GxsChatUserNotify::iconClicked()
 {
     MainWindow::showWindow(MainWindow::GxsChats);
 }
-
+//void GxsChatUserNotify::notifyGxsChatMessageReceive(const gxsChatId& groupChatId, const RsGxsChatMsg &gxsChatMsg, std::string nickInGroupChat, long long current_time, std::string msg, bool isSend)
 void GxsChatUserNotify::gxsChatNewMessage(RsGxsChatMsg gxsChatMsg, gxsChatId groupChatId, QDateTime time, QString senderName, QString msg)
 {
 
@@ -136,29 +189,28 @@ void GxsChatUserNotify::gxsChatCleared(gxsChatId groupChatId, QString anchor, bo
     updateIcon();
 }
 
-void GxsChatUserNotify::chatMessageReceived(ChatMessage msg)
-{
-    if(!msg.chat_id.isBroadcast()
-            &&( ChatDialog::getExistingChat(msg.chat_id)
-                || (Settings->getChatFlags() & RS_CHAT_OPEN)
-                || msg.chat_id.isDistantChatId()))
-    {
-        ChatDialog::chatMessageReceived(msg);
-    }
-    else
-    {
-        // this implicitly counts broadcast messages, because broadcast messages are not handled by chat dialog
-        bool found = false;
-        for(std::map<gxsChatId, int>::iterator mit = waitingChats.begin(); mit != waitingChats.end(); ++mit)
-        {
-            if(msg.gxs_ChatId.isSameEndpoint(mit->first))
-            {
-                mit->second++;
-                found = true;
-            }
-        }
-        if(!found)
-            waitingChats[msg.gxs_ChatId] = 1;
-        updateIcon();
-    }
-}
+//void GxsChatUserNotify::notifyGxsChatMessageReceive(const gxsChatId& gxsChatId, const RsGxsChatMsg &gxsChatMsg, std::string nickInGroupChat, long long current_time, std::string textmsg, bool isSend)
+//{
+//    if( ChatDialog::getExistingChat(gxsChatId)
+//                || (Settings->getChatFlags() & RS_CHAT_OPEN))
+//    {
+//        //ChatDialog::chatMessageReceived(msg);
+//    }
+//    else
+//    {
+//        // this implicitly counts broadcast messages, because broadcast messages are not handled by chat dialog
+////        bool found = false;
+////        for(std::map<gxsChatId, int>::iterator mit = waitingChats.begin(); mit != waitingChats.end(); ++mit)
+////        {
+////            if(msg.gxs_ChatId.isSameEndpoint(mit->first))
+////            {
+////                mit->second++;
+////                found = true;
+////            }
+////        }
+////        if(!found)
+////            waitingChats[msg.gxs_ChatId] = 1;
+//        updateIcon();
+//    }
+//}
+

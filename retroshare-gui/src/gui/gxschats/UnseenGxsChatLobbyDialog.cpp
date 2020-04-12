@@ -1402,7 +1402,7 @@ void UnseenGxsChatLobbyDialog::insertGxsChatPosts(std::vector<RsGxsChatMsg> &pos
         else allDownloadedMsgs.insert(posts[i].mMeta.mMsgId);
 
 #ifdef DEBUG_CHAT
-        std::cerr << "  " << i << ": msg_id=" << posts[i].mMeta.mMsgId <<" : msg timestamp= " << posts[i].mMeta.mPublishTs << " : msg = " << posts[i].mMsg << std::endl;
+        //std::cerr << "  " << i << ": msg_id=" << posts[i].mMeta.mMsgId <<" : msg timestamp= " << posts[i].mMeta.mPublishTs << " : msg = " << posts[i].mMsg << std::endl;
 #endif
 
         if(!posts[i].mMeta.mOrigMsgId.isNull())
@@ -1410,7 +1410,7 @@ void UnseenGxsChatLobbyDialog::insertGxsChatPosts(std::vector<RsGxsChatMsg> &pos
 
         //unseenp2p - try to add msg into chat content
         QDateTime sendTime = QDateTime::fromSecsSinceEpoch(posts[i].mMeta.mPublishTs);
-        QDateTime recvTime = QDateTime::fromSecsSinceEpoch(posts[i].mMeta.mPublishTs);
+        QDateTime recvTime = sendTime;
         RsGxsId gxs_id = posts[i].mMeta.mAuthorId;
         QString mmsg = QString::fromUtf8(posts[i].mMsg.c_str());
         bool incomming = !rsIdentity->isOwnId(gxs_id);
@@ -1423,7 +1423,6 @@ void UnseenGxsChatLobbyDialog::insertGxsChatPosts(std::vector<RsGxsChatMsg> &pos
         }
 
         //try to show all files from post.files: if image, show thumbnail + link, if not, only show link
-
         std::list<RsGxsFile> fileList; // = posts[i].mFiles;
         std::list<RsGxsFile>::iterator fit;
         for(fit = posts[i].mFiles.begin(); fit != posts[i].mFiles.end(); ++fit)
@@ -1458,7 +1457,8 @@ void UnseenGxsChatLobbyDialog::insertGxsChatPosts(std::vector<RsGxsChatMsg> &pos
         }
 
         ui.chatWidget->addChatMsg(incomming, nickname, posts[i], sendTime, recvTime, mmsg, msgType);
-        if(posts[i].mMsg.length() > 0)
+        //this is when we receive absolute new incoming msg (not history)
+        if(posts[i].mMsg.length() > 0 && incomming &&  msgType == ChatWidget::MSGTYPE_NORMAL )
         {
             emit gxsMessageReceived(posts[i], incomming, gxsChatId(groupId()), sendTime, nickname, mmsg) ;
         }

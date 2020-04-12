@@ -57,20 +57,21 @@ public:
 
     void gxsChatNewMessage(RsGxsChatMsg gxsChatMsg, gxsChatId groupChatId, QDateTime time, QString senderName, QString msg);
     void gxsChatCleared(gxsChatId groupChatId, QString anchor, bool onlyUnread=false);
-//	void setCheckForNickName(bool value);
-//	bool isCheckForNickName() { return _bCheckForNickName;}
-//	void setCountUnRead(bool value);
-//	bool isCountUnRead() { return _bCountUnRead;}
-//	void setCountSpecificText(bool value);
-//	bool isCountSpecificText() { return _bCountSpecificText;}
-//	void setTextToNotify(QStringList);
-//	void setTextToNotify(QString);
-//	QString textToNotify() { return _textToNotify.join("\n");}
-//	void setTextCaseSensitive(bool value);
-//	bool isTextCaseSensitive() {return _bTextCaseSensitive;}
 
-private slots:
-    void chatMessageReceived(ChatMessage msg);
+    void setCheckForNickName(bool value);
+    bool isCheckForNickName() { return _bCheckForNickName;}
+    void setCountUnRead(bool value);
+    bool isCountUnRead() { return _bCountUnRead;}
+    void setCountSpecificText(bool value);
+    bool isCountSpecificText() { return _bCountSpecificText;}
+    void setTextToNotify(QStringList);
+    void setTextToNotify(QString);
+    QString textToNotify() { return _textToNotify.join("\n");}
+    void setTextCaseSensitive(bool value);
+    bool isTextCaseSensitive() {return _bTextCaseSensitive;}
+
+//private slots:
+//    void notifyGxsChatMessageReceive(const gxsChatId& gxsChatId, const RsGxsChatMsg &gxsChatMsg, std::string nickInGroupChat, long long current_time, std::string textmsg, bool isSend);
 
 signals:
     void countChanged(RsGxsChatMsg gxsChatMsg, gxsChatId id, unsigned int count);
@@ -84,8 +85,8 @@ private:
 //	virtual void iconHovered();
     bool checkWord(QString msg, QString word);
 
-//	QString _name;
-//	QString _group;
+    QString _name;
+    QString _group;
 
     typedef std::map<QString, MsgGxsData> msg_map;
     typedef	std::map<gxsChatId, msg_map> lobby_map;

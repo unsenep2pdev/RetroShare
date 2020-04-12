@@ -302,27 +302,9 @@ void UnseenGxsGroupFrameDialog::updateDisplay(bool complete)
                 //so, just show the unread nunmber on the chat list and sort the list
                 if(msgIt->second.size() > 0 )
                 {
-//                    LocalGroupInfo localInfo;
-//                    rsGxsChats->getLocalMessageStatus(msgIt->first, localInfo);
-//                    if (localInfo.msg.length() > 0)
-//                    {
-//                        long long mPublishTs = QDateTime::currentSecsSinceEpoch();
-//                        //for(auto chatMsg = msgs.begin(); chatMsg != msgs.end(); ++chatMsg)
-//                        for(auto msgId = (*msgIt).second.begin(); msgId != (*msgIt).second.end(); ++msgId)
-//                        {
-//                             updateRecentTimeAndUnreadNumber(msgIt->first, *msgId , "", mPublishTs, localInfo.msg, true, 1, false  );
-//                        }
-
-//                        smartListModel_->setGxsChatGroupList(allGxsChatGroupList);
-//                        emit ui->unseenGroupTreeWidget->model()->layoutChanged();
-//                    }
-
                     //Using token request from this list dialog to get the last msg: cost performance?
                     requestLastMsgOfGroup(msgIt->first, msgIt->second);
-
                 }
-
-
             }
         }
 	}
