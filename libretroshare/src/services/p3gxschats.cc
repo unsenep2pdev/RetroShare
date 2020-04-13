@@ -958,11 +958,15 @@ void p3GxsChats::notifyChanges(std::vector<RsGxsNotify *> &changes)
                 if (notify)
                 {
 
+#ifdef GXSCHATS_DEBUG
+                    std::cerr <<"p3GxsChats::notifyChanges(): Received New Messages: "<<std::endl;
+#endif
                     std::map<RsGxsGroupId, std::set<RsGxsMessageId> > &msgChangeMap = msgChange->msgChangeMap;
                     for (auto mit = msgChangeMap.begin(); mit != msgChangeMap.end(); ++mit)
                         for (auto mit1 = mit->second.begin(); mit1 != mit->second.end(); ++mit1)
                         {
                             notify->AddFeedItem(RS_FEED_ITEM_CHATS_MSG, mit->first.toStdString(), mit1->toStdString());
+                            std::cerr<<"GroupId: "<<mit->first.toStdString() <<" and MsgId: "<<mit1->toStdString() <<std::endl;
                         }
                 }
             }
@@ -978,8 +982,7 @@ void p3GxsChats::notifyChanges(std::vector<RsGxsNotify *> &changes)
                 for(auto mit = msgChangeMap.begin(); mit != msgChangeMap.end(); ++mit)
                 {
 #ifdef GXSCHATS_DEBUG
-                    std::cerr << "p3GxsChats::notifyChanges() Msgs for Group: " << mit->first;
-                    std::cerr << std::endl;
+                    std::cerr << "p3GxsChats::notifyChanges() Msgs for Group: " << mit->first<<std::endl;
 #endif
                                 bool enabled = false ;
 
