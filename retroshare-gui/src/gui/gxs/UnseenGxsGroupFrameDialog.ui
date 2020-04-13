@@ -437,7 +437,7 @@
   <customwidget>
    <class>UnseenGxsSmartListView</class>
    <extends>QWidget</extends>
-   <header>gui/gxschats/UnseenGxsSmartlistview.h</header>
+   <header>gui/gxschats/UnseenGxsSmartListView.h</header>
   </customwidget>
  </customwidgets>
  <resources>

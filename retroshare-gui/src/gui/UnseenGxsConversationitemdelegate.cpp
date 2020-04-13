@@ -27,7 +27,7 @@
 
 typedef QVector<unsigned int>                                       VectorUInt                    ;
 // Client
-#include "gui/gxschats/UnseenGxsSmartlistmodel.h"
+#include "gui/gxschats/UnseenGxsSmartListModel.h"
 #include "ringthemeutils.h"
 //#include "utils.h"
 //#include "lrcinstance.h"
