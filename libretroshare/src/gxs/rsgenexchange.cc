@@ -1091,6 +1091,11 @@ static void addMessageChanged(std::map<RsGxsGroupId, std::set<RsGxsMessageId> > 
 
             for (auto msgIt = srcMsgIds.begin(); msgIt != srcMsgIds.end(); ++msgIt)
                 destMsgIds.insert(*msgIt) ;
+
+            //comment after testing
+            for (auto msgIt = destMsgIds.begin(); msgIt != destMsgIds.end(); ++msgIt)
+                std::cerr << "backend receiving msgId: " <<  (*msgIt).toStdString() << std::endl ;
+
         }
     }
 }
@@ -1102,7 +1107,6 @@ void RsGenExchange::receiveChanges(std::vector<RsGxsNotify*>& changes)
 #endif
     RsGxsChanges out;
     out.mService = getTokenService();
-
     // collect all changes in one GxsChanges object
     std::vector<RsGxsNotify*>::iterator vit = changes.begin();
     for(; vit != changes.end(); ++vit)
@@ -1111,7 +1115,6 @@ void RsGenExchange::receiveChanges(std::vector<RsGxsNotify*>& changes)
         RsGxsGroupChange* gc;
         RsGxsMsgChange* mc;
         RsGxsDistantSearchResultChange *gt;
-
         if((mc = dynamic_cast<RsGxsMsgChange*>(n)) != NULL)
         {
             if (mc->metaChange())
@@ -1120,7 +1123,11 @@ void RsGenExchange::receiveChanges(std::vector<RsGxsNotify*>& changes)
             }
             else
             {
+                //remove after testing
+                std::cerr << " ================backend msg receiving: =========" << std::endl;
                 addMessageChanged(out.mMsgs, mc->msgChangeMap);
+
+
             }
         }
         else if((gc = dynamic_cast<RsGxsGroupChange*>(n)) != NULL)

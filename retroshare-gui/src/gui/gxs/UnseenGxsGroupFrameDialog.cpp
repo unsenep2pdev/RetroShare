@@ -303,6 +303,7 @@ void UnseenGxsGroupFrameDialog::updateDisplay(bool complete)
                 if(msgIt->second.size() > 0 )
                 {
                     //Using token request from this list dialog to get the last msg: cost performance?
+                    std::cerr << "we want to show all unread msg for these groups:" << msgIt->first.toStdString() << std::endl;
                     requestLastMsgOfGroup(msgIt->first, msgIt->second);
                 }
             }
@@ -1168,6 +1169,7 @@ void UnseenGxsGroupFrameDialog::insertGroupsData2(const std::map<RsGxsGroupId,Rs
     // if not it will refresh the list very frequently and work wrong (for ex. clear the unread number)!
     //if(!isRunOnlyOnce)
     {
+        updateDisplay(false);
         sortGxsConversationListByRecentTime();
         smartListModel_->setGxsChatGroupList(allGxsChatGroupList);
         emit ui->unseenGroupTreeWidget->model()->layoutChanged();
@@ -1187,17 +1189,16 @@ void UnseenGxsGroupFrameDialog::insertGroupsData2(const std::map<RsGxsGroupId,Rs
     }
 #endif
     //update the groupname and member list if the groupchat already opened: need to check the changes ?!!!
-//    for (auto it = groupList.begin(); it != groupList.end(); ++it)
-//    {
-//       //need to check the changes ?!!!
-//       if(_unseenGxsGroup_infos.find((*it).first) != _unseenGxsGroup_infos.end())
-//        {
-//           std::cerr << " There is change in the group: " << (*it).second.mMeta.mGroupName << std::endl;
-//           _unseenGxsGroup_infos[(*it).first].dialog->updateTitle(QString::fromStdString((*it).second.mMeta.mGroupName));
-//           _unseenGxsGroup_infos[(*it).first].dialog->updateParticipantsList();
-//       }
-//    }
-
+    for (auto it = allGxsChatGroupList.begin(); it != allGxsChatGroupList.end(); ++it)
+    {
+       //need to check the changes ?!!!
+       if(_unseenGxsGroup_infos.find((*it).mMeta.mGroupId) != _unseenGxsGroup_infos.end())
+        {
+           std::cerr << " There is change in the group: " << (*it).mMeta.mGroupName << std::endl;
+           _unseenGxsGroup_infos[(*it).mMeta.mGroupId].dialog->updateTitle(QString::fromStdString((*it).mMeta.mGroupName));
+           _unseenGxsGroup_infos[(*it).mMeta.mGroupId].dialog->updateParticipantsList();
+       }
+    }
 
 }
 
@@ -1230,7 +1231,7 @@ void UnseenGxsGroupFrameDialog::requestLastMsgOfGroup(RsGxsGroupId groupId, cons
     std::cerr << std::endl;
 #endif
 
-    mTokenQueue->cancelActiveRequestTokens(TOKEN_TYPE_LAST_MSG_OF_GROUP);
+    //mTokenQueue->cancelActiveRequestTokens(TOKEN_TYPE_LAST_MSG_OF_GROUP);
 
     RsTokReqOptions opts;
     opts.mReqType = GXS_REQUEST_TYPE_MSG_DATA;
