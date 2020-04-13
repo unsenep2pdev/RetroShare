@@ -42,7 +42,7 @@
 
 //unseenp2p - using SmartListView and SmartListModel
 #include "gui/common/GroupTreeWidget.h"
-#include "gui/gxschats/UnseenGxsSmartlistview.h"
+#include "gui/gxschats/UnseenGxsSmartListView.h"
 #include "gui/UnseenGxsConversationitemdelegate.h"
 
 //#define DEBUG_GROUPFRAMEDIALOG 1

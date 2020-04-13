@@ -33,7 +33,7 @@
 #include "util/TokenQueue.h"
 #include "GxsIdTreeWidgetItem.h"
 #include "UnseenGxsGroupDialog.h"
-#include "gui/gxschats/UnseenGxsSmartlistmodel.h"
+#include "gui/gxschats/UnseenGxsSmartListModel.h"
 
 #include "gui/gxschats/GxsChatUserNotify.h"
 
