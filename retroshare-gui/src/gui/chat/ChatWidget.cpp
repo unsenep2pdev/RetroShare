@@ -1692,7 +1692,7 @@ void ChatWidget::sendChat()
     {
         long long current_time = QDateTime::currentSecsSinceEpoch();
         std::string nickInGroupChat = "You";
-        emit NotifyQt::getInstance()->alreadySendChat(this->getGxsChatId(), post, nickInGroupChat, current_time, textToSignal, true);
+        //emit NotifyQt::getInstance()->alreadySendChat(this->getGxsChatId(), post, nickInGroupChat, current_time, textToSignal, true);
     }
 
     // This is common, for all cases of chat,
