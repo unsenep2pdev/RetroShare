@@ -262,6 +262,12 @@ void UnseenFriendSelectionWidget::loadRequest(const TokenQueue */*queue*/, const
 	std::vector<RsGxsIdGroup> datavector;
 	std::vector<RsGxsIdGroup>::iterator vit;
 
+    gxsIds.clear() ;
+
+    //here we can set the gxsIds with different options:
+    // 1 - all Identities: MODE_CREATE_GROUP, MODE_EDIT_GROUP (for Admin)
+    // 2 - only Identities without existing members: MODE_INVITE_FRIENDS
+
 	if (!rsIdentity->getGroupData(token, datavector))
 	{
         std::cerr << "UnseenFriendSelectionWidget::loadRequest() ERROR. Cannot load data from rsIdentity." << std::endl;
@@ -270,58 +276,80 @@ void UnseenFriendSelectionWidget::loadRequest(const TokenQueue */*queue*/, const
 
     std::list<RsGxsId> own_ids ;
     rsIdentity->getOwnIds(own_ids) ;
-    std::set<RsGxsGroupId> myGroupIdVector;
 
-    for (std::list<RsGxsId>::iterator it = own_ids.begin(); it!= own_ids.end(); ++it)
+    //try to use but it can not work
+    std::set<RsGxsMyContact> contactList;
+    rsIdentity->getMyContacts(contactList);
+
+    std::list<RsPgpId> pgpList;
+    if(rsPeers->getGPGAcceptedList(pgpList))
     {
-        myGroupIdVector.insert(RsGxsGroupId(*it));
-    }
-
-	gxsIds.clear() ;
-
-    //here we can set the gxsIds with different options:
-    // 1 - all Identities: MODE_CREATE_GROUP, MODE_EDIT_GROUP (for Admin)
-    // 2 - only Identities without existing members: MODE_INVITE_FRIENDS
-
-    if (showMode == MODE_CREATE_GROUP || showMode == MODE_EDIT_GROUP)
-    {
-        //do not change the gxsIds
+        //this is for MODE_CREATE_GROUP || MODE_EDIT_GROUP
         for(uint32_t i=0;i<datavector.size();++i)
         {
-            //remove ourself gxsId when show contact list here
-            if (myGroupIdVector.find(datavector[i].mMeta.mGroupId) == myGroupIdVector.end())
+            std::list<RsPgpId>::iterator it2 = std::find(pgpList.begin(), pgpList.end(), datavector[i].mPgpId);
+            if(it2 != pgpList.end())
                 gxsIds.push_back(datavector[i].mMeta.mGroupId) ;
             else
                 std::cerr << "My RsGxsGroupId = " << datavector[i].mMeta.mGroupId << std::endl;
         }
-    }
-    else if (showMode == MODE_INVITE_FRIENDS)
-    {
-        //change the gxsIds: remove all the existing members in the gxsIds
-        std::list<RsGxsGroupId> groupChatIdList;
-        groupChatIdList.push_back(groupChatId);
-        std::vector<RsGxsChatGroup> chatsInfo;
-        if (rsGxsChats->getChatsInfo(groupChatIdList, chatsInfo))
+
+        //if mode is invited so need to remove from gxsIds those the existing members in member list
+        if (showMode == MODE_INVITE_FRIENDS)
         {
-            if (chatsInfo.size() > 0)
+            std::list<RsGxsGroupId> groupChatIdList;
+            groupChatIdList.push_back(groupChatId);
+            std::vector<RsGxsChatGroup> chatsInfo;
+            if (rsGxsChats->getChatsInfo(groupChatIdList, chatsInfo))
             {
-                std::set<RsGxsGroupId> memberList;
-                memberList.clear();
-                for ( std::set<GxsChatMember>::iterator it =chatsInfo[0].members.begin(); it != chatsInfo[0].members.end(); ++it)
+                if (chatsInfo.size() > 0)
                 {
-                    memberList.insert((RsGxsGroupId)(*it).chatGxsId);
-                }
-                std::cerr << "Do not add member to the gxsIds, member list total: " << memberList.size() << std::endl;
-                for(uint32_t i=0;i<datavector.size();++i)
-                {
-                    //remove all existing member list in gxsId (that mean insert mGroupId to gxsIds only when
-                    // it  when it is not in the member list
-                    if (memberList.find(datavector[i].mMeta.mGroupId) == memberList.end() && myGroupIdVector.find(datavector[i].mMeta.mGroupId) == myGroupIdVector.end())
-                        gxsIds.push_back(datavector[i].mMeta.mGroupId);
+                    std::set<RsGxsGroupId> memberList;
+                    memberList.clear();
+                    for ( std::set<GxsChatMember>::iterator it =chatsInfo[0].members.begin(); it != chatsInfo[0].members.end(); ++it)
+                    {
+                        std::vector<RsGxsGroupId>::iterator it2 = std::find(gxsIds.begin(), gxsIds.end(), RsGxsGroupId((*it).chatGxsId));
+                        if (it2 != gxsIds.end() )
+                        {
+                            gxsIds.erase(it2);
+                        }
+                    }
                 }
             }
         }
     }
+
+
+//    if (showMode == MODE_CREATE_GROUP || showMode == MODE_EDIT_GROUP)
+//    {
+//        for(std::set<RsGxsMyContact>::iterator it = contactList.begin(); it != contactList.end(); ++it)
+//        {
+//            gxsIds.push_back(RsGxsGroupId((*it).gxsId));
+//        }
+//    }
+//    else if (showMode == MODE_INVITE_FRIENDS)
+//    {
+//        std::list<RsGxsGroupId> groupChatIdList;
+//        groupChatIdList.push_back(groupChatId);
+//        std::vector<RsGxsChatGroup> chatsInfo;
+//        if (rsGxsChats->getChatsInfo(groupChatIdList, chatsInfo))
+//        {
+//            if (chatsInfo.size() > 0)
+//            {
+//                std::set<RsGxsGroupId> memberList;
+//                memberList.clear();
+//                for ( std::set<GxsChatMember>::iterator it =chatsInfo[0].members.begin(); it != chatsInfo[0].members.end(); ++it)
+//                {
+//                    std::vector<RsGxsGroupId>::iterator it2 = std::find(gxsIds.begin(), gxsIds.end(), RsGxsGroupId((*it).chatGxsId));
+//                    if (it2 != gxsIds.end() )
+//                    {
+//                         gxsIds.erase(it2);
+//                    }
+//                }
+//            }
+//        }
+//    }
+
     //unseenp2p - save the gxsIds to the smartlistmodel
     smartListModel_->setAllIdentites(gxsIds);
     emit ui->friendList->model()->layoutChanged();
