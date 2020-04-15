@@ -40,6 +40,8 @@
 #include "util/HandleRichText.h"
 #include "retroshare/rspeers.h"
 
+#include "gui/common/AvatarDefs.h"
+
 
 #define IMAGE_PUBLIC          ":/chat/img/groundchat.png"               //copy from ChatLobbyWidget
 #define IMAGE_PRIVATE         ":/chat/img/groundchat_private.png"       //copy from ChatLobbyWidget
@@ -56,6 +58,7 @@ UnseenGxsSmartListModel::UnseenGxsSmartListModel(const std::string& accId, QObje
 {
     setAccount(accId_);
 }
+
 
 static QString readMsgFromXml(const QString &historyMsg)
 {
@@ -186,7 +189,17 @@ QVariant UnseenGxsSmartListModel::data(const QModelIndex &index, int role) const
         else if (gxsChatItem.type == RsGxsChatGroup::ONE2ONE)
         {
             //avatar = get avatar for that contact here
-            avatar = QImage(IMAGE_PRIVATE);
+            for(std::set<GxsChatMember>::iterator it = gxsChatItem.members.begin(); it!= gxsChatItem.members.end(); ++it)
+            {
+                if ((*it).chatPeerId != rsPeers->getOwnId())
+                {
+                    QPixmap bestAvatar;
+                    AvatarDefs::getAvatarFromSslId((*it).chatPeerId, bestAvatar);
+                    avatar = bestAvatar.toImage();
+                    break;
+                }
+            }
+
         }
 
 
