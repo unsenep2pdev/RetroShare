@@ -443,6 +443,8 @@ void ChatWidget::init(const gxsChatId &chat_id, const QString &title)
     this->mGxsChatId = chat_id;
     this->title = title;
 
+    this->setGxsChatType(chat_id.gxsChatType);
+
     ui->statusLabel->hide();
     ui->titleLabel->setText(RsHtml::plainText(title));
     ui->chatTextEdit->setMaxBytes(this->maxMessageSize() - 200);
@@ -477,7 +479,7 @@ void ChatWidget::init(const gxsChatId &chat_id, const QString &title)
     uint32_t hist_chat_type = RS_HISTORY_TYPE_GXSGROUPCHAT; // a value larger than the biggest RS_HISTORY_TYPE_* value
     int messageCount=0;
 
-    if (chatType() == CHATTYPE_GXSGROUPCHAT)
+    if (chatType() == CHATTYPE_GXSGROUPCHAT || this->chatType() == CHATTYPE_GXSONE2ONE || this->chatType() == CHATTYPE_GXSCHANNEL)
     {
         messageCount=100;   //just for testing gxs groupchat
     }
@@ -547,11 +549,25 @@ ChatWidget::ChatType ChatWidget::chatType()
 
     if (chatId.isNotSet())
     {
-        //if (mGxsChatId.toStdString()) ()
-        return CHATTYPE_GXSGROUPCHAT;
+        if(gxsChatType == RsGxsChatGroup::GROUPCHAT)
+            return CHATTYPE_GXSGROUPCHAT;
+        else if (gxsChatType == RsGxsChatGroup::ONE2ONE)
+            return CHATTYPE_GXSONE2ONE;
+        else if (gxsChatType == RsGxsChatGroup::CHANNEL)
+            return CHATTYPE_GXSCHANNEL;
     }
 
     return CHATTYPE_UNKNOWN;
+}
+
+RsGxsChatGroup::ChatType ChatWidget::getGxsChatType()
+{
+    return gxsChatType;
+}
+
+void ChatWidget::setGxsChatType(RsGxsChatGroup::ChatType chatType)
+{
+    gxsChatType = chatType;
 }
 
 void ChatWidget::blockSending(QString msg)
@@ -1375,7 +1391,7 @@ void ChatWidget::addChatMsg(bool incoming, const QString &name, const RsGxsChatM
             emit NotifyQt::getInstance()->newChatMessageReceive(this->chatId, name.toStdString(), current_time, message.toStdString(), false);
         }
         // this for gxs chat recent time, sort the gxschat conversation list
-        else if (this->chatType() == CHATTYPE_GXSGROUPCHAT)
+        else if (this->chatType() == CHATTYPE_GXSGROUPCHAT || this->chatType() == CHATTYPE_GXSONE2ONE || this->chatType() == CHATTYPE_GXSCHANNEL )
         {
             long long current_time = QDateTime::currentSecsSinceEpoch();
             std::string nickInGroupChat = "You";
@@ -1538,7 +1554,7 @@ void ChatWidget::updateStatusTyping()
             rsMsgs->sendStatusString(chatId, "is typing...");
 
         }
-        else if (chatType() == CHATTYPE_GXSGROUPCHAT)
+        else if (chatType() == CHATTYPE_GXSGROUPCHAT || this->chatType() == CHATTYPE_GXSONE2ONE || this->chatType() == CHATTYPE_GXSCHANNEL)
         {
             RsGxsGroupId groupId = mGxsChatId.toGxsGroupId();
             std::pair<std::string, std::string> commandForTyping;
@@ -1625,11 +1641,11 @@ void ChatWidget::sendChat()
 
     uint32_t token;
     RsGxsChatMsg post;
-    if (this->chatType() != CHATTYPE_GXSGROUPCHAT)
+    if (this->chatType() == CHATTYPE_PRIVATE || this->chatType() == CHATTYPE_LOBBY  )
     {
         rsMsgs->sendChat(chatId, msg);
     }
-    else if (this->chatType() == CHATTYPE_GXSGROUPCHAT)
+    else if (this->chatType() == CHATTYPE_GXSGROUPCHAT || this->chatType() == CHATTYPE_GXSONE2ONE || this->chatType() == CHATTYPE_GXSCHANNEL)
     {       
         if (rsGxsChats)
         {
@@ -1688,7 +1704,7 @@ void ChatWidget::sendChat()
         emit NotifyQt::getInstance()->alreadySendChat(this->getChatId(), nickInGroupChat, current_time, textToSignal, true);        
     }
     // this for gxs chat recent time, sort the gxschat conversation list
-    else if (this->chatType() == CHATTYPE_GXSGROUPCHAT)
+    else if (this->chatType() == CHATTYPE_GXSGROUPCHAT || this->chatType() == CHATTYPE_GXSONE2ONE || this->chatType() == CHATTYPE_GXSCHANNEL)
     {
         long long current_time = QDateTime::currentSecsSinceEpoch();
         std::string nickInGroupChat = "You";
@@ -2016,7 +2032,7 @@ void ChatWidget::addExtraFile()
 	QStringList files;
     if (misc::getOpenFileNames(this, RshareSettings::LASTDIR_EXTRAFILE, tr("Add Extra File"), "", files))
     {
-        if (chatType() == CHATTYPE_GXSGROUPCHAT)
+        if (chatType() == CHATTYPE_GXSGROUPCHAT || this->chatType() == CHATTYPE_GXSONE2ONE || this->chatType() == CHATTYPE_GXSCHANNEL)
         {
             ui->hashBox->addGxsFileAttachments(files,mDefaultExtraFileFlags );
         }
@@ -2219,7 +2235,7 @@ void ChatWidget::setCurrentFileName(const QString &fileName)
 
 void ChatWidget::updateStatus(const QString &peer_id, int status)
 {
-    if ((chatType() == CHATTYPE_GXSGROUPCHAT || chatType() == CHATTYPE_LOBBY)) return;
+    if ((chatType() == CHATTYPE_GXSGROUPCHAT || chatType() == CHATTYPE_LOBBY || this->chatType() == CHATTYPE_GXSCHANNEL)) return;
 
     if (! (chatType() == CHATTYPE_PRIVATE || chatType() == CHATTYPE_DISTANT))
     {
@@ -2314,14 +2330,21 @@ void ChatWidget::updateStatus(const QString &peer_id, int status)
 
 void ChatWidget::updateTitle()
 {
-//	if (chatType() != CHATTYPE_LOBBY) {
-//		// updateStatus is used
-//		return;
-//	}
-
-    //ui->titleLabel->setText(RsHtml::plainText(name) + "@" + RsHtml::plainText(title));
-    if (chatType() == CHATTYPE_GXSGROUPCHAT || chatType() == CHATTYPE_LOBBY)
+    if (chatType() == CHATTYPE_GXSGROUPCHAT || this->chatType() == CHATTYPE_GXSCHANNEL || chatType() == CHATTYPE_LOBBY)
         ui->titleLabel->setText(RsHtml::plainText(title));
+    else if (this->chatType() == CHATTYPE_GXSONE2ONE )
+    {
+        //need to filter the contact nick and owner nick from the groupname: goku|meiyousixin
+        QString ownerNick = title.left(title.indexOf("|"));
+        QString contactNick = title.right(title.indexOf("|"));
+
+        QString thisContactNick  = QString::fromStdString(rsPeers->getPeerName(rsPeers->getOwnId()));
+        if (thisContactNick == contactNick)
+            ui->titleLabel->setText(RsHtml::plainText(ownerNick));
+        else
+            ui->titleLabel->setText(RsHtml::plainText(contactNick));
+
+    }
 
 }
 

@@ -38,6 +38,7 @@
 #include "retroshare/rsgxscircles.h"
 
 #include "util/HandleRichText.h"
+#include "retroshare/rspeers.h"
 
 
 #define IMAGE_PUBLIC          ":/chat/img/groundchat.png"               //copy from ChatLobbyWidget
@@ -185,6 +186,7 @@ QVariant UnseenGxsSmartListModel::data(const QModelIndex &index, int role) const
         else if (gxsChatItem.type == RsGxsChatGroup::ONE2ONE)
         {
             //avatar = get avatar for that contact here
+            avatar = QImage(IMAGE_PRIVATE);
         }
 
 
@@ -284,8 +286,30 @@ QVariant UnseenGxsSmartListModel::data(const QModelIndex &index, int role) const
             case Role::DisplayName:
             case Qt::DisplayRole:
             {
-                return QVariant(QString::fromStdString(gxsChatItem.mMeta.mGroupName));
-                //return QVariant(chatItem.name);
+                if (gxsChatItem.type == RsGxsChatGroup::ONE2ONE)
+                {
+                    QString groupname = QString::fromStdString(gxsChatItem.mMeta.mGroupName);
+                    QString ownerNick = groupname.left(groupname.indexOf("|"));
+                    QString contactNick = groupname.right(groupname.indexOf("|"));
+
+                    //create goku()meiyousixin, ownerNick = goku, contactNick = meiyousixin
+                    //on goku: thisContactNick = goku, check if (goku == contactNick(=meiyousixin) --> return meiyousixin
+                    //on meiyousixin: thisContactNick = meiyousixin, check if meiyousixin == contactNick(meiyousixin) --> return goku
+
+                    QString thisContactNick  = QString::fromStdString(rsPeers->getPeerName(rsPeers->getOwnId()));
+
+                    std::cerr << "one2one groupname is: " << groupname.toStdString() << std::endl;
+                    std::cerr << "ownerNick is: " << ownerNick.toStdString() << std::endl;
+                    std::cerr << "contactNick  is: " << contactNick.toStdString() << std::endl;
+                    std::cerr << "thisContactNick  is: " << thisContactNick.toStdString() << std::endl;
+
+                    if (thisContactNick == contactNick )
+                        return QVariant(ownerNick);
+                    else
+                        return QVariant(contactNick);
+                }
+                else
+                    return QVariant(QString::fromStdString(gxsChatItem.mMeta.mGroupName));
             }
             case Role::DisplayID:
             {

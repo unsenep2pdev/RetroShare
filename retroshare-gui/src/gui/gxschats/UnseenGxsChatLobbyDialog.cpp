@@ -102,7 +102,6 @@ UnseenGxsChatLobbyDialog::UnseenGxsChatLobbyDialog( const RsGxsGroupId& id, QWid
     connect(ui.filterLineEdit, SIGNAL(textChanged(QString)), this, SLOT(filterChanged(QString)));
 
     //notify when receive the gxschat typing
-    //QObject::connect(NotifyQt::getInstance(), SIGNAL(notifyReceiveGxsChatTyping(const RsGxsGroupId, const QString, const RsPeerId, const RsGxsId)), this, SLOT(updateReceiveGxsChatTyping(const RsGxsGroupId, const QString, const RsPeerId, const RsGxsId)));
     QObject::connect(NotifyQt::getInstance(), SIGNAL(notifyReceiveGxsChatTyping3(const QString, const RsPeerId, const RsGxsId)), this, SLOT(updateReceiveGxsChatTyping3( const QString, const RsPeerId, const RsGxsId)));
 
     //Hide Search list
@@ -460,11 +459,18 @@ void UnseenGxsChatLobbyDialog::showInPeopleTab()
     idDialog->navigate(nickname);
 }
 
+gxsChatId UnseenGxsChatLobbyDialog::getGxsChatId()
+{
+    return  gxsChat_Id;
+}
+
 void UnseenGxsChatLobbyDialog::init(const gxsChatId &id, const QString &/*title*/)
 {
     ChatLobbyInfo linfo ;
 
     QString title;
+
+    gxsChat_Id = id;
 
     //TODO:  use id (gxsChatId) to get the gxsGroupChat Info: replace this by gxs groupchat function
 
@@ -514,6 +520,20 @@ void UnseenGxsChatLobbyDialog::init(const gxsChatId &id, const QString &/*title*
 
     /** List of muted Participants */
     mutedParticipants.clear() ;
+
+    if(gxsChat_Id.gxsChatType == RsGxsChatGroup::ONE2ONE)
+    {
+        inviteFriendsButton->hide();
+        unsubscribeButton->hide();
+        membersListButton->hide();
+        membersListButton2->hide();
+    }
+    else
+    {
+        inviteFriendsButton->show();
+        unsubscribeButton->show();
+
+    }
 
     //try to update the member status on member list
     updateParticipantsList();
@@ -1185,16 +1205,6 @@ void UnseenGxsChatLobbyDialog::filterIds()
     ui.participantsList->filterItems(filterColumn, text);
 }
 
-
-void UnseenGxsChatLobbyDialog::updateReceiveGxsChatTyping(const RsGxsGroupId groupId, const QString nickname, const RsPeerId sslId, const RsGxsId gxsId)
-{
-    QString status = nickname  + " is typing...";
-    ui.chatWidget->updateStatusString(nickname + " %1", "is typing...");
-
-    ui.chatWidget->updateCustomStateStringInGroup(status, false);
-
-}
-
 void UnseenGxsChatLobbyDialog::updateReceiveGxsChatTyping3(const QString nickname,  const RsPeerId sslId, const RsGxsId gxsId)
 {
     QString status = nickname  + " is typing...";
@@ -1204,14 +1214,6 @@ void UnseenGxsChatLobbyDialog::updateReceiveGxsChatTyping3(const QString nicknam
 
 }
 
-void UnseenGxsChatLobbyDialog::updateReceiveGxsChatTyping2(const QString nickname)
-{
-    QString status = nickname + " is typing...";
-    ui.chatWidget->updateStatusString(nickname + " %1", "is typing...");
-
-    ui.chatWidget->updateCustomStateStringInGroup(status, false);
-
-}
 //////////////////////////////////////////////////////////////////////////////////////////////////
 /// ALL FROM RsGxsUpdateBroadcastWidget                                                       ////
 //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1360,6 +1362,18 @@ void UnseenGxsChatLobbyDialog::GxsMessageFrameWidgetloadRequest(const TokenQueue
 ///     ALL  from GxsUpdateBroadcastWidget
 /////////////////////////////////////////////////////////////////////////////////////////////
 
+static QString filterContactFromGroupname(QString groupname)
+{
+    QString ownerNick = groupname.left(groupname.indexOf("|"));
+    QString contactNick = groupname.right(groupname.indexOf("|"));
+    QString thisContactNick  = QString::fromStdString(rsPeers->getPeerName(rsPeers->getOwnId()));
+
+    if (thisContactNick == contactNick )
+        return ownerNick;
+    else
+        return contactNick;
+}
+
 //COPY from GxsUpdateBroadcastWidget
 void sortGxsMsgChat(std::vector<RsGxsChatMsg> &list)
 {
@@ -1470,10 +1484,29 @@ void UnseenGxsChatLobbyDialog::insertGxsChatPosts(std::vector<RsGxsChatMsg> &pos
 
         if(incomming && msgType == ChatWidget::MSGTYPE_NORMAL)
         {
-            if(notifyMsg.length() > 30)
-                MainWindow::displayLobbySystrayMsg(tr("Group chat") + ": " + mGroupName, notifyMsg.left(30) + QString("..."));
-            else
-                MainWindow::displayLobbySystrayMsg(tr("Group chat") + ": " + mGroupName, notifyMsg);
+            if(gxsChat_Id.gxsChatType == RsGxsChatGroup::GROUPCHAT)
+            {
+                if(notifyMsg.length() > 30)
+                    MainWindow::displayLobbySystrayMsg(tr("Group chat") + ": " + mGroupName, notifyMsg.left(30) + QString("..."));
+                else
+                    MainWindow::displayLobbySystrayMsg(tr("Group chat") + ": " + mGroupName, notifyMsg);
+            }
+            else if (gxsChat_Id.gxsChatType == RsGxsChatGroup::CHANNEL)
+            {
+                if(notifyMsg.length() > 30)
+                    MainWindow::displayLobbySystrayMsg(tr("Channel") + ": " + mGroupName, notifyMsg.left(30) + QString("..."));
+                else
+                    MainWindow::displayLobbySystrayMsg(tr("Channel") + ": " + mGroupName, notifyMsg);
+            }
+            else if (gxsChat_Id.gxsChatType == RsGxsChatGroup::ONE2ONE)
+            {
+                QString notifyMsg2 = editor.toPlainText();
+                if(notifyMsg2.length() > 30)
+                    MainWindow::displayLobbySystrayMsg(nickname, notifyMsg2.left(30) + QString("..."));
+                else
+                    MainWindow::displayLobbySystrayMsg(nickname, notifyMsg2);
+            }
+
         }
 
         //updateParticipantsList();

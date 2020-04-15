@@ -1562,7 +1562,10 @@ void UnseenGxsGroupFrameDialog::selectConversation(const QModelIndex& index)
 
     mGroupId = gxsChatGroupItem.mMeta.mGroupId; // RsGxsGroupId(gxsGroupItem.id.toStdString());
 
-    showGxsGroupChatMVC(gxsChatId(mGroupId));
+    gxsChatId gxschatId(mGroupId);
+    gxschatId.gxsChatType = gxsChatGroupItem.type;
+
+    showGxsGroupChatMVC(gxschatId);
 
     //check if this is the filtered search mode, just return to normal mode
     if (getConversationListMode() == GXSCONVERSATION_MODE_WITH_SEARCH_FILTER)
@@ -1883,16 +1886,6 @@ void UnseenGxsGroupFrameDialog::updateGxsMsgNotify(RsGxsChatMsg gxsChatMsg, gxsC
         rsGxsChats->setMessageReadStatus(token, msgPair, gxsChatMsg.mMsg, true);
     }
 }
-
-//void UnseenGxsGroupFrameDialog::updateGxsMsgTyping(const RsGxsGroupId& groupId, const QString nickname, const RsPeerId& sslId, const RsGxsId& gxsId)
-//{
-//    //QMessageBox::warning(NULL, "UnseenP2P", "Yes, someone is typing....");
-
-//    if(_unseenGxsGroup_infos.find(groupId) != _unseenGxsGroup_infos.end())
-//    {
-//        _unseenGxsGroup_infos[groupId].dialog->updateReceiveGxsChatTyping(groupId,nickname, sslId, gxsId);
-//    }
-//}
 
 
 bool UnseenGxsGroupFrameDialog::isGroupIdInGxsConversationList(std::string uId)

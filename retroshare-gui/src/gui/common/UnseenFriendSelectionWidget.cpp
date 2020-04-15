@@ -290,8 +290,8 @@ void UnseenFriendSelectionWidget::loadRequest(const TokenQueue */*queue*/, const
             std::list<RsPgpId>::iterator it2 = std::find(pgpList.begin(), pgpList.end(), datavector[i].mPgpId);
             if(it2 != pgpList.end())
                 gxsIds.push_back(datavector[i].mMeta.mGroupId) ;
-            else
-                std::cerr << "My RsGxsGroupId = " << datavector[i].mMeta.mGroupId << std::endl;
+//            else
+//                std::cerr << "My RsGxsGroupId = " << datavector[i].mMeta.mGroupId << std::endl;
         }
 
         //if mode is invited so need to remove from gxsIds those the existing members in member list

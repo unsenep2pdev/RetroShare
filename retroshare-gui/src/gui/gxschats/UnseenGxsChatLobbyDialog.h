@@ -85,10 +85,7 @@ public:
     void updateTitle(QString title);
 public slots:
     //unseenp2p - gxschat typing slot
-    void updateReceiveGxsChatTyping(const RsGxsGroupId groupId, const QString nickname, const RsPeerId sslId, const RsGxsId gxsId) ;
     void updateReceiveGxsChatTyping3( const QString nickname, const RsPeerId sslId, const RsGxsId gxsId) ;
-
-    void updateReceiveGxsChatTyping2( const QString nickname) ;
 
 private slots:
 	void participantsTreeWidgetCustomPopupMenu( QPoint point );
@@ -147,7 +144,9 @@ private:
 	
 	ChatLobbyId lobbyId;
 	//meiyousixin - add this one to identify the chat id
-	ChatId cId;
+    ChatId cId;           //for old chat
+    gxsChatId gxsChat_Id; //for gxs chat (new chat)
+
 	QString _lobby_name ;
 	time_t lastUpdateListTime;
 
@@ -228,6 +227,7 @@ private:
 
 public:
 
+    gxsChatId getGxsChatId();
     const RsGxsGroupId &groupId();  //need to consider with the
     void setGroupId(const RsGxsGroupId &groupId);
     void setAllMessagesRead(bool read);

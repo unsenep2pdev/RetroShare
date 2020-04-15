@@ -78,6 +78,7 @@ public:
 	enum MsgType { MSGTYPE_NORMAL, MSGTYPE_HISTORY, MSGTYPE_OFFLINE, MSGTYPE_SYSTEM };
     //Unseenp2p - add more 3 types of Chattypes: GXSGROUPCHAT, GXSONE2ONE, GXSCHANNEL
     enum ChatType { CHATTYPE_UNKNOWN, CHATTYPE_PRIVATE, CHATTYPE_LOBBY, CHATTYPE_DISTANT, CHATTYPE_GXSGROUPCHAT, CHATTYPE_GXSONE2ONE, CHATTYPE_GXSCHANNEL };
+    enum RsGxsChatGroup::ChatType gxsChatType;
 
 	explicit ChatWidget(QWidget *parent = 0);
 	~ChatWidget();
@@ -86,6 +87,8 @@ public:
     //unseenp2p
     void init(const gxsChatId &chat_id, const QString &title);
 
+    void setGxsChatType(RsGxsChatGroup::ChatType gxsChatType);
+    RsGxsChatGroup::ChatType getGxsChatType();
     ChatId getChatId();
     ChatType chatType();
 

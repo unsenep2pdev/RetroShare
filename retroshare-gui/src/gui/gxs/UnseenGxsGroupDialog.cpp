@@ -495,27 +495,27 @@ bool UnseenGxsGroupDialog::prepareGroupMetaData(RsGroupMetaData &meta)
     std::cerr << "UnseenGxsGroupDialog::prepareGroupMetaData()";
 	std::cerr << std::endl;
 
-    QString name;
-    if(chatType!= RsGxsChatGroup::ONE2ONE)
-    {
-        name = getName();
-    }
-    else
-    {
-        RsPeerDetails detail;
-        for(std::set<RsPeerId>::const_iterator it(mShareFriends.begin());it!=mShareFriends.end();++it)
-        {
-            if (rsPeers->getPeerDetails( *it, detail))
-            {
-                name = QString::fromStdString(detail.name);
-                break;
-                //QMessageBox::warning(this, "UnseenP2P", tr("You want to chat with ") + name, QMessageBox::Ok, QMessageBox::Ok);
-            }
-        }
-    }
+//    QString name;
+//    if(chatType!= RsGxsChatGroup::ONE2ONE)
+//    {
+//        name = getName();
+//    }
+//    else
+//    {
+//        RsPeerDetails detail;
+//        for(std::set<RsPeerId>::const_iterator it(mShareFriends.begin());it!=mShareFriends.end();++it)
+//        {
+//            if (rsPeers->getPeerDetails( *it, detail))
+//            {
+//                name = QString::fromStdString(detail.name);
+//                break;
+//                //QMessageBox::warning(this, "UnseenP2P", tr("You want to chat with ") + name, QMessageBox::Ok, QMessageBox::Ok);
+//            }
+//        }
+//    }
 
 
-    if(chatType!= RsGxsChatGroup::ONE2ONE && name.isEmpty()) {
+    if(chatType!= RsGxsChatGroup::ONE2ONE && meta.mGroupName.length() == 0) {
         std::cerr << "UnseenGxsGroupDialog::prepareGroupMetaData()";
 		std::cerr << " Invalid GroupName";
 		std::cerr << std::endl;
@@ -523,7 +523,7 @@ bool UnseenGxsGroupDialog::prepareGroupMetaData(RsGroupMetaData &meta)
 	}
 
 	// Fill in the MetaData as best we can.
-	meta.mGroupName = std::string(name.toUtf8());
+    //meta.mGroupName = std::string(name.toUtf8());
     meta.mSignFlags = getGroupSignFlags();
 
 
@@ -588,6 +588,22 @@ void UnseenGxsGroupDialog::createGroup()
             QMessageBox::warning(this, "UnseenP2P", tr("Please choose only one contact for chat"), QMessageBox::Ok, QMessageBox::Ok);
             return;
         }
+        std::set<RsPgpId>::iterator it;
+        std::string contactNick;
+        for (it = gpgIds.begin(); it != gpgIds.end(); ++it)
+        {
+            RsPeerDetails detail;
+
+            if (rsPeers->getGPGDetails(*it, detail))
+            {
+                contactNick = detail.name;
+                break;
+            }
+        }
+        std::string thisContactNick  = rsPeers->getPeerName(rsPeers->getOwnId());
+        name = QString::fromStdString(thisContactNick) + "|" + QString::fromStdString(contactNick) ;
+
+        std::cerr << "Create one2one groupname is: " << name.toStdString() << std::endl;
     }
 
     //Begin to create gxsgroup for 3 types: one2one chat, groupchat (private or public), and channel
@@ -596,6 +612,9 @@ void UnseenGxsGroupDialog::createGroup()
      *      meta.mGroupFlags = flags = FLAG_PRIVACY_PUBLIC = 0x00000004; // anyone can publish, publish key pair not needed.
      *      + With one2one we just keep the group name as contact name, then the backend will can change then
      *      + One2one chat is private groupchat with 2 members, no bounce, no invite
+     *          meta.mInternalCircle:
+     *          + private ( GXS_CIRCLE_TYPE_YOUR_FRIENDS_ONLY)
+
      *  Groupchat:
      *      meta.mGroupFlags = flags = FLAG_PRIVACY_PUBLIC = 0x00000004; // anyone can publish, publish key pair not needed.
      *      meta.mInternalCircle:
@@ -621,6 +640,7 @@ void UnseenGxsGroupDialog::createGroup()
 
     if(!rsPeers->addGroup(groupInfo, true))
     {
+        QMessageBox::warning(this, "UnseenP2P", tr("Can not create group because the app can not create local group circle "), QMessageBox::Ok, QMessageBox::Ok);
         return;
     }
 
@@ -663,9 +683,11 @@ void UnseenGxsGroupDialog::createGroup()
              meta.mCircleType = GXS_CIRCLE_TYPE_PUBLIC;
          }
     }
+
     meta.mInternalCircle = RsGxsCircleId(groupInfo.id);
     meta.mGroupFlags = flags;
     meta.mSignFlags = getGroupSignFlags();
+    meta.mGroupName = name.toStdString();
     std::list<RsGxsId> ownIds;
     rsIdentity->getOwnIds(ownIds);
     if(!ownIds.empty())
