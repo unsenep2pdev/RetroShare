@@ -564,7 +564,35 @@ void UnseenGxsGroupDialog::createGroup()
     ui.keyShareList->selectedIds<RsGxsId, UnseenFriendSelectionWidget::IDTYPE_GXS>(gxsFriends, false);
     ui.keyShareList->getSelectedContacts(mSelectedList);
 
-    //ui.keyShareList->selectedIds<RsPeerId,FriendSelectionWidget::IDTYPE_SSL>(mShareFriends, false);
+    //Begin to create gxsgroup for 3 types: one2one chat, groupchat (private or public), and channel
+    /*
+     *  One2one chat:
+     *      meta.mGroupFlags = flags = FLAG_PRIVACY_PUBLIC = 0x00000004; // anyone can publish, publish key pair not needed.
+     *      + With one2one we just keep the group name as contact name, then the backend will can change then
+     *      + One2one chat is private groupchat with 2 members, no bounce, no invite
+     *          meta.mInternalCircle:
+     *          + private ( GXS_CIRCLE_TYPE_YOUR_FRIENDS_ONLY)
+     *      + meta.mGroupName = Goku|meiyousixin,
+     *      + group node name = GxsId of contact
+     *    BEFORE creating ONE2ONE chat: need to check if existing that ONE2ONE chat with that contact:
+     *    checkExistingOne2OneChat(pgpId), if true, than switch to the existing window, if not, continue to create.
+
+     *  Groupchat:
+     *      meta.mGroupFlags = flags = FLAG_PRIVACY_PUBLIC = 0x00000004; // anyone can publish, publish key pair not needed.
+     *      meta.mInternalCircle:
+     *         + private ( GXS_CIRCLE_TYPE_YOUR_FRIENDS_ONLY)
+               + public ( GXS_CIRCLE_TYPE_PUBLIC)
+
+     *
+     * Channel:
+     *      meta.mGroupFlags = flags =FLAG_PRIVACY_RESTRICTED = 0x00000002; // publish private key needed to publish. Typical usage: channels.
+            meta.mInternalCircle:
+     *         + private ( GXS_CIRCLE_TYPE_YOUR_FRIENDS_ONLY)
+               + public ( GXS_CIRCLE_TYPE_PUBLIC)
+           - allow comments
+           - not allow comments
+
+     */
 
 	/* Check name */
 	QString name = getName();
@@ -590,12 +618,14 @@ void UnseenGxsGroupDialog::createGroup()
         }
         std::set<RsPgpId>::iterator it;
         std::string contactNick;
+        RsPgpId contactPgpId;
         for (it = gpgIds.begin(); it != gpgIds.end(); ++it)
         {
             RsPeerDetails detail;
 
             if (rsPeers->getGPGDetails(*it, detail))
             {
+                contactPgpId = (*it);
                 contactNick = detail.name;
                 break;
             }
@@ -604,38 +634,30 @@ void UnseenGxsGroupDialog::createGroup()
         name = QString::fromStdString(thisContactNick) + "|" + QString::fromStdString(contactNick) ;
 
         std::cerr << "Create one2one groupname is: " << name.toStdString() << std::endl;
+        //need to check the gxs One2One chat existing or not?
+        if(rsPeers->checkExistingOne2OneChat(contactPgpId))
+        {
+            QMessageBox::warning(this, "UnseenP2P", tr("This conversation with this contact already existed, just enter the existing conversation to chat."), QMessageBox::Ok, QMessageBox::Ok);
+            //enter to the existing conversation because it was already created
+            close();
+            return;
+        }
     }
-
-    //Begin to create gxsgroup for 3 types: one2one chat, groupchat (private or public), and channel
-    /*
-     *  One2one chat:
-     *      meta.mGroupFlags = flags = FLAG_PRIVACY_PUBLIC = 0x00000004; // anyone can publish, publish key pair not needed.
-     *      + With one2one we just keep the group name as contact name, then the backend will can change then
-     *      + One2one chat is private groupchat with 2 members, no bounce, no invite
-     *          meta.mInternalCircle:
-     *          + private ( GXS_CIRCLE_TYPE_YOUR_FRIENDS_ONLY)
-
-     *  Groupchat:
-     *      meta.mGroupFlags = flags = FLAG_PRIVACY_PUBLIC = 0x00000004; // anyone can publish, publish key pair not needed.
-     *      meta.mInternalCircle:
-     *         + private ( GXS_CIRCLE_TYPE_YOUR_FRIENDS_ONLY)
-               + public ( GXS_CIRCLE_TYPE_PUBLIC)
-
-     *
-     * Channel:
-     *      meta.mGroupFlags = flags =FLAG_PRIVACY_RESTRICTED = 0x00000002; // publish private key needed to publish. Typical usage: channels.
-            meta.mInternalCircle:
-     *         + private ( GXS_CIRCLE_TYPE_YOUR_FRIENDS_ONLY)
-               + public ( GXS_CIRCLE_TYPE_PUBLIC)
-           - allow comments
-           - not allow comments
-
-     */
-
 
     RsGroupInfo groupInfo;
     groupInfo.id.clear(); // RS will generate an ID
-    groupInfo.name = name.toStdString();
+     if (!ui.typeOne2One->isChecked())
+            groupInfo.name = name.toStdString();
+     else if(ui.typeOne2One->isChecked())
+     {
+         std::set<RsGxsId>::iterator it;
+         std::string contactNick;
+          for (it = gxsFriends.begin(); it != gxsFriends.end(); ++it)
+          {
+              groupInfo.name = (*it).toStdString();
+              break;
+          }
+     }
     groupInfo.type = groupType;
 
     if(!rsPeers->addGroup(groupInfo, true))

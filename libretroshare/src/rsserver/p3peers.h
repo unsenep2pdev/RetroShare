@@ -152,6 +152,8 @@ public:
     virtual bool getGroupInfoList(std::list<RsGroupInfo> &groupInfoList);
     virtual bool assignPeerToGroup(const RsNodeGroupId &groupId, const RsPgpId &peerId, bool assign);
     virtual bool assignPeersToGroup(const RsNodeGroupId &groupId, const std::list<RsPgpId>& peerIds, bool assign);
+    virtual bool checkExistingOne2OneChat(const RsPgpId& pgpId);
+    virtual bool addGroupWithId(RsGroupInfo &groupInfo, bool hide);
 
     virtual FileSearchFlags computePeerPermissionFlags(const RsPeerId& peer_id, FileStorageFlags share_flags, const std::list<RsNodeGroupId> &parent_groups);
 

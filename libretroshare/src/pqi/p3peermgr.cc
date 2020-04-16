@@ -2602,6 +2602,32 @@ void  printConnectState(std::ostream &out, peerState &peer)
  **********************************************************************
  **********************************************************************/
 
+//unseenp2p: add this one for create local group node on the member side (publisher) when syncing group from admin
+bool p3PeerMgrIMPL::addGroupWithId(RsGroupInfo &groupInfo, bool hide)
+{
+    {
+        RsStackMutex stack(mPeerMtx); /****** STACK LOCK MUTEX *******/
+
+        //do { groupInfo.id = RsNodeGroupId::random(); } while(groupList.find(groupInfo.id) != groupList.end()) ;
+
+        RsGroupInfo groupItem(groupInfo) ;
+
+        // remove standard flag
+
+        groupItem.flag &= ~RS_GROUP_FLAG_STANDARD;
+        if (hide) groupItem.flag |= RS_GROUP_FLAG_HIDE;
+        groupList[groupInfo.id] = groupItem;
+
+        std::cerr << "(II) Added new group with ID " << groupInfo.id << ", name=\"" << groupInfo.name << "\"" << std::endl;
+    }
+
+    RsServer::notify()->notifyListChange(NOTIFY_LIST_GROUPLIST, NOTIFY_TYPE_ADD);
+
+    IndicateConfigChanged();
+
+    return true;
+}
+
 bool p3PeerMgrIMPL::addGroup(RsGroupInfo &groupInfo, bool hide)
 {
 	{
@@ -2748,6 +2774,21 @@ bool p3PeerMgrIMPL::getGroupInfoList(std::list<RsGroupInfo>& groupInfoList)
 		groupInfoList.push_back(groupIt->second) ;
 
 	return true;
+}
+
+bool p3PeerMgrIMPL::checkExistingOne2OneChat(const RsPgpId& pgpId)
+{
+    RsStackMutex stack(mPeerMtx); /****** STACK LOCK MUTEX *******/
+
+    for(std::map<RsNodeGroupId,RsGroupInfo>::iterator it = groupList.begin();it!=groupList.end();++it)
+    {
+        if(it->second.type == it->second.ONE2ONE && it->second.peerIds.find(pgpId) != it->second.peerIds.end())
+        {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 // groupId.isNull() && assign == false -> remove from all groups

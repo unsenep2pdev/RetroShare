@@ -671,6 +671,8 @@ public:
 	 */
     virtual bool addGroup(RsGroupInfo& groupInfo, bool hide) = 0;
 
+    virtual bool addGroupWithId(RsGroupInfo &groupInfo, bool hide) = 0;
+
 	/**
 	 * @brief editGroup edit an existing group
 	 * @jsonapi{development}
@@ -714,6 +716,15 @@ public:
 	 */
     virtual bool getGroupInfoList(std::list<RsGroupInfo>& groupInfoList) = 0;
 
+    /**
+     * @brief checkExistingOne2OneChat add a peer to a group
+     * @jsonapi{development}
+     * @param[in] pgpId
+     * @return
+     */
+    virtual bool    checkExistingOne2OneChat(const RsPgpId& pgpId) = 0;
+
+
 	// groupId == "" && assign == false -> remove from all groups
 	/**
 	 * @brief assignPeerToGroup add a peer to a group
@@ -723,6 +734,7 @@ public:
 	 * @param[in] assign true to assign a peer, false to remove a peer
 	 * @return
 	 */
+
     virtual bool assignPeerToGroup(const RsNodeGroupId& groupId, const RsPgpId& peerId, bool assign) = 0;
 
 	/**

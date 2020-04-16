@@ -45,6 +45,8 @@
 #include "gui/gxschats/UnseenGxsSmartListView.h"
 #include "gui/UnseenGxsConversationitemdelegate.h"
 
+#include "retroshare/rspeers.h"
+
 //#define DEBUG_GROUPFRAMEDIALOG 1
 
 /* Images for TreeWidget */
@@ -1155,16 +1157,63 @@ void UnseenGxsGroupFrameDialog::insertGroupsData2(const std::map<RsGxsGroupId,Rs
     mInFill = true;
     std::cerr << std::endl;
     allGxsChatGroupList.clear();
-    for (auto it = groupList.begin(); it != groupList.end(); ++it) {
+    for (auto it = groupList.begin(); it != groupList.end(); ++it)
+    {
         /* sort it into Publish (Own), Subscribed, Popular and Other */
         uint32_t flags = it->second.mMeta.mSubscribeFlags;
 
-        if (IS_GROUP_SUBSCRIBED(flags))
+        RsGxsChatGroup groupChat = it->second;
+        bool isAdmin      = IS_GROUP_ADMIN(it->second.mMeta.mSubscribeFlags);
+        bool isPublisher  = IS_GROUP_PUBLISHER(it->second.mMeta.mSubscribeFlags);
+        bool isSubscribed = IS_GROUP_SUBSCRIBED(it->second.mMeta.mSubscribeFlags);
+
+        if( !isAdmin && isSubscribed)
+        {
+            std::cerr << " This group is publisher, not admin:" << it->second.mMeta.mGroupName << std::endl;
+            //need to create local nodegroupId for all private and one2one chat so that it can sync properly
+            if(it->second.type == RsGxsChatGroup::ONE2ONE ||  (it->second.type == RsGxsChatGroup::GROUPCHAT  && it->second.mMeta.mCircleType == GXS_CIRCLE_TYPE_YOUR_FRIENDS_ONLY))
+            {
+                RsGroupInfo groupInfo2;
+                //if we can not find the group name with the mGroupId, so we need to create a local group node with name = mGroupId
+                if(!rsPeers->getGroupInfoByName(it->second.mMeta.mGroupId.toStdString(), groupInfo2))
+                {
+                    RsGroupInfo groupInfo;
+                    groupInfo.id = RsNodeGroupId(it->second.mMeta.mGroupId); // RsNodeGroupId(it->second.mMeta.mInternalCircle); //.clear(); // RS will generate an ID
+                    groupInfo.name = it->second.mMeta.mGroupId.toStdString();
+                    groupInfo.type =it->second.type == RsGxsChatGroup::ONE2ONE? RsGroupInfo::ONE2ONE : RsGroupInfo::GROUPCHAT;
+
+                    //create local groupnode and add this group to the groupnode list in the local here:
+                    if(!rsPeers->addGroupWithId(groupInfo, true))
+                    {
+                        std::cerr << " Can not create local group node for this group chat on member side." << std::endl;
+                        return;
+                    }
+                    std::set<RsPgpId> pgpIds;
+                    //get all PgpId from the member list of this group
+                    for(std::set<GxsChatMember>::iterator it2 = it->second.members.begin(); it2 != it->second.members.end(); ++it2)
+                    {
+                        RsPeerDetails detail;
+                        if (rsPeers->getPeerDetails((*it2).chatPeerId, detail))
+                        {
+                            pgpIds.insert(detail.gpg_id);
+                        }
+                    }
+                    std::set<RsPgpId>::iterator it;
+                    for (it = pgpIds.begin(); it != pgpIds.end(); ++it) {
+                        rsPeers->assignPeerToGroup(groupInfo.id, *it, true);
+                    }
+                }
+
+            }
+        }
+
+        //after customizing the RsGxsChatGroup we can to add it into the allGxsChatGroupList
+        if (isSubscribed)
         {
              allGxsChatGroupList.push_back(it->second);
         }
-    }
 
+    }
     // We can update to MVC GUI here from the all list, need to check whenever will update the GUI,
     // if not it will refresh the list very frequently and work wrong (for ex. clear the unread number)!
     //if(!isRunOnlyOnce)

@@ -1373,6 +1373,13 @@ bool p3Peers::addGroup(RsGroupInfo &groupInfo, bool hide)
 		  return res ;
 }
 
+bool p3Peers::addGroupWithId(RsGroupInfo &groupInfo, bool hide)
+{
+    bool res = mPeerMgr->addGroupWithId(groupInfo, hide);
+    rsFiles->updateSinceGroupPermissionsChanged() ;
+    return res ;
+}
+
 bool p3Peers::editGroup(const RsNodeGroupId &groupId, RsGroupInfo &groupInfo)
 {
 #ifdef P3PEERS_DEBUG
@@ -1420,6 +1427,11 @@ bool p3Peers::getGroupInfoList(std::list<RsGroupInfo> &groupInfoList)
 #endif
 
 	return mPeerMgr->getGroupInfoList(groupInfoList);
+}
+
+bool p3Peers::checkExistingOne2OneChat(const RsPgpId& pgpId)
+{
+    return mPeerMgr->checkExistingOne2OneChat(pgpId);
 }
 
 bool p3Peers::assignPeerToGroup(const RsNodeGroupId &groupId, const RsPgpId& peerId, bool assign)
