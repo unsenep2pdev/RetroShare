@@ -283,6 +283,24 @@ ChatWidget::~ChatWidget()
 	delete ui;
 }
 
+static QString getHumanReadableDuration(uint32_t seconds)
+{
+    if(seconds < 60)
+        return QString(QObject::tr("%1 seconds ago")).arg(seconds) ;
+    else if(seconds < 120)
+        return QString(QObject::tr("%1 minute ago")).arg(seconds/60) ;
+    else if(seconds < 3600)
+        return QString(QObject::tr("%1 minutes ago")).arg(seconds/60) ;
+    else if(seconds < 7200)
+        return QString(QObject::tr("%1 hour ago")).arg(seconds/3600) ;
+    else if(seconds < 24*3600)
+        return QString(QObject::tr("%1 hours ago")).arg(seconds/3600) ;
+    else if(seconds < 2*24*3600)
+        return QString(QObject::tr("%1 day ago")).arg(seconds/86400) ;
+    else
+        return QString(QObject::tr("%1 days ago")).arg(seconds/86400) ;
+}
+
 void ChatWidget::setDefaultExtraFileFlags(TransferRequestFlags fl)
 {
 	mDefaultExtraFileFlags = fl ;
@@ -1510,21 +1528,49 @@ QString ChatWidget::getStatusForThisGroup()
     std::vector<RsGxsChatGroup> chatInfos;
     int memberNumber = 2;
     int count = 0;
+    QString text;
     if (rsGxsChats->getChatsInfo(groupIdList, chatInfos))
     {
         if(chatInfos.size() > 0)
         {
-            memberNumber = (int) chatInfos[0].members.size();
-
-            for(std::set<GxsChatMember>::iterator it = chatInfos[0].members.begin(); it != chatInfos[0].members.end(); ++it)
+            if(chatInfos[0].type == RsGxsChatGroup::ONE2ONE)
             {
-                  if((*it).chatPeerId != rsPeers->getOwnId() && rsPeers->isOnline( (*it).chatPeerId)) ++count;
-            }
+                RsGxsId gxsId;
+                for(std::set<GxsChatMember>::iterator it = chatInfos[0].members.begin(); it != chatInfos[0].members.end(); ++it)
+                {
+                      if((*it).chatPeerId != rsPeers->getOwnId())
+                      {
+                            gxsId = (*it).chatGxsId  ;
+                            break;
+                      }
+                }
+                RsIdentityDetails detail;
+                QString lastMsgStatus  = "last seen ";
+                if (!gxsId.isNull() && !rsIdentity->getIdDetails(gxsId, detail))
+                {
+                   text = lastMsgStatus + "long time ago";
+                }
+                else
+                {
+                    time_t now = time(NULL) ;
+                    lastMsgStatus += getHumanReadableDuration(now - detail.mLastUsageTS) ;
+                    text = lastMsgStatus;
+                }
 
+            }
+            else
+            {
+                memberNumber = (int) chatInfos[0].members.size();
+                for(std::set<GxsChatMember>::iterator it = chatInfos[0].members.begin(); it != chatInfos[0].members.end(); ++it)
+                {
+                      if((*it).chatPeerId != rsPeers->getOwnId() && rsPeers->isOnline( (*it).chatPeerId)) ++count;
+                }
+
+                text = QString("%1 members, %2 online").arg(memberNumber).arg(count+1);
+            }
         }
     }
 
-    QString text = QString("%1 members, %2 online").arg(memberNumber).arg(count+1);
     return text;
 }
 
@@ -2383,7 +2429,7 @@ void ChatWidget::updateCustomStateStringInGroup( const QString& status_string, b
     ui->statusLabel->setAlignment ( Qt::AlignVCenter );
 
     if(!permanent)
-        QTimer::singleShot(5000, this, SLOT(resetStatusStringInGroup())) ;
+        QTimer::singleShot(3000, this, SLOT(resetStatusStringInGroup())) ;
 }
 
 void ChatWidget::updateStatusString(const QString &statusMask, const QString &statusString, bool permanent)
@@ -2398,7 +2444,7 @@ void ChatWidget::updateStatusString(const QString &statusMask, const QString &st
 	}
 
     if(!permanent)
-        QTimer::singleShot(5000, this, SLOT(resetStatusBar())) ;
+        QTimer::singleShot(3000, this, SLOT(resetStatusBar())) ;
 }
 
 void ChatWidget::setName(const QString &name)
