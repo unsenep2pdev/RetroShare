@@ -1885,6 +1885,14 @@ void UnseenGxsGroupFrameDialog::unsubscribeGxsGroupChat(RsGxsGroupId id)
 
     uint32_t token;
     mInterface->subscribeToGroup(token, id, false);
+
+    //leave and delete private group/one2one: remove the local group node with the name = groupId
+    RsGroupInfo groupInfo;
+    if(rsPeers->getGroupInfoByName(id.toStdString(), groupInfo))
+    {
+        rsPeers->removeGroup(groupInfo.id);
+    }
+
     removeGxsChatGroup(id);
     smartListModel_->setGxsChatGroupList(allGxsChatGroupList);
     emit ui->unseenGroupTreeWidget->model()->layoutChanged();
