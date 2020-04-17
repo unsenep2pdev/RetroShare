@@ -2610,6 +2610,9 @@ bool p3PeerMgrIMPL::addGroupWithId(RsGroupInfo &groupInfo, bool hide)
 
         //do { groupInfo.id = RsNodeGroupId::random(); } while(groupList.find(groupInfo.id) != groupList.end()) ;
 
+//        if(groupList.find(groupInfo.id) != groupList.end())
+//            return false; //groupId is already exist.
+
         RsGroupInfo groupItem(groupInfo) ;
 
         // remove standard flag

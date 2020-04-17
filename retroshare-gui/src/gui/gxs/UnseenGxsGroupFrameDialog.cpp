@@ -1178,7 +1178,8 @@ void UnseenGxsGroupFrameDialog::insertGroupsData2(const std::map<RsGxsGroupId,Rs
                 if(!rsPeers->getGroupInfoByName(it->second.mMeta.mGroupId.toStdString(), groupInfo2))
                 {
                     RsGroupInfo groupInfo;
-                    groupInfo.id = RsNodeGroupId(it->second.mMeta.mGroupId); // RsNodeGroupId(it->second.mMeta.mInternalCircle); //.clear(); // RS will generate an ID
+                    //groupInfo.id = RsNodeGroupId(it->second.mMeta.mGroupId);
+                    groupInfo.id = RsNodeGroupId(it->second.mMeta.mInternalCircle); //.clear(); // RS will generate an ID
                     groupInfo.name = it->second.mMeta.mGroupId.toStdString();
                     groupInfo.type =it->second.type == RsGxsChatGroup::ONE2ONE? RsGroupInfo::ONE2ONE : RsGroupInfo::GROUPCHAT;
 

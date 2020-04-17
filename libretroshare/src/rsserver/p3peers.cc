@@ -1580,6 +1580,16 @@ RsGroupInfo::RsGroupInfo()
 	flag = 0;
 }
 
+RsGroupInfo::RsGroupInfo(const RsGroupInfo &info){
+    type = info.type;  //one2one,groupchat, and channel
+    id = info.id;
+    name = info.name;
+    flag=info.flag;
+    peerIds=info.peerIds;
+    gxsIds=info.gxsIds;
+}
+
+
 ServicePermissionFlags p3Peers::servicePermissionFlags(const RsPeerId& ssl_id) 
 {
 	return mPeerMgr->servicePermissionFlags(ssl_id) ;
