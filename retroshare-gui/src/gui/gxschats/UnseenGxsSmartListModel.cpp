@@ -39,7 +39,7 @@
 
 #include "util/HandleRichText.h"
 #include "retroshare/rspeers.h"
-
+#include "retroshare/rsstatus.h"
 #include "gui/common/AvatarDefs.h"
 
 
@@ -166,6 +166,8 @@ QVariant UnseenGxsSmartListModel::data(const QModelIndex &index, int role) const
         //STATUS FOR CONTACT
         QString presenceForChat = "no-status"; //for groupchat
 
+
+
         QImage avatar(IMAGE_PUBLIC);    //default is public group chat avatar for UnseenP2P
 
         bool isAdmin      =  IS_GROUP_ADMIN(gxsChatItem.mMeta.mSubscribeFlags); // IS_GROUP_ADMIN(chatItem.subscribeFlags);
@@ -196,6 +198,27 @@ QVariant UnseenGxsSmartListModel::data(const QModelIndex &index, int role) const
                     QPixmap bestAvatar;
                     AvatarDefs::getAvatarFromSslId((*it).chatPeerId, bestAvatar);
                     avatar = bestAvatar.toImage();
+                    StatusInfo statusContactInfo;
+
+                    rsStatus->getStatus((*it).chatPeerId,statusContactInfo);
+                    switch (statusContactInfo.status)
+                    {
+                        case RS_STATUS_OFFLINE:
+                            presenceForChat = "offline";
+                            break;
+                        case RS_STATUS_INACTIVE:
+                            presenceForChat = "idle";
+                            break;
+                        case RS_STATUS_ONLINE:
+                            presenceForChat = "online";
+                            break;
+                        case RS_STATUS_AWAY:
+                            presenceForChat = "away";
+                            break;
+                        case RS_STATUS_BUSY:
+                            presenceForChat = "busy";
+                            break;
+                    }
                     break;
                 }
             }
