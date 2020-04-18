@@ -1418,12 +1418,17 @@ void ChatWidget::addChatMsg(bool incoming, const QString &name, const RsGxsChatM
         /* meiyousixin - need to update the recent time and sort the chat list */
 
     }
-    else if(chatType == MSGTYPE_HISTORY && this->chatType() == CHATTYPE_GXSGROUPCHAT)
+    if(!incoming && chatType == MSGTYPE_NORMAL)
     {
-        //with the history msg, we just show without any checking incomming or not
-        //go here, the msg already added to browser, but we can update the last msg on the left list?
-
+        long long current_time = QDateTime::currentSecsSinceEpoch();
+        emit NotifyQt::getInstance()->alreadySendChat(this->getGxsChatId(), gxsChatMsg, name.toStdString(), current_time, message.toStdString(), true);
     }
+//    else if(chatType == MSGTYPE_HISTORY && this->chatType() == CHATTYPE_GXSGROUPCHAT)
+//    {
+//        //with the history msg, we just show without any checking incomming or not
+//        //go here, the msg already added to browser, but we can update the last msg on the left list?
+
+//    }
 }
 
 bool ChatWidget::isActive()
@@ -1750,12 +1755,12 @@ void ChatWidget::sendChat()
         emit NotifyQt::getInstance()->alreadySendChat(this->getChatId(), nickInGroupChat, current_time, textToSignal, true);        
     }
     // this for gxs chat recent time, sort the gxschat conversation list
-    else if (this->chatType() == CHATTYPE_GXSGROUPCHAT || this->chatType() == CHATTYPE_GXSONE2ONE || this->chatType() == CHATTYPE_GXSCHANNEL)
-    {
-        long long current_time = QDateTime::currentSecsSinceEpoch();
-        std::string nickInGroupChat = "You";
-        //emit NotifyQt::getInstance()->alreadySendChat(this->getGxsChatId(), post, nickInGroupChat, current_time, textToSignal, true);
-    }
+//    else if (this->chatType() == CHATTYPE_GXSGROUPCHAT || this->chatType() == CHATTYPE_GXSONE2ONE || this->chatType() == CHATTYPE_GXSCHANNEL)
+//    {
+//        long long current_time = QDateTime::currentSecsSinceEpoch();
+//        std::string nickInGroupChat = "You";
+//        //emit NotifyQt::getInstance()->alreadySendChat(this->getGxsChatId(), post, nickInGroupChat, current_time, textToSignal, true);
+//    }
 
     // This is common, for all cases of chat,
     //we can check the scroll position here, if it is not at the end, so update it to the end

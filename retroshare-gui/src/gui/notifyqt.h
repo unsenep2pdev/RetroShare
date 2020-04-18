@@ -169,7 +169,7 @@ class NotifyQt: public QObject, public NotifyClient
         void alreadySendChat(const gxsChatId&, const RsGxsChatMsg& gxsChatMsg, std::string nickInGroupChat, long long current_time, std::string textmsg, bool);
         void newGxsChatMessageReceive(const gxsChatId&, const RsGxsChatMsg& gxsChatMsg, std::string nickInGroupChat, long long current_time, std::string textmsg, bool);
 
-        //void notifyReceiveGxsChatTyping(const RsGxsGroupId, const QString, const RsPeerId, const RsGxsId) ;
+        void notifyReceiveGxsChatTyping(const QString, const QString, const RsPeerId, const RsGxsId) ;
 
         void notifyReceiveGxsChatTyping3(const QString, const RsPeerId, const RsGxsId) ;
 	public slots:

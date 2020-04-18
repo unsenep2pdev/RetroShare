@@ -1331,6 +1331,8 @@ void NotifyQt::receiveGxsChatTyping(const RsGxsGroupId groupId, const std::strin
     //emit notifyReceiveGxsChatTyping(groupId, QString::fromStdString(nickname), sslId,gxsId) ;
     std::cerr << "This is the groupId string: " << groupId.toStdString() << std::endl;
 
+    QString gxsGroupId = QString::fromStdString(groupId.toStdString());
     emit notifyReceiveGxsChatTyping3(QString::fromStdString(nickname),  sslId,gxsId) ;
+    emit notifyReceiveGxsChatTyping(gxsGroupId, QString::fromStdString(nickname),  sslId,gxsId);
 
 }

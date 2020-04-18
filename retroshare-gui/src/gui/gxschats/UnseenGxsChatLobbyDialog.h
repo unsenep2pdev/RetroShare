@@ -86,7 +86,7 @@ public:
 public slots:
     //unseenp2p - gxschat typing slot
     void updateReceiveGxsChatTyping3( const QString nickname, const RsPeerId sslId, const RsGxsId gxsId) ;
-
+    void updateReceiveGxsChatTyping(const QString gxsGroupIdStr, const QString nickname,  const RsPeerId sslId, const RsGxsId gxsId);
 private slots:
 	void participantsTreeWidgetCustomPopupMenu( QPoint point );
 	void textBrowserAskContextMenu(QMenu* contextMnu, QString anchorForPosition, const QPoint point);

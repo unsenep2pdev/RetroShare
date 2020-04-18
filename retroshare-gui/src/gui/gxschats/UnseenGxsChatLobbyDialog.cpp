@@ -102,7 +102,11 @@ UnseenGxsChatLobbyDialog::UnseenGxsChatLobbyDialog( const RsGxsGroupId& id, QWid
     connect(ui.filterLineEdit, SIGNAL(textChanged(QString)), this, SLOT(filterChanged(QString)));
 
     //notify when receive the gxschat typing
-    QObject::connect(NotifyQt::getInstance(), SIGNAL(notifyReceiveGxsChatTyping3(const QString, const RsPeerId, const RsGxsId)), this, SLOT(updateReceiveGxsChatTyping3( const QString, const RsPeerId, const RsGxsId)));
+    //QObject::connect(NotifyQt::getInstance(), SIGNAL(notifyReceiveGxsChatTyping3(const QString, const RsPeerId, const RsGxsId)), this, SLOT(updateReceiveGxsChatTyping3( const QString, const RsPeerId, const RsGxsId)));
+
+    //notify when receive the gxschat typing
+    QObject::connect(NotifyQt::getInstance(), SIGNAL(notifyReceiveGxsChatTyping(const QString, const QString, const RsPeerId, const RsGxsId)), this, SLOT(updateReceiveGxsChatTyping( const QString, const QString, const RsPeerId, const RsGxsId)));
+
 
     //Hide Search list
     ui.toolBarFrame->hide();
@@ -1211,6 +1215,17 @@ void UnseenGxsChatLobbyDialog::updateReceiveGxsChatTyping3(const QString nicknam
     ui.chatWidget->updateStatusString(nickname + " %1", "is typing...");
 
     ui.chatWidget->updateCustomStateStringInGroup(status, false);
+
+}
+
+void UnseenGxsChatLobbyDialog::updateReceiveGxsChatTyping(const QString gxsGroupIdStr, const QString nickname,  const RsPeerId sslId, const RsGxsId gxsId)
+{
+    if(groupId().toStdString() == gxsGroupIdStr.toStdString())
+    {
+        QString status = nickname  + " is typing...";
+        ui.chatWidget->updateStatusString(nickname + " %1", "is typing...");
+        ui.chatWidget->updateCustomStateStringInGroup(status, false);
+    }
 
 }
 
