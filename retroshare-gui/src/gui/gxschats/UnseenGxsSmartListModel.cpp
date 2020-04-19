@@ -43,9 +43,13 @@
 #include "gui/common/AvatarDefs.h"
 
 
-#define IMAGE_PUBLIC          ":/chat/img/groundchat.png"               //copy from ChatLobbyWidget
-#define IMAGE_PRIVATE         ":/chat/img/groundchat_private.png"       //copy from ChatLobbyWidget
+#define IMAGE_GROUP_PUBLIC          ":/chat/img/groundchat.png"               //copy from ChatLobbyWidget
+#define IMAGE_GROUP_PRIVATE         ":/chat/img/groundchat_private.png"       //copy from ChatLobbyWidget
 #define IMAGE_UNSEEN          ":/app/images/unseen32.png"
+
+#define IMAGE_CHANNEL_PUBLIC          ":/chat/img/channel-private.png"
+#define IMAGE_CHANNEL_PRIVATE         ":/chat/img/channel-public.png"
+
 
 class UnseenGroupItemInfo;
 //class UnseenGroupTreeWidget;
@@ -149,26 +153,16 @@ QVariant UnseenGxsSmartListModel::data(const QModelIndex &index, int role) const
         //which one we will choose?
         rsGxsChats->getLocalMessageStatus(gxsChatItem.mMeta.mGroupId, localInfo);
 
-        if (localInfo.msg.length() == 0)
-        {
-            //uint32_t token;
-            //RsGxsGrpMsgIdPair msgPair = std::make_pair(gxsChatItem.mMeta.mGroupId,gxsChatMsg.mMeta.mMsgId);
-
-            //rsGxsChats->setMessageReadStatus(gxsChatItem.mMeta.mGroupId, )
-            std::cerr << " HERE IS THE EMPTY MSG ISSUE!!! gxs name: " << gxsChatItem.mMeta.mGroupName << " last msg: " << localInfo.msg << ", last date:  " << localInfo.update_ts <<std::endl;
-        }
-
         currentLocalInfo = gxsChatItem.localMsgInfo;
         if(currentLocalInfo.update_ts > localInfo.update_ts || localInfo.msg.length() == 0)
             localInfo = currentLocalInfo;
-        //std::cerr << " gxs name: " << gxsChatItem.mMeta.mGroupName << " last msg: " << localInfo.msg << ", last date:  " << localInfo.update_ts << ", unread number: " << localInfo.unreadMsgIds.size() <<std::endl;
 
         //STATUS FOR CONTACT
         QString presenceForChat = "no-status"; //for groupchat
 
 
 
-        QImage avatar(IMAGE_PUBLIC);    //default is public group chat avatar for UnseenP2P
+        QImage avatar(IMAGE_GROUP_PUBLIC);    //default is public group chat avatar for UnseenP2P
 
         bool isAdmin      =  IS_GROUP_ADMIN(gxsChatItem.mMeta.mSubscribeFlags); // IS_GROUP_ADMIN(chatItem.subscribeFlags);
         bool isSubscribed =  IS_GROUP_SUBSCRIBED(gxsChatItem.mMeta.mSubscribeFlags); // IS_GROUP_SUBSCRIBED(chatItem.subscribeFlags);
@@ -176,17 +170,17 @@ QVariant UnseenGxsSmartListModel::data(const QModelIndex &index, int role) const
         if (gxsChatItem.type == RsGxsChatGroup::GROUPCHAT)      //if this is a group chat that I created
         {
             if (gxsChatItem.mMeta.mCircleType == GXS_CIRCLE_TYPE_YOUR_FRIENDS_ONLY)
-                avatar = QImage(IMAGE_PRIVATE); // IMAGE_PRIVATE = green
+                avatar = QImage(IMAGE_GROUP_PRIVATE); // IMAGE_PRIVATE = green
             else if (gxsChatItem.mMeta.mCircleType == GXS_CIRCLE_TYPE_PUBLIC)
-                avatar =  QImage(IMAGE_PUBLIC); // IMAGE_PUBLIC = public
+                avatar =  QImage(IMAGE_GROUP_PUBLIC); // IMAGE_PUBLIC = public
 
         }
         else if (gxsChatItem.type == RsGxsChatGroup::CHANNEL)
         {
             if (gxsChatItem.mMeta.mCircleType == GXS_CIRCLE_TYPE_YOUR_FRIENDS_ONLY)
-                avatar = QImage(IMAGE_PRIVATE); // IMAGE_PRIVATE = green
+                avatar = QImage(IMAGE_CHANNEL_PRIVATE); // IMAGE_PRIVATE = green
             else if (gxsChatItem.mMeta.mCircleType == GXS_CIRCLE_TYPE_PUBLIC)
-                avatar =  QImage(IMAGE_PUBLIC); // IMAGE_PUBLIC = public
+                avatar =  QImage(IMAGE_CHANNEL_PUBLIC); // IMAGE_PUBLIC = public
         }
         else if (gxsChatItem.type == RsGxsChatGroup::ONE2ONE)
         {
@@ -471,10 +465,6 @@ std::vector<RsGxsChatGroup> UnseenGxsSmartListModel::getGxsChatGroupList()
 
 void UnseenGxsSmartListModel::sortGxsConversationListByRecentTime()
 {
-//    std::sort(allGxsGroupList.begin(), allGxsGroupList.end(),
-//              [] (UnseenGroupItemInfo const& a, UnseenGroupItemInfo const& b)
-//    { return a.lastMsgDatetime > b.lastMsgDatetime; });
-
     std::sort(allGxsChatGroupList.begin(), allGxsChatGroupList.end(),
               [] (RsGxsChatGroup const& a, RsGxsChatGroup const& b)
     { return a.mMeta.mLastPost > b.mMeta.mLastPost; });

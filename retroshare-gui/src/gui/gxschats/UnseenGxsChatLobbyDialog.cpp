@@ -102,9 +102,6 @@ UnseenGxsChatLobbyDialog::UnseenGxsChatLobbyDialog( const RsGxsGroupId& id, QWid
     connect(ui.filterLineEdit, SIGNAL(textChanged(QString)), this, SLOT(filterChanged(QString)));
 
     //notify when receive the gxschat typing
-    //QObject::connect(NotifyQt::getInstance(), SIGNAL(notifyReceiveGxsChatTyping3(const QString, const RsPeerId, const RsGxsId)), this, SLOT(updateReceiveGxsChatTyping3( const QString, const RsPeerId, const RsGxsId)));
-
-    //notify when receive the gxschat typing
     QObject::connect(NotifyQt::getInstance(), SIGNAL(notifyReceiveGxsChatTyping(const QString, const QString, const RsPeerId, const RsGxsId)), this, SLOT(updateReceiveGxsChatTyping( const QString, const QString, const RsPeerId, const RsGxsId)));
 
 

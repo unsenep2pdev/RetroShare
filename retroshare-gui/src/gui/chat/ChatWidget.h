@@ -234,6 +234,7 @@ private:
 	void completeNickname(bool reverse);
     QAbstractItemModel *modelFromPeers();
 
+    RsGxsChatGroup getGxsChatGroup();
     QString getStatusForThisGroup();
 
    // bool convertFromAttachmentsToGxsFiles( std::list<RsGxsFile>& files);

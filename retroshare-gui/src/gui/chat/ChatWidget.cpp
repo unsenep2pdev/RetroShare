@@ -463,6 +463,18 @@ void ChatWidget::init(const gxsChatId &chat_id, const QString &title)
 
     this->setGxsChatType(chat_id.gxsChatType);
 
+    RsGxsChatGroup gxsChatGroup = getGxsChatGroup();
+
+    if(gxsChatGroup.type == RsGxsChatGroup::CHANNEL)
+    {
+            if (!IS_GROUP_ADMIN(gxsChatGroup.mMeta.mSubscribeFlags) && IS_GROUP_SUBSCRIBED(gxsChatGroup.mMeta.mSubscribeFlags))
+            {
+                  ui->chatTextEdit->hide();
+                  ui->toolBarFrame->hide();
+                  ui->chatTextEditHSplitter->hide();
+            }
+    }
+
     ui->statusLabel->hide();
     ui->titleLabel->setText(RsHtml::plainText(title));
     ui->chatTextEdit->setMaxBytes(this->maxMessageSize() - 200);
@@ -1526,55 +1538,66 @@ void ChatWidget::resetStatusBar()
 	emit infoChanged(this);
 }
 
-QString ChatWidget::getStatusForThisGroup()
+RsGxsChatGroup ChatWidget::getGxsChatGroup()
 {
     std::list<RsGxsGroupId> groupIdList;
     groupIdList.push_back(getGxsChatId().toGxsGroupId());
     std::vector<RsGxsChatGroup> chatInfos;
-    int memberNumber = 2;
-    int count = 0;
-    QString text;
+
     if (rsGxsChats->getChatsInfo(groupIdList, chatInfos))
     {
         if(chatInfos.size() > 0)
         {
-            if(chatInfos[0].type == RsGxsChatGroup::ONE2ONE)
-            {
-                RsGxsId gxsId;
-                for(std::set<GxsChatMember>::iterator it = chatInfos[0].members.begin(); it != chatInfos[0].members.end(); ++it)
-                {
-                      if((*it).chatPeerId != rsPeers->getOwnId())
-                      {
-                            gxsId = (*it).chatGxsId  ;
-                            break;
-                      }
-                }
-                RsIdentityDetails detail;
-                QString lastMsgStatus  = "last seen ";
-                if (!gxsId.isNull() && !rsIdentity->getIdDetails(gxsId, detail))
-                {
-                   text = lastMsgStatus + "long time ago";
-                }
-                else
-                {
-                    time_t now = time(NULL) ;
-                    lastMsgStatus += getHumanReadableDuration(now - detail.mLastUsageTS) ;
-                    text = lastMsgStatus;
-                }
-
-            }
-            else
-            {
-                memberNumber = (int) chatInfos[0].members.size();
-                for(std::set<GxsChatMember>::iterator it = chatInfos[0].members.begin(); it != chatInfos[0].members.end(); ++it)
-                {
-                      if((*it).chatPeerId != rsPeers->getOwnId() && rsPeers->isOnline( (*it).chatPeerId)) ++count;
-                }
-
-                text = QString("%1 members, %2 online").arg(memberNumber).arg(count+1);
-            }
+            return chatInfos[0];
         }
     }
+    return RsGxsChatGroup();
+}
+
+QString ChatWidget::getStatusForThisGroup()
+{
+
+    int memberNumber = 2;
+    int count = 0;
+    QString text;
+    RsGxsChatGroup gxsChatGroup = getGxsChatGroup();
+
+    if(gxsChatGroup.type == RsGxsChatGroup::ONE2ONE)
+    {
+        RsGxsId gxsId;
+        for(std::set<GxsChatMember>::iterator it = gxsChatGroup.members.begin(); it != gxsChatGroup.members.end(); ++it)
+        {
+            if((*it).chatPeerId != rsPeers->getOwnId())
+            {
+                gxsId = (*it).chatGxsId  ;
+                break;
+            }
+        }
+        RsIdentityDetails detail;
+        QString lastMsgStatus  = "last seen ";
+        if (!gxsId.isNull() && !rsIdentity->getIdDetails(gxsId, detail))
+        {
+            text = lastMsgStatus + "long time ago";
+        }
+        else
+        {
+            time_t now = time(NULL) ;
+            lastMsgStatus += getHumanReadableDuration(now - detail.mLastUsageTS) ;
+            text = lastMsgStatus;
+        }
+
+    }
+    else
+    {
+        memberNumber = (int) gxsChatGroup.members.size();
+        for(std::set<GxsChatMember>::iterator it = gxsChatGroup.members.begin(); it != gxsChatGroup.members.end(); ++it)
+        {
+            if((*it).chatPeerId != rsPeers->getOwnId() && rsPeers->isOnline( (*it).chatPeerId)) ++count;
+        }
+
+        text = QString("%1 members, %2 online").arg(memberNumber).arg(count+1);
+    }
+
 
     return text;
 }
