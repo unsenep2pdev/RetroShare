@@ -360,7 +360,13 @@ void UnseenGxsChatLobbyDialog::inviteFriends()
         {
             if(chatsInfo[0].mMeta.mInternalCircle.isNull())
             {
-               std::cerr << " Vinh, pls fix backend code, why the mInternalCircle is empty? " << std::endl;
+                RsGroupInfo groupInfo;
+                if(rsPeers->getGroupInfo(RsNodeGroupId(RsGxsCircleId(chatsInfo[0].mMeta.mGroupId)), groupInfo)){
+                    std::cerr << "mInternalCircle: " << groupInfo.id <<std::endl;
+                    chatsInfo[0].mMeta.mInternalCircle = RsGxsCircleId(groupInfo.id);
+                }
+                else
+                    chatsInfo[0].mMeta.mInternalCircle= RsGxsCircleId(chatsInfo[0].mMeta.mGroupId);
             }
 
             for(std::set<GxsChatMember>::iterator it = invitedMemberList.begin(); it != invitedMemberList.end(); ++it)

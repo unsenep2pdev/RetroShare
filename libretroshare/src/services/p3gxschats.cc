@@ -334,6 +334,7 @@ RsGenExchange::ServiceCreate_Return p3GxsChats::service_UpateGroup(RsGxsGrpItem*
             std::cerr <<"******p3GxsChats::service_UpateGroup(): Update GroupNodeId MemberLists()*******"<<std::endl;
             for(auto it2 = groupItem->members.begin(); it2 != groupItem->members.end(); ++it2)
             {
+                std::cerr<<"Member: "<<it2->nickname <<" and RsPeerId: "<<it2->chatPeerId <<std::endl;
                 RsPeerDetails detail;
                 if (rsPeers->getPeerDetails((*it2).chatPeerId, detail))
                     rsPeers->assignPeerToGroup(groupInfo.id, detail.gpg_id, true);
@@ -347,10 +348,7 @@ RsGenExchange::ServiceCreate_Return p3GxsChats::service_UpateGroup(RsGxsGrpItem*
     if(adminFound || publishFound)  //owner | admin of the gxsgroup
         return SERVICE_GXSCHATS_UPDATE_SUCCESS;
 
-    if( grpItem->meta.mCircleType !=GXS_CIRCLE_TYPE_PUBLIC)
-        return SERVICE_GXSCHATS_DEFAULT ;
-
-    return SERVICE_GXSCHATS_UPDATE_SUCCESS;
+    return SERVICE_GXSCHATS_DEFAULT ;
 
 }
 
