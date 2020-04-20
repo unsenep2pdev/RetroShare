@@ -528,18 +528,30 @@ void UnseenGxsChatLobbyDialog::init(const gxsChatId &id, const QString &/*title*
     /** List of muted Participants */
     mutedParticipants.clear() ;
 
-    if(gxsChat_Id.gxsChatType == RsGxsChatGroup::ONE2ONE)
-    {
-        inviteFriendsButton->hide();
-        unsubscribeButton->hide();
-        membersListButton->hide();
-        membersListButton2->hide();
-    }
-    else
-    {
-        inviteFriendsButton->show();
-        unsubscribeButton->show();
 
+    RsGxsChatGroup gxsChatGroup;
+    if (unseenGxsChatLobbyPage)
+    {
+        gxsChatGroup = unseenGxsChatLobbyPage->gxsGroupFromList(gxsChat_Id.toGxsGroupId());
+        if(gxsChat_Id.gxsChatType == RsGxsChatGroup::ONE2ONE)
+        {
+            inviteFriendsButton->hide();
+            unsubscribeButton->hide();
+            membersListButton->hide();
+            membersListButton2->hide();
+        }
+        else if(gxsChat_Id.gxsChatType == RsGxsChatGroup::GROUPCHAT || gxsChat_Id.gxsChatType == RsGxsChatGroup::CHANNEL)
+        {
+            //version 0.8.0: Only owner can invite friends, other members can not invite their friends, so need to hide the invite button in their side
+            if (!IS_GROUP_ADMIN(gxsChatGroup.mMeta.mSubscribeFlags) && IS_GROUP_SUBSCRIBED(gxsChatGroup.mMeta.mSubscribeFlags))
+            {
+                inviteFriendsButton->hide();
+            }
+            else if (IS_GROUP_ADMIN(gxsChatGroup.mMeta.mSubscribeFlags))
+            {
+                inviteFriendsButton->show();
+            }
+        }
     }
 
     //try to update the member status on member list

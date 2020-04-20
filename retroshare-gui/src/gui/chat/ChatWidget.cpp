@@ -473,6 +473,13 @@ void ChatWidget::init(const gxsChatId &chat_id, const QString &title)
                   ui->toolBarFrame->hide();
                   ui->chatTextEditHSplitter->hide();
             }
+            else if (!IS_GROUP_ADMIN(gxsChatGroup.mMeta.mSubscribeFlags) && IS_GROUP_PUBLISHER(gxsChatGroup.mMeta.mSubscribeFlags))
+            {
+                //publisher can send the msg
+                ui->chatTextEdit->show();
+                ui->toolBarFrame->show();
+                ui->chatTextEditHSplitter->show();
+            }
     }
 
     ui->statusLabel->hide();

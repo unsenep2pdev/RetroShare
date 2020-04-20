@@ -112,6 +112,8 @@ public:
     UnseenGroupItemInfo groupItemIdAt(QString groupId);
     RsGxsChatGroup gxsGroupItemIdAt(QPoint &point);
     RsGxsChatGroup gxsGroupItemIdAt(RsGxsGroupId groupId);
+    RsGxsChatGroup gxsGroupFromList(RsGxsGroupId groupId);
+
     void sortGxsConversationListByRecentTime();
 
     //unseenp2p - overload with the parent

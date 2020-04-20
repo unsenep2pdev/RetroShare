@@ -1699,11 +1699,13 @@ UnseenGroupItemInfo UnseenGxsGroupFrameDialog::groupItemIdAt(QString groupId)
     std::vector<UnseenGroupItemInfo> iteminfoList = smartListModel_->getGxsGroupList();
 
     for (std::vector<UnseenGroupItemInfo>::iterator it = iteminfoList.begin(); it != iteminfoList.end(); ++it)
-    if (it->id == groupId)
     {
-        return *it;
+        if (it->id == groupId)
+        {
+            return *it;
+        }
     }
-    else return UnseenGroupItemInfo();
+    return UnseenGroupItemInfo();
 }
 
 RsGxsChatGroup UnseenGxsGroupFrameDialog::gxsGroupItemIdAt(RsGxsGroupId groupId)
@@ -1711,11 +1713,26 @@ RsGxsChatGroup UnseenGxsGroupFrameDialog::gxsGroupItemIdAt(RsGxsGroupId groupId)
     std::vector<RsGxsChatGroup> iteminfoList = smartListModel_->getGxsChatGroupList();
 
     for (std::vector<RsGxsChatGroup>::iterator it = iteminfoList.begin(); it != iteminfoList.end(); ++it)
-    if (it->mMeta.mGroupId == groupId)
     {
-        return *it;
+        if (it->mMeta.mGroupId == groupId)
+        {
+            return *it;
+        }
     }
-    else return RsGxsChatGroup();
+    return RsGxsChatGroup();
+}
+
+RsGxsChatGroup UnseenGxsGroupFrameDialog::gxsGroupFromList(RsGxsGroupId groupId)
+{
+    for (std::vector<RsGxsChatGroup>::iterator it = allGxsChatGroupList.begin(); it != allGxsChatGroupList.end(); ++it)
+    {
+        if (it->mMeta.mGroupId == groupId)
+        {
+            return *it;
+        }
+    }
+
+    return RsGxsChatGroup();
 }
 
 
