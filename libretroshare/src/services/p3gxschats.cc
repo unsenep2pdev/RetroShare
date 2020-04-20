@@ -453,13 +453,16 @@ RsGenExchange::ServiceCreate_Return p3GxsChats::service_PublishGroup(RsNxsGrp *g
             }
         }else{
             RsGroupInfo groupInfo;
-            if(rsPeers->getGroupInfo(RsNodeGroupId(grp->metaData->mInternalCircle), groupInfo) && cinfo.second.size() > groupInfo.peerIds.size()){
+            RsNodeGroupId nodeId( RsGxsCircleId(grp->grpId));
+            if(rsPeers->getGroupInfo(nodeId, groupInfo) ){
+                groupInfo.peerIds.clear();
+                rsPeers->addGroupWithId(groupInfo, true);
+
                 for(std::set<GxsChatMember>::iterator it2 = cinfo.second.begin(); it2 != cinfo.second.end(); ++it2)
                 {
                     RsPeerDetails detail;
                     if (rsPeers->getPeerDetails((*it2).chatPeerId, detail)){
                         rsPeers->assignPeerToGroup(groupInfo.id, detail.gpg_id, true);
-                        std::cerr <<"Adding PGPid: "<<detail.gpg_id <<" to GroupNodeID: "<<groupInfo.id<<std::endl;
                     }
                 }
 
@@ -581,37 +584,34 @@ RsGenExchange::ServiceCreate_Return p3GxsChats::service_RecvBounceGroup(RsNxsGrp
 
     groupBouncePending.push_back(std::make_pair(newGrp, isNew));
 
-
-
     ChatInfo cinfo;
     auto mit = grpMembers.find(grp->grpId);
-    if(mit == grpMembers.end()){
-        RsTlvBinaryData& data = grp->grp;
-        RsItem* item = NULL;
-        if(data.bin_len != 0)
-            item = mSerialiser->deserialise(data.bin_data, &data.bin_len);
+    if(mit != grpMembers.end()){
+        cinfo = mit->second;
+    }
 
-        if(item)
+    RsTlvBinaryData& data = grp->grp;
+    RsItem* item = NULL;
+    if(data.bin_len != 0)
+        item = mSerialiser->deserialise(data.bin_data, &data.bin_len);
+
+    if(item)
+    {
+        RsGxsGrpItem* gItem = dynamic_cast<RsGxsGrpItem*>(item);
+        if (gItem)
         {
-            RsGxsGrpItem* gItem = dynamic_cast<RsGxsGrpItem*>(item);
-            if (gItem)
-            {
-                std::cerr<<"GroupId: "<<gItem->meta.mGroupId <<" and GroupName: "<<gItem->meta.mGroupName<<std::endl;
-                gItem->meta = *(grp->metaData);
-                RsGxsChatGroupItem* groupItem = dynamic_cast<RsGxsChatGroupItem*>(gItem);
-                if(groupItem){
-                    RsGroupMetaData chatGrpMeta = groupItem->meta;
-                    if(chatGrpMeta.mCircleType==GXS_CIRCLE_TYPE_PUBLIC)
-                        return SERVICE_CREATE_SUCCESS;
+            gItem->meta = *(grp->metaData);
+            RsGxsChatGroupItem* groupItem = dynamic_cast<RsGxsChatGroupItem*>(gItem);
+            if(groupItem){
+                RsGroupMetaData chatGrpMeta = groupItem->meta;
+                if(chatGrpMeta.mCircleType==GXS_CIRCLE_TYPE_PUBLIC)
+                    return SERVICE_CREATE_SUCCESS;
 
-                    cinfo = std::make_pair(groupItem->type,groupItem->members);
-                    grpMembers.insert(std::make_pair(grp->grpId,cinfo));
-                }
+                cinfo = std::make_pair(groupItem->type,groupItem->members);
+                grpMembers.insert(std::make_pair(grp->grpId,cinfo));
             }
         }
     }
-    else
-        cinfo = mit->second;
 
    if(isNew){
         //check groupNodeId
@@ -664,13 +664,16 @@ RsGenExchange::ServiceCreate_Return p3GxsChats::service_RecvBounceGroup(RsNxsGrp
         }
    }else{//check if more members has added.
        RsGroupInfo groupInfo;
-       if(rsPeers->getGroupInfo(RsNodeGroupId(grp->metaData->mInternalCircle), groupInfo) && cinfo.second.size() > groupInfo.peerIds.size()){
+       RsNodeGroupId nodeId(RsGxsCircleId(grp->grpId));
+       if(rsPeers->getGroupInfo(nodeId, groupInfo) ){
+           groupInfo.peerIds.clear();
+           rsPeers->addGroupWithId(groupInfo, true);
+
            for(std::set<GxsChatMember>::iterator it2 = cinfo.second.begin(); it2 != cinfo.second.end(); ++it2)
            {
                RsPeerDetails detail;
                if (rsPeers->getPeerDetails((*it2).chatPeerId, detail)){
                    rsPeers->assignPeerToGroup(groupInfo.id, detail.gpg_id, true);
-                   std::cerr <<"Adding PGPid: "<<detail.gpg_id <<" to GroupNodeID: "<<groupInfo.id<<std::endl;
                }
            }
 
