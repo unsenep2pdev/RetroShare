@@ -784,8 +784,10 @@ void UnseenGxsChatLobbyDialog::updateParticipantsList()
                         {
                             isIdentical = false;
                             //update the system message about new users joining
-                            ui.chatWidget->addChatMsg(true, tr("Chat room management"), QDateTime::currentDateTime(), QDateTime::currentDateTime(), tr("%1 joined the room.").arg(RsHtml::plainText((*it).nickname)), ChatWidget::MSGTYPE_SYSTEM);
-
+                            if (thisGroup.type == RsGxsChatGroup::GROUPCHAT)
+                                ui.chatWidget->addChatMsg(true, tr("Chat Group management"), QDateTime::currentDateTime(), QDateTime::currentDateTime(), tr("%1 joined the group.").arg(RsHtml::plainText((*it).nickname)), ChatWidget::MSGTYPE_SYSTEM);
+                            else if (thisGroup.type == RsGxsChatGroup::CHANNEL)
+                                ui.chatWidget->addChatMsg(true, tr("Chat Channel management"), QDateTime::currentDateTime(), QDateTime::currentDateTime(), tr("%1 joined the channel.").arg(RsHtml::plainText((*it).nickname)), ChatWidget::MSGTYPE_SYSTEM);
                         }
                     }
 
@@ -798,7 +800,11 @@ void UnseenGxsChatLobbyDialog::updateParticipantsList()
                      {
                          isIdentical = false;
                          //update the system message about old users leave group
-                         ui.chatWidget->addChatMsg(true, tr("Chat room management"), QDateTime::currentDateTime(), QDateTime::currentDateTime(), tr("%1 leaved the room.").arg(RsHtml::plainText((*it).nickname)), ChatWidget::MSGTYPE_SYSTEM);
+                         if (thisGroup.type == RsGxsChatGroup::GROUPCHAT)
+                            ui.chatWidget->addChatMsg(true, tr("Chat group management"), QDateTime::currentDateTime(), QDateTime::currentDateTime(), tr("%1 leaved the group.").arg(RsHtml::plainText((*it).nickname)), ChatWidget::MSGTYPE_SYSTEM);
+                         else if (thisGroup.type == RsGxsChatGroup::CHANNEL)
+                             ui.chatWidget->addChatMsg(true, tr("Chat Channel management"), QDateTime::currentDateTime(), QDateTime::currentDateTime(), tr("%1 leaved the channel.").arg(RsHtml::plainText((*it).nickname)), ChatWidget::MSGTYPE_SYSTEM);
+
                      }
                 }
 
@@ -1156,7 +1162,7 @@ void UnseenGxsChatLobbyDialog::displayLobbyEvent(int event_type, const RsGxsId& 
 
         QString newname= getParticipantName(RsGxsId(str.toStdString())) ;
 
-        ui.chatWidget->addChatMsg(true, tr("Chat room management"), QDateTime::currentDateTime(),
+        ui.chatWidget->addChatMsg(true, tr("Chat Group management"), QDateTime::currentDateTime(),
                                   QDateTime::currentDateTime(),
                                   tr("%1 changed his name to: %2").arg(RsHtml::plainText(name)).arg(RsHtml::plainText(newname)),
                                   ChatWidget::MSGTYPE_SYSTEM);
