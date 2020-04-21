@@ -206,7 +206,7 @@ UnseenGxsChatLobbyDialog::UnseenGxsChatLobbyDialog( const RsGxsGroupId& id, QWid
     unsubscribeButton->setMaximumSize(icon_size);
     unsubscribeButton->setText(QString()) ;
     unsubscribeButton->setAutoRaise(true) ;
-    unsubscribeButton->setToolTip(tr("Leave this group chat"));
+    unsubscribeButton->setToolTip(tr("Leave this conversation"));
 
     {
     QIcon icon ;
@@ -319,22 +319,25 @@ void UnseenGxsChatLobbyDialog::leaveGxsGroupChat()
 {
     //TODO: change leave group with gxs groupchat
     //Need to update the group with gxsChat->updateGroup with new member list for other before unsubscribe
-    std::list<RsGxsGroupId> groupChatId;
-    groupChatId.push_back(mGroupId);
-    std::vector<RsGxsChatGroup> chatsInfo;
-    if (rsGxsChats->getChatsInfo(groupChatId, chatsInfo))
+    if ((QMessageBox::question(this, tr("Really leave?"), tr("Do you really want to leave and delete this conversation?"), QMessageBox::Yes|QMessageBox::No, QMessageBox::No))== QMessageBox::Yes)
     {
-        if (chatsInfo.size() > 0)
+        std::list<RsGxsGroupId> groupChatId;
+        groupChatId.push_back(mGroupId);
+        std::vector<RsGxsChatGroup> chatsInfo;
+        if (rsGxsChats->getChatsInfo(groupChatId, chatsInfo))
         {
-            GxsChatMember myown;
-            rsGxsChats->getOwnMember(myown);
-            if(chatsInfo[0].members.find(myown)!= chatsInfo[0].members.end())
-                chatsInfo[0].members.erase(myown);
-            uint32_t token;
-            rsGxsChats->updateGroup(token, chatsInfo[0]);
+            if (chatsInfo.size() > 0)
+            {
+                GxsChatMember myown;
+                rsGxsChats->getOwnMember(myown);
+                if(chatsInfo[0].members.find(myown)!= chatsInfo[0].members.end())
+                    chatsInfo[0].members.erase(myown);
+                uint32_t token;
+                rsGxsChats->updateGroup(token, chatsInfo[0]);
+            }
         }
+        emit gxsGroupLeave(groupId()) ;
     }
-    emit gxsGroupLeave(groupId()) ;
 }
 void UnseenGxsChatLobbyDialog::inviteFriends()
 {

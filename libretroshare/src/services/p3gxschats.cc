@@ -1027,7 +1027,7 @@ void p3GxsChats::publishNotifyMessage(const RsGxsGroupId &grpId,std::pair<std::s
     ChatInfo cinfo = mit->second;
      //one2one or channel notification, drop off, final destination!
     switch(cinfo.first){
-        case RsGxsChatGroup::CHANNEL:  break;  //drop, no bouncing off
+        case RsGxsChatGroup::CHANNEL: // break;  //drop, no bouncing off
         case RsGxsChatGroup::ONE2ONE:
         case RsGxsChatGroup::GROUPCHAT:
 
