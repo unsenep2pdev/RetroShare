@@ -271,7 +271,7 @@ public:
      * \param grpMeta Group metadata to check
      * \return
      */
-    virtual bool acceptNewMessage(const RsGxsMsgMetaData* /*grpMeta*/,uint32_t /*size*/ );
+    virtual bool acceptNewMessage(const RsNxsMsg* /*grpMeta*/,uint32_t /*size*/ );
 
     virtual void receiveNewChatMesesages(std::vector<RsNxsMsg*>& messages) {}
 

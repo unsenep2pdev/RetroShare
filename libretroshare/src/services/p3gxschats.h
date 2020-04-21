@@ -153,7 +153,7 @@ virtual bool getOwnMember(GxsChatMember &member);
      * \param grpMeta Group metadata to check
      * \return
      */
-    virtual bool acceptNewMessage(const RsGxsMsgMetaData* grpMeta, uint32_t size );
+    virtual bool acceptNewMessage(const RsNxsMsg* msg, uint32_t size );
 
 
     /// @see RsGxsChannels::turtleSearchRequest

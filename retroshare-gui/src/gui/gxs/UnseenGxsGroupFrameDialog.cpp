@@ -289,11 +289,11 @@ void UnseenGxsGroupFrameDialog::updateDisplay(bool complete)
 
         for (auto msgIt = msgIds.begin(); msgIt != msgIds.end(); ++msgIt)
         {
-            std::cerr << " ****** groupId :  "  << (*msgIt).first.toStdString() << std::endl;
-            for(auto msgId = (*msgIt).second.begin(); msgId != (*msgIt).second.end(); ++msgId)
-            {
-                 std::cerr << " msgId :  " << (*msgId).toStdString() << std::endl;
-            }
+//            std::cerr << " ****** groupId :  "  << (*msgIt).first.toStdString() << std::endl;
+//            for(auto msgId = (*msgIt).second.begin(); msgId != (*msgIt).second.end(); ++msgId)
+//            {
+//                 std::cerr << " msgId :  " << (*msgId).toStdString() << std::endl;
+//            }
 
             //updateMessageSummaryList(msgIt->first);
             if(_unseenGxsGroup_infos.find(msgIt->first) != _unseenGxsGroup_infos.end())
