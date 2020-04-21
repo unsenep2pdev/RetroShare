@@ -456,8 +456,9 @@ void UnseenGxsGroupFrameDialog::groupTreeCustomPopupMenu(QPoint point)
     actnn = ctxMenu2->addAction(tr(" Indefinitly"),this,SLOT(setStorePostsDelay())) ; actnn->setData(QVariant(  0)) ; if(current_store_time ==  0) { actnn->setEnabled(false);actnn->setIcon(QIcon(":/images/start.png"));}
 
     if (shareKeyType()) {
-        action = contextMnu.addAction(QIcon(IMAGE_SHARE), tr("Share publish permissions"), this, SLOT(sharePublishKey()));
-        action->setEnabled(!mGroupId.isNull() && isPublisher);
+        action = contextMnu.addAction(QIcon(IMAGE_SHARE), tr("Grant Moderator Permission"), this, SLOT(sharePublishKey()));
+        //action->setEnabled(!mGroupId.isNull() && isPublisher); //in this version (0.8.0), just admin can grant and share key
+        action->setEnabled(!mGroupId.isNull() && isAdmin);
     }
 
     contextMnu.addSeparator();
@@ -1208,6 +1209,7 @@ void UnseenGxsGroupFrameDialog::insertGroupsData2(const std::map<RsGxsGroupId,Rs
             }
         }
 
+
         //after customizing the RsGxsChatGroup we can to add it into the allGxsChatGroupList
         if (isSubscribed)
         {
@@ -1247,7 +1249,13 @@ void UnseenGxsGroupFrameDialog::insertGroupsData2(const std::map<RsGxsGroupId,Rs
            std::cerr << " There is change in the group: " << (*it).mMeta.mGroupName << std::endl;
            _unseenGxsGroup_infos[(*it).mMeta.mGroupId].dialog->updateTitle(QString::fromStdString((*it).mMeta.mGroupName));
            _unseenGxsGroup_infos[(*it).mMeta.mGroupId].dialog->updateParticipantsList();
+           bool isPublisher  = IS_GROUP_PUBLISHER((*it).mMeta.mSubscribeFlags);
+           if( isPublisher && (*it).type == RsGxsChatGroup::CHANNEL)
+           {
+                _unseenGxsGroup_infos[(*it).mMeta.mGroupId].dialog->showChatTextInbox(true);
+           }
        }
+
     }
 
 }

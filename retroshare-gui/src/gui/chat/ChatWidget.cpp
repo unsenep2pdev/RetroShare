@@ -455,6 +455,21 @@ void ChatWidget::init(const ChatId &chat_id, const QString &title)
 	processSettings(true);
 }
 
+void ChatWidget::showChatInbox(bool iShow)
+{
+    if (iShow)
+    {
+        ui->chatTextEdit->show();
+        ui->toolBarFrame->show();
+        ui->chatTextEditHSplitter->show();
+    }
+    else
+    {
+        ui->chatTextEdit->hide();
+        ui->toolBarFrame->hide();
+        ui->chatTextEditHSplitter->hide();
+    }
+}
 
 void ChatWidget::init(const gxsChatId &chat_id, const QString &title)
 {
@@ -469,16 +484,13 @@ void ChatWidget::init(const gxsChatId &chat_id, const QString &title)
     {
             if (!IS_GROUP_ADMIN(gxsChatGroup.mMeta.mSubscribeFlags) && IS_GROUP_SUBSCRIBED(gxsChatGroup.mMeta.mSubscribeFlags))
             {
-                  ui->chatTextEdit->hide();
-                  ui->toolBarFrame->hide();
-                  ui->chatTextEditHSplitter->hide();
+                showChatInbox(false);
+
             }
             else if (!IS_GROUP_ADMIN(gxsChatGroup.mMeta.mSubscribeFlags) && IS_GROUP_PUBLISHER(gxsChatGroup.mMeta.mSubscribeFlags))
             {
                 //publisher can send the msg
-                ui->chatTextEdit->show();
-                ui->toolBarFrame->show();
-                ui->chatTextEditHSplitter->show();
+               showChatInbox(true);
             }
     }
 

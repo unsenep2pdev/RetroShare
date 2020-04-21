@@ -712,7 +712,14 @@ void UnseenGxsChatLobbyDialog::addChatMsg(const ChatMessage& msg)
 
 void UnseenGxsChatLobbyDialog::updateTitle(QString title)
 {
-     ui.chatWidget->setTitle(title);
+    ui.chatWidget->setTitle(title);
+}
+
+void UnseenGxsChatLobbyDialog::showChatTextInbox(bool iShow)
+{
+    //publisher can send the msg
+    ui.chatWidget->showChatInbox(iShow);
+
 }
 
 /**
