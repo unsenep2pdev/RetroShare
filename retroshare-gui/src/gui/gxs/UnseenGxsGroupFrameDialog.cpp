@@ -418,18 +418,21 @@ void UnseenGxsGroupFrameDialog::groupTreeCustomPopupMenu(QPoint point)
     QMenu contextMnu(this);
     QAction *action;
 
-    if (isSubscribed) {
+    if (isSubscribed && groupItem.type != RsGxsChatGroup::ONE2ONE) {
         action = contextMnu.addAction(QIcon(IMAGE_UNSUBSCRIBE), tr("Leave and delete this group"), this, SLOT(unsubscribeGroup()));
         action->setEnabled (!mGroupId.isNull() && isSubscribed);
     }
 
     contextMnu.addAction(QIcon(icon(ICON_NEW)), text(TEXT_NEW), this, SLOT(newGroup()));
 
-    action = contextMnu.addAction(QIcon(IMAGE_INFO), tr("Show Details"), this, SLOT(showGroupDetails()));
-    action->setEnabled (!mGroupId.isNull());
+    if(groupItem.type != RsGxsChatGroup::ONE2ONE)
+    {
+        action = contextMnu.addAction(QIcon(IMAGE_INFO), tr("Show Details"), this, SLOT(showGroupDetails()));
+        action->setEnabled (!mGroupId.isNull());
 
-    action = contextMnu.addAction(QIcon(IMAGE_EDIT), tr("Edit Details"), this, SLOT(editGroupDetails()));
-    action->setEnabled (!mGroupId.isNull() && isAdmin);
+        action = contextMnu.addAction(QIcon(IMAGE_EDIT), tr("Edit Details"), this, SLOT(editGroupDetails()));
+        action->setEnabled (!mGroupId.isNull() && isAdmin);
+    }
 
     uint32_t current_store_time = mInterface->getStoragePeriod(mGroupId)/86400 ;
     uint32_t current_sync_time  = mInterface->getSyncPeriod(mGroupId)/86400 ;
@@ -455,9 +458,10 @@ void UnseenGxsGroupFrameDialog::groupTreeCustomPopupMenu(QPoint point)
     actnn = ctxMenu2->addAction(tr(" 1 year  "   ),this,SLOT(setStorePostsDelay())) ; actnn->setData(QVariant(372)) ; if(current_store_time ==372) { actnn->setEnabled(false);actnn->setIcon(QIcon(":/images/start.png"));}
     actnn = ctxMenu2->addAction(tr(" Indefinitly"),this,SLOT(setStorePostsDelay())) ; actnn->setData(QVariant(  0)) ; if(current_store_time ==  0) { actnn->setEnabled(false);actnn->setIcon(QIcon(":/images/start.png"));}
 
-    if (shareKeyType()) {
-        action = contextMnu.addAction(QIcon(IMAGE_SHARE), tr("Share publish permissions"), this, SLOT(sharePublishKey()));
-        action->setEnabled(!mGroupId.isNull() && isPublisher);
+    if (shareKeyType() && groupItem.type != RsGxsChatGroup::ONE2ONE) {
+        action = contextMnu.addAction(QIcon(IMAGE_SHARE), tr("Grant Moderator Permission"), this, SLOT(sharePublishKey()));
+        //action->setEnabled(!mGroupId.isNull() && isPublisher); //in this version (0.8.0), just admin can grant and share key
+        action->setEnabled(!mGroupId.isNull() && isAdmin);
     }
 
     contextMnu.addSeparator();
@@ -585,7 +589,11 @@ void UnseenGxsGroupFrameDialog::subscribeGroup()
 
 void UnseenGxsGroupFrameDialog::unsubscribeGroup()
 {
-	groupSubscribe(false);
+    if ((QMessageBox::question(this, tr("Really leave?"), tr("Do you really want to leave and delete this conversation?"), QMessageBox::Yes|QMessageBox::No, QMessageBox::No))== QMessageBox::Yes)
+    {
+        groupSubscribe(false);
+    }
+
 }
 
 void UnseenGxsGroupFrameDialog::groupSubscribe(bool subscribe)
@@ -608,7 +616,8 @@ void UnseenGxsGroupFrameDialog::showGroupDetails()
 		return;
 	}
 
-    UnseenGxsGroupDialog *dialog = createGroupDialog(mTokenQueue, mInterface->getTokenService(), UnseenGxsGroupDialog::MODE_SHOW, mGroupId);
+    RsGxsChatGroup gxsChatGroup = gxsGroupFromList(mGroupId);
+    UnseenGxsGroupDialog *dialog = createGroupDialog(mTokenQueue, mInterface->getTokenService(), UnseenGxsGroupDialog::MODE_SHOW,gxsChatGroup.type, mGroupId);
 	if (!dialog) {
 		return;
 	}
@@ -623,7 +632,9 @@ void UnseenGxsGroupFrameDialog::editGroupDetails()
 		return;
 	}
 
-    UnseenGxsGroupDialog *dialog = createGroupDialog(mTokenQueue, mInterface->getTokenService(), UnseenGxsGroupDialog::MODE_EDIT, mGroupId);
+    RsGxsChatGroup gxsChatGroup = gxsGroupFromList(mGroupId);
+    
+    UnseenGxsGroupDialog *dialog = createGroupDialog(mTokenQueue, mInterface->getTokenService(), UnseenGxsGroupDialog::MODE_EDIT, gxsChatGroup.type, mGroupId);
 	if (!dialog) {
 		return;
 	}
@@ -1208,6 +1219,7 @@ void UnseenGxsGroupFrameDialog::insertGroupsData2(const std::map<RsGxsGroupId,Rs
             }
         }
 
+
         //after customizing the RsGxsChatGroup we can to add it into the allGxsChatGroupList
         if (isSubscribed)
         {
@@ -1247,7 +1259,13 @@ void UnseenGxsGroupFrameDialog::insertGroupsData2(const std::map<RsGxsGroupId,Rs
            std::cerr << " There is change in the group: " << (*it).mMeta.mGroupName << std::endl;
            _unseenGxsGroup_infos[(*it).mMeta.mGroupId].dialog->updateTitle(QString::fromStdString((*it).mMeta.mGroupName));
            _unseenGxsGroup_infos[(*it).mMeta.mGroupId].dialog->updateParticipantsList();
+           bool isPublisher  = IS_GROUP_PUBLISHER((*it).mMeta.mSubscribeFlags);
+           if( isPublisher && (*it).type == RsGxsChatGroup::CHANNEL)
+           {
+                _unseenGxsGroup_infos[(*it).mMeta.mGroupId].dialog->showChatTextInbox(true);
+           }
        }
+
     }
 
 }

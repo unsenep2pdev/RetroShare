@@ -83,6 +83,7 @@ public:
     RsGxsGroupId groupId() const {return mGroupId; }
 
     void updateTitle(QString title);
+    void showChatTextInbox(bool iShow);
 public slots:
     //unseenp2p - gxschat typing slot
     void updateReceiveGxsChatTyping3( const QString nickname, const RsPeerId sslId, const RsGxsId gxsId) ;

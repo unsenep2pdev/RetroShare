@@ -94,6 +94,7 @@ public:
 
     //unseenp2p
     gxsChatId getGxsChatId();
+    void showChatInbox(bool iShow);
 
     // allow/disallow sendng of messages
     void blockSending(QString msg);

@@ -193,7 +193,7 @@ private:
     //virtual TurtleRequestId distantSearch(const QString& search_string) ;
 
     virtual UnseenGxsGroupDialog *createNewGroupDialog(TokenQueue *tokenQueue) = 0;
-    virtual UnseenGxsGroupDialog *createGroupDialog(TokenQueue *tokenQueue, RsTokenService *tokenService, UnseenGxsGroupDialog::Mode mode, RsGxsGroupId groupId) = 0;
+    virtual UnseenGxsGroupDialog *createGroupDialog(TokenQueue *tokenQueue, RsTokenService *tokenService, UnseenGxsGroupDialog::Mode mode, RsGxsChatGroup::ChatType chatType, RsGxsGroupId groupId) = 0;
 	virtual int shareKeyType() = 0;
 	virtual GxsMessageFrameWidget *createMessageFrameWidget(const RsGxsGroupId &groupId) = 0;
 	virtual void groupTreeCustomActions(RsGxsGroupId /*grpId*/, int /*subscribeFlags*/, QList<QAction*> &/*actions*/) {}

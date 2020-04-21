@@ -65,14 +65,14 @@ UnseenGxsChatGroupDialog::UnseenGxsChatGroupDialog(TokenQueue *tokenQueue, QWidg
 {
 }
 
-UnseenGxsChatGroupDialog::UnseenGxsChatGroupDialog(TokenQueue *tokenExternalQueue, RsTokenService *tokenService, Mode mode, RsGxsGroupId groupId, QWidget *parent)
-    : UnseenGxsGroupDialog(tokenExternalQueue, tokenService, mode, groupId, ChannelEditEnabledFlags, ChannelEditDefaultsFlags, parent)
+UnseenGxsChatGroupDialog::UnseenGxsChatGroupDialog(TokenQueue *tokenExternalQueue, RsTokenService *tokenService, Mode mode, RsGxsChatGroup::ChatType chatType, RsGxsGroupId groupId, QWidget *parent)
+    : UnseenGxsGroupDialog(tokenExternalQueue, tokenService, mode, chatType, groupId, ChannelEditEnabledFlags, ChannelEditDefaultsFlags, parent)
 {
     GxsChatMember chatId;
     rsGxsChats->getOwnMember(chatId);
     ownChatId=chatId;
     members.insert(chatId);
-    chattype=RsGxsChatGroup::GROUPCHAT;  //set default for now...
+    chattype=chatType;  //set default for now...
 
 
 }

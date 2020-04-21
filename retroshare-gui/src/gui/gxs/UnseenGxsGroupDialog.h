@@ -128,7 +128,7 @@ public:
 	 * @param mode This determines whether the dialog starts in show or edit mode (Edit not supported yet)
 	 * @param parent
 	 */
-    UnseenGxsGroupDialog(TokenQueue *tokenExternalQueue, RsTokenService *tokenService, Mode mode, RsGxsGroupId groupId, uint32_t enableFlags, uint32_t defaultFlags, QWidget *parent = NULL);
+    UnseenGxsGroupDialog(TokenQueue *tokenExternalQueue, RsTokenService *tokenService, Mode mode, RsGxsChatGroup::ChatType _chatType, RsGxsGroupId groupId, uint32_t enableFlags, uint32_t defaultFlags, QWidget *parent = NULL);
 
     ~UnseenGxsGroupDialog();
 
