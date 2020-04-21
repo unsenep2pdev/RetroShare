@@ -616,7 +616,8 @@ void UnseenGxsGroupFrameDialog::showGroupDetails()
 		return;
 	}
 
-    UnseenGxsGroupDialog *dialog = createGroupDialog(mTokenQueue, mInterface->getTokenService(), UnseenGxsGroupDialog::MODE_SHOW, mGroupId);
+    RsGxsChatGroup gxsChatGroup = gxsGroupFromList(mGroupId);
+    UnseenGxsGroupDialog *dialog = createGroupDialog(mTokenQueue, mInterface->getTokenService(), UnseenGxsGroupDialog::MODE_SHOW,gxsChatGroup.type, mGroupId);
 	if (!dialog) {
 		return;
 	}
@@ -631,7 +632,9 @@ void UnseenGxsGroupFrameDialog::editGroupDetails()
 		return;
 	}
 
-    UnseenGxsGroupDialog *dialog = createGroupDialog(mTokenQueue, mInterface->getTokenService(), UnseenGxsGroupDialog::MODE_EDIT, mGroupId);
+    RsGxsChatGroup gxsChatGroup = gxsGroupFromList(mGroupId);
+    
+    UnseenGxsGroupDialog *dialog = createGroupDialog(mTokenQueue, mInterface->getTokenService(), UnseenGxsGroupDialog::MODE_EDIT, gxsChatGroup.type, mGroupId);
 	if (!dialog) {
 		return;
 	}

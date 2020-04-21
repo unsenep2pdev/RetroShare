@@ -164,9 +164,9 @@ UnseenGxsGroupDialog *GxsChatDialog::createNewGroupDialog(TokenQueue *tokenQueue
 }
 
 // When user click on Edit details of gxs groupchat/ channel/ one2one
-UnseenGxsGroupDialog *GxsChatDialog::createGroupDialog(TokenQueue *tokenQueue, RsTokenService *tokenService, UnseenGxsGroupDialog::Mode mode, RsGxsGroupId groupId)
+UnseenGxsGroupDialog *GxsChatDialog::createGroupDialog(TokenQueue *tokenQueue, RsTokenService *tokenService, UnseenGxsGroupDialog::Mode mode, RsGxsChatGroup::ChatType chatType, RsGxsGroupId groupId)
 {
-    return new UnseenGxsChatGroupDialog(tokenQueue, tokenService, mode, groupId, this);
+    return new UnseenGxsChatGroupDialog(tokenQueue, tokenService, mode,chatType, groupId, this);
     //return new GxsChatGroupDialog(tokenQueue, tokenService, mode, groupId, this); //old code
 }
 

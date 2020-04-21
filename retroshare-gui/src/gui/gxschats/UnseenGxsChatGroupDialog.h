@@ -42,7 +42,7 @@ class UnseenGxsChatGroupDialog : public UnseenGxsGroupDialog
 
 public:
     UnseenGxsChatGroupDialog(TokenQueue *tokenQueue, QWidget *parent);
-    UnseenGxsChatGroupDialog(TokenQueue *tokenExternalQueue, RsTokenService *tokenService, Mode mode, RsGxsGroupId groupId, QWidget *parent = NULL);
+    UnseenGxsChatGroupDialog(TokenQueue *tokenExternalQueue, RsTokenService *tokenService, Mode mode, RsGxsChatGroup::ChatType chatType, RsGxsGroupId groupId, QWidget *parent = NULL);
 
 protected:
     virtual void initUi();

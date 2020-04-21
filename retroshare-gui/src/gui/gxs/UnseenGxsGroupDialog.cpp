@@ -61,7 +61,7 @@ UnseenGxsGroupDialog::UnseenGxsGroupDialog(TokenQueue *tokenExternalQueue, uint3
     init(UnseenFriendSelectionWidget::MODE_CREATE_GROUP, pgpFriends, friends, gxsFriends);
 }
 
-UnseenGxsGroupDialog::UnseenGxsGroupDialog(TokenQueue *tokenExternalQueue, RsTokenService *tokenService, Mode mode, RsGxsGroupId groupId, uint32_t enableFlags, uint32_t defaultFlags, QWidget *parent)
+UnseenGxsGroupDialog::UnseenGxsGroupDialog(TokenQueue *tokenExternalQueue, RsTokenService *tokenService, Mode mode, RsGxsChatGroup::ChatType _chatType, RsGxsGroupId groupId, uint32_t enableFlags, uint32_t defaultFlags, QWidget *parent)
     : QDialog(parent, Qt::WindowSystemMenuHint | Qt::WindowTitleHint | Qt::WindowCloseButtonHint), mTokenService(NULL), mExternalTokenQueue(tokenExternalQueue), mInternalTokenQueue(NULL), mGrpMeta(), mMode(mode), mEnabledFlags(enableFlags), mReadonlyFlags(0), mDefaultsFlags(defaultFlags)
 {
 	/* Invoke the Qt Designer generated object setup routine */
@@ -70,6 +70,7 @@ UnseenGxsGroupDialog::UnseenGxsGroupDialog(TokenQueue *tokenExternalQueue, RsTok
 	mTokenService = tokenService;
 	mInternalTokenQueue = new TokenQueue(tokenService, this);
 	mGrpMeta.mGroupId = groupId;
+    chatType = _chatType;
 
     std::set<RsPeerId> friends;
     std::set<RsPgpId> pgpFriends;
@@ -90,7 +91,24 @@ void UnseenGxsGroupDialog::init(UnseenFriendSelectionWidget::ShowFriendListMode 
 	// connect up the buttons.
 	connect(ui.buttonBox, SIGNAL(accepted()), this, SLOT(submitGroup()));
 	connect(ui.buttonBox, SIGNAL(rejected()), this, SLOT(cancelDialog()));
-    ui.typeGroup->setChecked(true);
+
+    if(_showMode == UnseenFriendSelectionWidget::MODE_EDIT_GROUP)
+    {
+        switch (chatType) {
+        case RsGxsChatGroup::ONE2ONE:
+            ui.typeOne2One->setChecked(true);
+            break;
+        case RsGxsChatGroup::GROUPCHAT:
+            ui.typeGroup->setChecked(true);
+            break;
+        case RsGxsChatGroup::CHANNEL:
+            ui.typeChannel->setChecked(true);
+            break;
+        }
+
+    }
+    else
+        ui.typeGroup->setChecked(true);
 
     setDefaultOptions();
 
