@@ -1221,7 +1221,7 @@ bool p3GxsTrans::loadList(std::list<RsItem *>&loadList)
 	return true;
 }
 
-bool p3GxsTrans::acceptNewMessage(const RsGxsMsgMetaData *msgMeta,uint32_t msg_size)
+bool p3GxsTrans::acceptNewMessage(const RsNxsMsg* msg ,uint32_t msg_size)
 {
 	// 1 - check the total size of the msgs for the author of this particular msg.
 
@@ -1253,6 +1253,8 @@ bool p3GxsTrans::acceptNewMessage(const RsGxsMsgMetaData *msgMeta,uint32_t msg_s
 	uint32_t max_count = 0 ;
 	uint32_t max_size  = 0 ;
 	uint32_t identity_flags = 0 ;
+
+    RsGxsMsgMetaData *msgMeta=msg->metaData;
 
 	RsReputations::ReputationLevel rep_lev = rsReputations->overallReputationLevel(msgMeta->mAuthorId,&identity_flags);
 

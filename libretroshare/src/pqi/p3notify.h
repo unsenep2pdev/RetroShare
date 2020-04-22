@@ -129,6 +129,9 @@ class p3Notify: public RsNotify
 
 		virtual bool setDisableAskPassword    (const bool /*bValue*/) ;
 
+        //unseenp2p - gxschat notify
+        void receiveGxsChatTyping(const RsGxsGroupId, const std::string, const RsPeerId, const RsGxsId );
+
 	private:
 
 		RsMutex noteMtx;

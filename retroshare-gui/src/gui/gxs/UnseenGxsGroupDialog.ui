@@ -473,12 +473,6 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>UnseenFriendSelectionWidget</class>
-   <extends>QWidget</extends>
-   <header>gui/common/UnseenFriendSelectionWidget.h</header>
-   <container>1</container>
-  </customwidget>
-  <customwidget>
    <class>GxsIdLabel</class>
    <extends>QLabel</extends>
    <header>gui/gxs/GxsIdLabel.h</header>
@@ -493,6 +487,12 @@
    <class>GxsCircleChooser</class>
    <extends>QComboBox</extends>
    <header>gui/gxs/GxsCircleChooser.h</header>
+  </customwidget>
+  <customwidget>
+   <class>UnseenFriendSelectionWidget</class>
+   <extends>QWidget</extends>
+   <header>gui/common/UnseenFriendSelectionWidget.h</header>
+   <container>1</container>
   </customwidget>
  </customwidgets>
  <resources>

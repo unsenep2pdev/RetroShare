@@ -30,6 +30,7 @@
 
 #include "rstypes.h"
 #include "rsgxsifacetypes.h"
+#include "retroshare/rsgxschats.h"
 
 /********************** For Messages and Channels *****************/
 
@@ -369,28 +370,31 @@ public:
     gxsChatId();
     explicit gxsChatId(RsGxsGroupId  groupId);
 
+    enum RsGxsChatGroup::ChatType gxsChatType;
     std::string toStdString() const;
 
     RsGxsGroupId    toGxsGroupId()  const;
     bool operator<(const gxsChatId& other) const;
     bool isSameEndpoint(const gxsChatId& other) const;
 
+
     bool operator==(const gxsChatId& other) const { return isSameEndpoint(other) ; }
 private:
-    enum Type : uint8_t
-    {	TYPE_NOT_SET,
-        TYPE_GXSONE2ONE,
-        TYPE_GXSGROUPCHAT,
-        TYPE_GXSCHANNEL
-    };
 
-    Type type;
+//    enum Type : uint8_t
+//    {	TYPE_NOT_SET,
+//        TYPE_GXSONE2ONE,
+//        TYPE_GXSGROUPCHAT,
+//        TYPE_GXSCHANNEL
+//    };
+
+//    Type type;
     RsGxsGroupId  groupId;
     // RsSerializable interface
 public:
     void serial_process(RsGenericSerializer::SerializeJob j, RsGenericSerializer::SerializeContext &ctx) {
         RS_SERIAL_PROCESS(groupId);
-        RS_SERIAL_PROCESS(type);
+        RS_SERIAL_PROCESS(gxsChatType);
     }
 };
 
@@ -411,7 +415,7 @@ public:
     bool unread;
     //bool system_message;
     //unseenp2p - for gxs chat
-    gxsChatId groupId;
+    gxsChatId gxs_ChatId;
 };
 
 class ChatLobbyInvite : RsSerializable

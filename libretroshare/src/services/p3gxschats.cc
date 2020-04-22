@@ -51,7 +51,7 @@
 RsGxsChats *rsGxsChats = NULL;
 
 //cache delay
-#define DELAY_BETWEEN_CONFIG_UPDATES   300
+#define DELAY_BETWEEN_CONFIG_UPDATES   30
 
 #define GXSCHAT_STOREPERIOD	(3600 * 24 * 30)  // 30 days store
 
@@ -95,6 +95,12 @@ p3GxsChats::p3GxsChats(RsGeneralDataService *gds, RsNetworkExchangeService *nes,
 
     //initalized chatInfo
     initChatId();
+}
+
+p3GxsChats::~p3GxsChats(){
+    std::cerr <<"p3GxsChats::~p3GxsChats()"<<std::endl;
+   IndicateConfigChanged() ;   //sync before shutdown
+   std::this_thread::sleep_for(std::chrono::milliseconds(1000*15)); //waiting 15s before shutdown.
 }
 
 const std::string GXS_CHATS_APP_NAME = "gxschats";
@@ -143,7 +149,9 @@ struct RsGxsChatNotifyRecordsItem: public RsItem
                          RsGenericSerializer::SerializeContext& ctx )
     { RS_SERIAL_PROCESS(records); }
 
-    void clear() {}
+    void clear() {
+        records.clear();
+    }
 
     std::map<RsGxsGroupId,LocalGroupInfo> records;
 };
@@ -171,6 +179,10 @@ public:
 
 bool p3GxsChats::saveList(bool &cleanup, std::list<RsItem *>&saveList)
 {
+#ifdef GXSCHATS_DEBUG
+    std::cerr <<" p3GxsChats::saveList()"<<std::endl;
+#endif
+
     cleanup = true ;
 
     RsGxsChatNotifyRecordsItem *item = new RsGxsChatNotifyRecordsItem ;
@@ -184,6 +196,10 @@ bool p3GxsChats::saveList(bool &cleanup, std::list<RsItem *>&saveList)
 
 bool p3GxsChats::loadList(std::list<RsItem *>& loadList)
 {
+#ifdef GXSCHATS_DEBUG
+    std::cerr <<" p3GxsChats::loadList()"<<std::endl;
+#endif
+
     while(!loadList.empty())
     {
         RsItem *item = loadList.front();
@@ -198,12 +214,16 @@ bool p3GxsChats::loadList(std::list<RsItem *>& loadList)
             RS_STACK_MUTEX(mChatMtx);
             mKnownChats.clear();
 
+
             for(auto it(fnr->records.begin());it!=fnr->records.end();++it){
                 LocalGroupInfo localInfo = it->second;
                 rstime_t lasttime = localInfo.update_ts;
-                if( lasttime + GXS_CHATS_CONFIG_MAX_TIME_NOTIFY_STORAGE < now)
-                    mKnownChats.insert(*it) ;
+                if( lasttime + GXS_CHATS_CONFIG_MAX_TIME_NOTIFY_STORAGE > now){
+                    mKnownChats.insert(std::make_pair(it->first, it->second)) ;
+                }
+
             }
+
         }
 
         delete item ;
@@ -261,6 +281,7 @@ RsGenExchange::ServiceCreate_Return p3GxsChats::service_CreateGroup(RsGxsGrpItem
 #ifdef GXSCHATS_DEBUG
         std::cerr <<"*****************p3GxsChats::service_CreateGroup(**********"<<std::endl;
         std::cerr <<"*****************GroupId:"<<item->meta.mGroupId<< "  and   group.type:"<<item->type<<std::endl;
+        std::cerr <<"*****************Group mInternalCircleID: "<<item->meta.mInternalCircle <<std::endl;
         std::cerr <<"*****************GroupMembers: *************"<<std::endl;
         for(auto it=item->members.begin(); it !=item->members.end(); it++){
             std::cerr << "chatPeerId:"<< it->chatPeerId<< "Username: "<<it->nickname<< std::endl;
@@ -272,10 +293,66 @@ RsGenExchange::ServiceCreate_Return p3GxsChats::service_CreateGroup(RsGxsGrpItem
         return SERVICE_CREATE_FAIL;
     }
 
+
     return SERVICE_CREATE_SUCCESS;
 }
 
-RsGenExchange::ServiceCreate_Return p3GxsChats::service_PublishGroup(RsNxsGrp *grp){
+RsGenExchange::ServiceCreate_Return p3GxsChats::service_UpateGroup(RsGxsGrpItem* grpItem, const RsTlvSecurityKeySet& keySet){
+#ifdef GXSCHATS_DEBUG
+    std::cerr <<"*****************p3GxsChats::service_UpateGroup()**********"<<std::endl;
+#endif
+
+    typedef std::map<RsGxsId, RsTlvPrivateRSAKey> keyMap;
+    const keyMap& allKeys = keySet.private_keys;
+    keyMap::const_iterator cit = allKeys.begin();
+
+    bool adminFound = false, publishFound = false;
+    for(; cit != allKeys.end(); ++cit)
+    {
+        const RsTlvPrivateRSAKey& key = cit->second;
+        if(key.keyFlags & RSTLV_KEY_TYPE_FULL)		// this one is not useful. Just a security.
+        {
+            if(key.keyFlags & RSTLV_KEY_DISTRIB_ADMIN)
+                adminFound = true;
+
+            if(key.keyFlags & RSTLV_KEY_DISTRIB_PUBLISH)
+                publishFound = true;
+
+        }
+        else if(key.keyFlags & RSTLV_KEY_TYPE_PUBLIC_ONLY)		// this one is not useful. Just a security.
+        {
+            std::cerr << "(EE) found a public only key in the private key list" << std::endl;
+            return SERVICE_GXSCHATS_DEFAULT ;
+        }
+    }
+
+
+    RsGxsChatGroupItem* groupItem = dynamic_cast<RsGxsChatGroupItem*>(grpItem);
+    if(groupItem){
+        RsGroupInfo groupInfo;
+        if(rsPeers->getGroupInfo(RsNodeGroupId(groupItem->meta.mInternalCircle), groupInfo)){
+            std::cerr <<"******p3GxsChats::service_UpateGroup(): Update GroupNodeId MemberLists()*******"<<std::endl;
+            for(auto it2 = groupItem->members.begin(); it2 != groupItem->members.end(); ++it2)
+            {
+                std::cerr<<"Member: "<<it2->nickname <<" and RsPeerId: "<<it2->chatPeerId <<std::endl;
+                RsPeerDetails detail;
+                if (rsPeers->getPeerDetails((*it2).chatPeerId, detail))
+                    rsPeers->assignPeerToGroup(groupInfo.id, detail.gpg_id, true);
+            }
+
+        }
+    }
+
+
+    // user must have both private and public parts of publish and admin keys
+    if(adminFound || publishFound)  //owner | admin of the gxsgroup
+        return SERVICE_GXSCHATS_UPDATE_SUCCESS;
+
+    return SERVICE_GXSCHATS_DEFAULT ;
+
+}
+
+RsGenExchange::ServiceCreate_Return p3GxsChats::service_PublishGroup(RsNxsGrp *grp, bool update){
     if (ownChatId==NULL){ //initalized chatInfo
         initChatId();
     }
@@ -285,17 +362,43 @@ RsGenExchange::ServiceCreate_Return p3GxsChats::service_PublishGroup(RsNxsGrp *g
     if (it == mSubscribedGroups.end() )
         return SERVICE_CREATE_FAIL;  //message doesn't belong to any group.
 
+
     auto mit = grpMembers.find(grp->grpId);
     if(mit == grpMembers.end())
         return SERVICE_CREATE_FAIL;  //message doesn't belong to any group.
 
     ChatInfo cinfo = mit->second;
+
+    RsTlvBinaryData& data = grp->grp;
+    RsItem* item = NULL;
+
+    if(data.bin_len != 0)
+        item = mSerialiser->deserialise(data.bin_data, &data.bin_len);
+
+    if(item)
+    {
+        RsGxsGrpItem* gItem = dynamic_cast<RsGxsGrpItem*>(item);
+        if (gItem)
+        {
+            gItem->meta = *(grp->metaData);
+            RsGxsChatGroupItem* groupItem = dynamic_cast<RsGxsChatGroupItem*>(gItem);
+            if(groupItem){
+                RsGroupMetaData chatGrpMeta = groupItem->meta;
+                if(chatGrpMeta.mCircleType !=GXS_CIRCLE_TYPE_PUBLIC){
+                    RS_STACK_MUTEX(mChatMtx);
+                    cinfo = std::make_pair(groupItem->type,groupItem->members);
+                    grpMembers.insert(std::make_pair(grp->grpId,cinfo));
+                }
+            }
+        }
+    }
+
     std::list<RsPeerId> ids;
     rsPeers->getOnlineList(ids);
     std::set<RsPeerId> tempSendList;
     RsNetworkExchangeService *netService = RsGenExchange::getNetworkExchangeService();
-
     RsGroupMetaData grpMeta = it->second;
+
     if(grpMeta.mCircleType==GXS_CIRCLE_TYPE_PUBLIC && !ids.empty()){
             std::set<RsPeerId> peers(ids.begin(), ids.end());
             netService->PublishChatGroup(grp,ids);
@@ -303,9 +406,78 @@ RsGenExchange::ServiceCreate_Return p3GxsChats::service_PublishGroup(RsNxsGrp *g
             //    groupShareKeys(grp->grpId,peers);
             //sharing publish key to all invite members.
     }else{
+        //check groupNodeId
+        RsGroupInfo groupInfo2;
+        if(!update){
+            if( !rsPeers->getGroupInfoByName(grpMeta.mGroupName, groupInfo2))
+            {
+                RsGroupInfo groupInfo;
+                //groupInfo.id = RsNodeGroupId(it->second.mMeta.mGroupId);
+                groupInfo.id = RsNodeGroupId(RsGxsCircleId(grp->grpId)); //.clear(); // RS will generate an ID
+                groupInfo.name = grpMeta.mGroupId.toStdString();
+
+                switch(cinfo.first){
+                case RsGxsChatGroup::ONE2ONE:   groupInfo.type =RsGroupInfo::ONE2ONE;   break;
+                case RsGxsChatGroup::GROUPCHAT: groupInfo.type =RsGroupInfo::GROUPCHAT; break;
+                case RsGxsChatGroup::CHANNEL:   groupInfo.type =RsGroupInfo::CHANNEL;   break;
+                }
+                //create local groupnode and add this group to the groupnode list in the local here:
+                if(rsPeers->addGroupWithId(groupInfo, true))
+                {
+                    grp->metaData->mInternalCircle = RsGxsCircleId(grp->grpId);
+                }
+                std::set<RsPgpId> pgpIds;
+                //get all PgpId from the member list of this group
+                for(std::set<GxsChatMember>::iterator it2 = cinfo.second.begin(); it2 != cinfo.second.end(); ++it2)
+                {
+                    RsPeerDetails detail;
+                    if (rsPeers->getPeerDetails((*it2).chatPeerId, detail))
+                    {
+                        pgpIds.insert(detail.gpg_id);
+                    }
+                }
+                std::set<RsPgpId>::iterator it;
+                for (it = pgpIds.begin(); it != pgpIds.end(); ++it) {
+                    rsPeers->assignPeerToGroup(groupInfo.id, *it, true);
+                }
+            }
+            else{
+                //already create nodegroupd, just need to upgrade groupId.
+                if(rsPeers->removeGroup(groupInfo2.id)){
+                    groupInfo2.id=RsNodeGroupId(RsGxsCircleId(grp->grpId));
+                    groupInfo2.name = grpMeta.mGroupId.toStdString();
+                    //create local groupnode and add this group to the groupnode list in the local here:
+                    if(rsPeers->addGroupWithId(groupInfo2, true))
+                    {
+                        grp->metaData->mInternalCircle = RsGxsCircleId(grp->grpId);
+                    }
+                }
+
+            }
+        }else{
+            RsGroupInfo groupInfo;
+            RsNodeGroupId nodeId( RsGxsCircleId(grp->grpId));
+            if(rsPeers->getGroupInfo(nodeId, groupInfo) ){
+                groupInfo.peerIds.clear();
+                rsPeers->addGroupWithId(groupInfo, true);
+
+                for(std::set<GxsChatMember>::iterator it2 = cinfo.second.begin(); it2 != cinfo.second.end(); ++it2)
+                {
+                    RsPeerDetails detail;
+                    if (rsPeers->getPeerDetails((*it2).chatPeerId, detail)){
+                        rsPeers->assignPeerToGroup(groupInfo.id, detail.gpg_id, true);
+                    }
+                }
+
+            }
+        }
+        //send off the network
+        std::cerr <<"ServiceCreate_Return p3GxsChats::service_PublishGroup() "<<std::endl;
         for (auto sit=cinfo.second.begin(); sit !=cinfo.second.end(); sit++){
-            if(sit->chatPeerId  != ownChatId->chatPeerId && rsPeers->isOnline(sit->chatPeerId))
+            if(sit->chatPeerId  != ownChatId->chatPeerId && rsPeers->isOnline(sit->chatPeerId)){
                 tempSendList.insert(sit->chatPeerId); //member of the group and also online status.
+                std::cerr<<"Sending to member: "<<sit->nickname <<std::endl;
+            }
         }
         if(!tempSendList.empty()){
             std::list<RsPeerId> sendlist(tempSendList.begin(), tempSendList.end());
@@ -313,7 +485,9 @@ RsGenExchange::ServiceCreate_Return p3GxsChats::service_PublishGroup(RsNxsGrp *g
             //if(cinfo.first !=RsGxsChatGroup::CHANNEL)
             //    groupShareKeys(grp->grpId,tempSendList);          //sharing publish key to all invite members.
         }
+
     }
+
     return SERVICE_CREATE_SUCCESS;
 }
 
@@ -380,10 +554,13 @@ RsGenExchange::ServiceCreate_Return p3GxsChats::service_CreateMessage(RsNxsMsg* 
         */
         //getting all member on conversation memberlist.
         //privateGroup. sending to only membership, except the sender.
+        std::cerr << "************p3GxsChats::service_CreateMessage()  MsgId: " << msg->msgId << " and GroupId: " << msg->grpId<< std::endl;
         ChatInfo cinfo = mit->second;
         for (auto sit=cinfo.second.begin(); sit !=cinfo.second.end(); sit++){
-            if(sit->chatPeerId  != ownChatId->chatPeerId && rsPeers->isOnline(sit->chatPeerId))
+            if(sit->chatPeerId  != ownChatId->chatPeerId && rsPeers->isOnline(sit->chatPeerId)){
                 tempSendList.push_back(sit->chatPeerId); //member of the group and also online status.
+                std::cerr <<"*********Group's Member: "<<sit->nickname << " and RsPeerId: "<<sit->chatPeerId <<std::endl;
+            }
         }
 
 
@@ -415,6 +592,105 @@ RsGenExchange::ServiceCreate_Return p3GxsChats::service_RecvBounceGroup(RsNxsGrp
     newGrp->metaData = grp->metaData;
 
     groupBouncePending.push_back(std::make_pair(newGrp, isNew));
+
+    ChatInfo cinfo;
+    auto mit = grpMembers.find(grp->grpId);
+    if(mit != grpMembers.end()){
+        cinfo = mit->second;
+    }
+
+    RsTlvBinaryData& data = grp->grp;
+    RsItem* item = NULL;
+    if(data.bin_len != 0)
+        item = mSerialiser->deserialise(data.bin_data, &data.bin_len);
+
+    if(item)
+    {
+        RsGxsGrpItem* gItem = dynamic_cast<RsGxsGrpItem*>(item);
+        if (gItem)
+        {
+            gItem->meta = *(grp->metaData);
+            RsGxsChatGroupItem* groupItem = dynamic_cast<RsGxsChatGroupItem*>(gItem);
+            if(groupItem){
+                RsGroupMetaData chatGrpMeta = groupItem->meta;
+                if(chatGrpMeta.mCircleType==GXS_CIRCLE_TYPE_PUBLIC)
+                    return SERVICE_CREATE_SUCCESS;
+
+                cinfo = std::make_pair(groupItem->type,groupItem->members);
+                grpMembers.insert(std::make_pair(grp->grpId,cinfo));
+            }
+        }
+    }
+
+   if(isNew){
+        //check groupNodeId
+        RsGroupInfo groupInfo2;
+        grp->metaData->mInternalCircle = RsGxsCircleId(grp->grpId);
+
+        if( !rsPeers->getGroupInfoByName(grp->grpId.toStdString(), groupInfo2))
+        {
+            RsGroupInfo groupInfo;
+            //groupInfo.id = RsNodeGroupId(it->second.mMeta.mGroupId);
+            groupInfo.id = RsNodeGroupId(RsGxsCircleId(grp->grpId)); //.clear(); // RS will generate an ID
+            groupInfo.name = grp->grpId.toStdString();
+
+            switch(cinfo.first){
+            case RsGxsChatGroup::ONE2ONE:   groupInfo.type =RsGroupInfo::ONE2ONE;   break;
+            case RsGxsChatGroup::GROUPCHAT: groupInfo.type =RsGroupInfo::GROUPCHAT; break;
+            case RsGxsChatGroup::CHANNEL:   groupInfo.type =RsGroupInfo::CHANNEL;   break;
+            }
+            //create local groupnode and add this group to the groupnode list in the local here:
+            if(rsPeers->addGroupWithId(groupInfo, true))
+            {
+                grp->metaData->mInternalCircle = RsGxsCircleId(grp->grpId);
+            }
+            std::set<RsPgpId> pgpIds;
+            //get all PgpId from the member list of this group
+            for(std::set<GxsChatMember>::iterator it2 = cinfo.second.begin(); it2 != cinfo.second.end(); ++it2)
+            {
+                RsPeerDetails detail;
+                if (rsPeers->getPeerDetails((*it2).chatPeerId, detail))
+                {
+                    pgpIds.insert(detail.gpg_id);
+                }
+            }
+            std::set<RsPgpId>::iterator it;
+            for (it = pgpIds.begin(); it != pgpIds.end(); ++it) {
+                rsPeers->assignPeerToGroup(groupInfo.id, *it, true);
+            }
+        }
+        else{
+            //already create nodegroupd, just need to upgrade groupId.
+            if(rsPeers->removeGroup(groupInfo2.id)){
+                groupInfo2.id=RsNodeGroupId(RsGxsCircleId(grp->grpId));
+                //create local groupnode and add this group to the groupnode list in the local here:
+                if(rsPeers->addGroupWithId(groupInfo2, true))
+                {
+                    grp->metaData->mInternalCircle = RsGxsCircleId(grp->grpId);
+                }
+            }
+
+        }
+   }else{//check if more members has added.
+       RsGroupInfo groupInfo;
+       RsNodeGroupId nodeId(RsGxsCircleId(grp->grpId));
+       if(rsPeers->getGroupInfo(nodeId, groupInfo) ){
+           groupInfo.peerIds.clear();
+           rsPeers->addGroupWithId(groupInfo, true);
+
+           for(std::set<GxsChatMember>::iterator it2 = cinfo.second.begin(); it2 != cinfo.second.end(); ++it2)
+           {
+               RsPeerDetails detail;
+               if (rsPeers->getPeerDetails((*it2).chatPeerId, detail)){
+                   rsPeers->assignPeerToGroup(groupInfo.id, detail.gpg_id, true);
+               }
+           }
+
+       }
+
+   }
+
+
     return SERVICE_CREATE_SUCCESS;
 }
 
@@ -431,6 +707,7 @@ RsGenExchange::ServiceCreate_Return p3GxsChats::service_RecvBounceMessage(RsNxsM
     newMsg->msg.setBinData(msg->msg.bin_data, msg->msg.bin_len);
     newMsg->PeerId(msg->PeerId());
     newMsg->metaData = msg->metaData;
+
 
     messageBouncePending.push_back(std::make_pair(newMsg, isNew));
     return SERVICE_CREATE_SUCCESS;
@@ -644,6 +921,7 @@ void p3GxsChats::processRecvBounceMessage(){
 
     RsNetworkExchangeService *netService = RsGenExchange::getNetworkExchangeService();
     std::vector<std::pair<RsNxsMsg*,bool>>::iterator it;
+
     for (it=messageBouncePending.begin(); it !=messageBouncePending.end(); it++){
         RsNxsMsg *msg = it->first;
         bool isNew = it->second;
@@ -658,7 +936,8 @@ void p3GxsChats::processRecvBounceMessage(){
         if(sit == mSubscribedGroups.end())
              continue; //not a subscribe conversation, no bouncing on this message.
 
-         ChatInfo cinfo = mit->second;
+        ChatInfo cinfo = mit->second;
+
          switch(cinfo.first){
             case RsGxsChatGroup::ONE2ONE: //one2one message, drop off, final destination! no bouncing off!
              break;
@@ -671,18 +950,24 @@ void p3GxsChats::processRecvBounceMessage(){
                 rsPeers->getOnlineList(ids);
 
                 RsGroupMetaData grpMeta = sit->second;
-                if(grpMeta.mCircleType !=GXS_CIRCLE_TYPE_PUBLIC){
+                if(grpMeta.mCircleType ==GXS_CIRCLE_TYPE_PUBLIC){
                     ids.remove(sender);
                     tempSendList.merge(ids);
                 }else{
                     //bouncing all private members with message on the group, execept the sender of this message.
                     std::set<GxsChatMember> friendList = cinfo.second;
+                    GxsChatMember senderCheck;
+                    senderCheck.chatPeerId = sender;
+                    if(friendList.find(senderCheck) == friendList.end())
+                        continue; //skip this message as it's not on memberlist.
+
                     for (auto sit=friendList.begin(); sit !=friendList.end(); sit++){
                         if(sit->chatPeerId == sender || sit->chatPeerId ==  ownChatId->chatPeerId)
                               continue;  //Don't send to itself and sender peer.
                         else{
-                            if(rsPeers->isOnline(sit->chatPeerId))
+                            if(rsPeers->isOnline(sit->chatPeerId)){
                                 tempSendList.push_back(sit->chatPeerId); //temp without gxs tunneling.
+                            }
                         }
                     }//end forloop
                 }
@@ -708,13 +993,16 @@ void p3GxsChats::processRecvBounceNotify(){
         RsGxsPersonPair personIdPair = msgnotify->sendFrom.first;
         std::string personName = msgnotify->sendFrom.second;
         //username|RsPeerId|GxsId
-        std::string sender = personName + "|" + personIdPair.first.toStdString() + + "|" + personIdPair.second.toStdString();
+        std::string sender = personName + "|" + personIdPair.first.toStdString()  + "|" + personIdPair.second.toStdString();
         //command type:argument, chatStatus:typing... audio_call:ICEINFO, ...
         std::string command = msgnotify->command.first + ":" + msgnotify->command.second;
 
 #ifdef GXSCHATS_DEBUG
     std::cerr << "p3GxsChats::processRecvBounceNotify() Nofify ->Sender:"<< sender << " command:"<<command<< std::endl;
 #endif
+        //unseenp2p - meiyousixin - add Notify from notifyQt
+        //emit NotifyQ
+        RsServer::notify()->receiveGxsChatTyping(msgnotify->grpId, personName, personIdPair.first, personIdPair.second );
         //send notification to application and GUI Layer.
         notify->AddFeedItem(RS_FEED_ITEM_CHATS_NOTIFY, msgnotify->grpId.toStdString(), sender,command);
         //bounce this message if it's groupchat public/private only.
@@ -757,7 +1045,7 @@ void p3GxsChats::publishNotifyMessage(const RsGxsGroupId &grpId,std::pair<std::s
     ChatInfo cinfo = mit->second;
      //one2one or channel notification, drop off, final destination!
     switch(cinfo.first){
-        case RsGxsChatGroup::CHANNEL:  break;  //drop, no bouncing off
+        case RsGxsChatGroup::CHANNEL:    //drop, no bouncing off
         case RsGxsChatGroup::ONE2ONE:
         case RsGxsChatGroup::GROUPCHAT:
 
@@ -792,10 +1080,21 @@ void p3GxsChats::publishBounceNotifyMessage(RsNxsNotifyChat * notifyMsg){
 #ifdef GXSCHATS_DEBUG
     std::cerr << "p3GxsChats::publishBounceNotifyMessage()  : " << std::endl;
 #endif
+    if(ownChatId==NULL)
+        initChatId();
+
     auto mit = grpMembers.find(notifyMsg->grpId);
     if (mit == grpMembers.end()) return;
 
     ChatInfo cinfo = mit->second;
+
+#ifdef GXSCHATS_DEBUG
+    RsGxsPersonPair personIdPair = notifyMsg->sendFrom.first;
+    std::string personName = notifyMsg->sendFrom.second;
+    std::cerr <<"GroupId: "<<notifyMsg->grpId << " and MsgId: "<<notifyMsg->msgId<<std::endl;
+    std::cerr <<"Sender: "<< personName << " and pair(sslid:"<<personIdPair.first<<", gxsid:"<< personIdPair.second<<") "<<std::endl;
+#endif
+
      //one2one or channel notification, drop off, final destination!
     switch(cinfo.first){
         case RsGxsChatGroup::ONE2ONE:  break;
@@ -821,8 +1120,8 @@ void p3GxsChats::publishBounceNotifyMessage(RsNxsNotifyChat * notifyMsg){
         }else{
             //privateGroup. sending to only membership, except the sender.
             for (auto sit=cinfo.second.begin(); sit !=cinfo.second.end(); sit++){
-                if( sit->chatPeerId != sender || sit->chatPeerId  != ownChatId->chatPeerId ){
-                    if (rsPeers->isOnline(sit->chatPeerId))
+                if( sit->chatPeerId != sender ){
+                    if ( sit->chatPeerId  != ownChatId->chatPeerId && rsPeers->isOnline(sit->chatPeerId))
                         tempSendList.push_back(sit->chatPeerId);
                 }
             }
@@ -883,11 +1182,15 @@ void p3GxsChats::notifyChanges(std::vector<RsGxsNotify *> &changes)
                 if (notify)
                 {
 
+#ifdef GXSCHATS_DEBUG
+                    std::cerr <<"p3GxsChats::notifyChanges(): Received New Messages: "<<std::endl;
+#endif
                     std::map<RsGxsGroupId, std::set<RsGxsMessageId> > &msgChangeMap = msgChange->msgChangeMap;
                     for (auto mit = msgChangeMap.begin(); mit != msgChangeMap.end(); ++mit)
                         for (auto mit1 = mit->second.begin(); mit1 != mit->second.end(); ++mit1)
                         {
                             notify->AddFeedItem(RS_FEED_ITEM_CHATS_MSG, mit->first.toStdString(), mit1->toStdString());
+                            std::cerr<<"GroupId: "<<mit->first.toStdString() <<" and MsgId: "<<mit1->toStdString() <<std::endl;
                         }
                 }
             }
@@ -903,8 +1206,7 @@ void p3GxsChats::notifyChanges(std::vector<RsGxsNotify *> &changes)
                 for(auto mit = msgChangeMap.begin(); mit != msgChangeMap.end(); ++mit)
                 {
 #ifdef GXSCHATS_DEBUG
-                    std::cerr << "p3GxsChats::notifyChanges() Msgs for Group: " << mit->first;
-                    std::cerr << std::endl;
+                    std::cerr << "p3GxsChats::notifyChanges() Msgs for Group: " << mit->first<<std::endl;
 #endif
                                 bool enabled = false ;
 
@@ -1008,12 +1310,12 @@ static  rstime_t last_notifyClear = 0;
 
 bool p3GxsChats::getGroupData(const uint32_t &token, std::vector<RsGxsChatGroup> &groups)
 {
-
     std::vector<RsGxsGrpItem*> grpData;
     bool ok = RsGenExchange::getGroupData(token, grpData);
 
     if(ok)
     {
+
         std::vector<RsGxsGrpItem*>::iterator vit = grpData.begin();
 
         for(; vit != grpData.end(); ++vit)
@@ -1023,20 +1325,28 @@ bool p3GxsChats::getGroupData(const uint32_t &token, std::vector<RsGxsChatGroup>
             {
                 RsGxsChatGroup grp;
                 item->toChatGroup(grp, true);
-                delete item;
-                groups.push_back(grp);
-                loadChatsMembers(grp);
-                if(mKnownChats.find(item->meta.mGroupId) != mKnownChats.end())
-                    grp.localMsgInfo = mKnownChats[item->meta.mGroupId];
+
+                auto found = mKnownChats.find(RsGxsGroupId(item->meta.mGroupId));
+                if( found != mKnownChats.end()){
+                    grp.localMsgInfo = mKnownChats[RsGxsGroupId(item->meta.mGroupId)];
+                }
                 else{
                     RS_STACK_MUTEX(mChatMtx);
                     LocalGroupInfo localMsg;
-                    localMsg.msg ="New Join";
+                    localMsg.msg ="New";
                     localMsg.update_ts = time(NULL);
                     localMsg.isSubscribed = true;
                     grp.localMsgInfo = localMsg;
-                    mKnownChats[item->meta.mGroupId] =  localMsg;
+                    mKnownChats[RsGxsGroupId(item->meta.mGroupId)] =  localMsg;
                 }
+                groups.push_back(grp);
+                //loadChatsMembers(grp);
+                {
+                    RS_STACK_MUTEX(mChatMtx);
+                    grpMembers[grp.mMeta.mGroupId]=std::make_pair(grp.type,grp.members);
+                }
+
+                delete item;
             }
             else
             {
@@ -1071,9 +1381,10 @@ void p3GxsChats::loadChatsMembers(RsGxsChatGroup &grp){
 
 }
 
-bool p3GxsChats::acceptNewMessage(const RsGxsMsgMetaData* grpMeta,uint32_t size)
+bool p3GxsChats::acceptNewMessage(const RsNxsMsg* msg ,uint32_t size)
 {
 
+    RsGxsMsgMetaData* grpMeta = msg->metaData;
     RsGxsGroupId grpId = grpMeta->mGroupId;
     RsGxsMessageId msgId = grpMeta->mMsgId;
 
@@ -1083,6 +1394,22 @@ bool p3GxsChats::acceptNewMessage(const RsGxsMsgMetaData* grpMeta,uint32_t size)
            return false; //drop this message if it's not belong to any subscribed group
      }
 
+    RsGroupMetaData chatGrpMeta = grpit->second;
+
+    auto mit = grpMembers.find(grpId);
+    if (mit == grpMembers.end()){
+         return false; //message doesn't belong to anygroup... Drop it!
+    }
+    else{
+        ChatInfo cinfo = mit->second;
+        if(chatGrpMeta.mCircleType !=GXS_CIRCLE_TYPE_PUBLIC){
+            GxsChatMember senderCheck;
+            senderCheck.chatPeerId = msg->PeerId();
+            if(cinfo.second.find(senderCheck) == cinfo.second.end())
+                return false; //drop this message as it's not belong on memberlist.
+        }
+
+    }
     //look up message with GroupId and MsgId
     RsGxsGrpMsgIdPair grpMsgPair=std::make_pair(grpId,msgId);
 
@@ -1111,6 +1438,8 @@ bool p3GxsChats::getPostData(const uint32_t &token, std::vector<RsGxsChatMsg> &m
     GxsMsgDataMap msgData;
     bool ok = RsGenExchange::getMsgData(token, msgData);
 
+    std::set<RsGxsChatMsg> results; //try to put timestamp order
+
     if(ok)
     {
         GxsMsgDataMap::iterator mit = msgData.begin();
@@ -1128,7 +1457,7 @@ bool p3GxsChats::getPostData(const uint32_t &token, std::vector<RsGxsChatMsg> &m
                 {
                     RsGxsChatMsg msg;
                     postItem->toChatPost(msg, true);
-                    msgs.push_back(msg);
+                    results.insert(msg);
                     RsGxsGrpMsgIdPair GrpMsgPair = std::make_pair(postItem->meta.mGroupId, postItem->meta.mMsgId);
                     uint32_t size = mSerialiser->size(*vit) ;
                     {
@@ -1175,6 +1504,10 @@ bool p3GxsChats::getPostData(const uint32_t &token, std::vector<RsGxsChatMsg> &m
     {
         std::cerr << "p3GxsChats::getPostData() ERROR in request";
         std::cerr << std::endl;
+    }
+
+    for(auto nit= results.begin(); nit !=results.end(); nit++){
+         msgs.push_back(*nit);
     }
 
     return ok;
@@ -1615,12 +1948,14 @@ void p3GxsChats::setMessageReadStatus( uint32_t& token,
         if (read) {
             status = 0;
             if(found !=mKnownChats.end()){
+                for(auto it=mKnownChats[msgId.first].unreadMsgIds.begin(); it!=mKnownChats[msgId.first].unreadMsgIds.end(); it++){
+                    RsGxsGrpMsgIdPair msgPair = std::make_pair(msgId.first,*it);
+                    setMsgStatusFlags(token, msgPair, status, mask);
+                }
                 mKnownChats[msgId.first].clear();  //clear all the unread messageId
-                mKnownChats[msgId.first].unreadMsgIds.insert(msgId.second);
                 mKnownChats[msgId.first].msg = shortMsg;
-                mKnownChats[msgId.first].update_ts = time(NULL);
 
-                slowIndicateConfigChanged();
+                slowIndicateConfigChanged();             
             }
         }else if(found !=mKnownChats.end()){
                 mKnownChats[msgId.first].unreadMsgIds.insert(msgId.second);
@@ -1628,12 +1963,19 @@ void p3GxsChats::setMessageReadStatus( uint32_t& token,
                 mKnownChats[msgId.first].update_ts = time(NULL);
 
                 slowIndicateConfigChanged();
+
+        }else{
+            std::cerr <<"Not found groupPair"<<std::endl;
+            std::cerr<<"PairGroup(): "<<msgId.first<< " and msgId: "<<msgId.second <<std::endl;
+            std::cerr<<"Msg : "<<shortMsg <<std::endl;
         }
     }
     setMsgStatusFlags(token, msgId, status, mask);
+
+
 }
 
-void p3GxsChats::setLocalMessageStatus(uint32_t& token, const RsGxsGrpMsgIdPair& msgId, const std::string msg){
+void p3GxsChats::setLocalMessageStatus(const RsGxsGrpMsgIdPair& msgId, const std::string msg){
 #ifdef GXSCHATS_DEBUG
     std::cerr << "p3GxsChats::setLocalMessageStatus()";
     std::cerr << std::endl;
@@ -1647,17 +1989,28 @@ void p3GxsChats::setLocalMessageStatus(uint32_t& token, const RsGxsGrpMsgIdPair&
 
         slowIndicateConfigChanged();
     }
+
+}
+
+bool  p3GxsChats::getLocalMessageStatus(const RsGxsGroupId& groupId, LocalGroupInfo &localInfo){
+
+    auto found = mKnownChats.find(groupId);
+    if(found ==mKnownChats.end())
+        return false;
+
+    localInfo = mKnownChats[groupId];
+    return true;
 }
 
 void p3GxsChats::slowIndicateConfigChanged()
 {
     rstime_t now = time(NULL) ;
 
-    if(mLastConfigUpdate + DELAY_BETWEEN_CONFIG_UPDATES < now)
-    {
+    //if(mLastConfigUpdate + DELAY_BETWEEN_CONFIG_UPDATES < now)
+    //{
         IndicateConfigChanged() ;
-    mLastConfigUpdate = now ;
-    }
+        mLastConfigUpdate = now ;
+    //}
 }
 
 /********************************************************************************************/
@@ -1693,6 +2046,15 @@ bool p3GxsChats::updateGroup(uint32_t &token, RsGxsChatGroup &group)
     grpItem->fromChatGroup(group, true);
 
     RsGenExchange::updateGroup(token, grpItem);
+
+#ifdef GXSCHATS_DEBUG
+        std::cerr <<"*****************p3GxsChats::updateGroup()**********"<<std::endl;
+        std::cerr <<"*****************GroupId:"<<group.mMeta.mGroupId<< "  and   group.type:"<<group.type<<std::endl;
+        std::cerr <<"*****************GroupMembers: *************"<<std::endl;
+        for(auto it=group.members.begin(); it !=group.members.end(); it++){
+            std::cerr << "chatPeerId:"<< it->chatPeerId<< "Username: "<<it->nickname<< std::endl;
+        }
+#endif
     return true;
 }
 
@@ -1745,11 +2107,26 @@ void p3GxsChats::receiveNotifyMessages(std::vector<RsNxsNotifyChat*>& notifyMess
 #endif
     RS_STACK_MUTEX(mChatMtx);
     for(auto notify:notifyMessages){
-        if( (mSubscribedGroups.find(notify->grpId) !=mSubscribedGroups.end()) &&
-                (already_notifyMsg.find(notify->msgId) == already_notifyMsg.end()) ){
-                rstime_t now = time(NULL);
-                notifyMsgCache.insert(std::make_pair(notify,now));
-                already_notifyMsg.insert(std::make_pair(notify->msgId, now ));
+        auto grpIt = mSubscribedGroups.find(notify->grpId);
+        if( ( grpIt !=mSubscribedGroups.end()) && (already_notifyMsg.find(notify->msgId) == already_notifyMsg.end()) ){
+            RsGroupMetaData chatGrpMeta = grpIt->second;
+            auto mit = grpMembers.find(notify->grpId);
+            if (mit == grpMembers.end()){
+                return ; //message doesn't belong to anygroup... Drop it!
+            }
+            else{
+                ChatInfo cinfo = mit->second;
+                if(chatGrpMeta.mCircleType !=GXS_CIRCLE_TYPE_PUBLIC){
+                    GxsChatMember senderCheck;
+                    senderCheck.chatPeerId = notify->PeerId();
+                    if(cinfo.second.find(senderCheck) == cinfo.second.end())
+                        return ; //drop this message as it's not belong on memberlist.
+                }
+            }
+            rstime_t now = time(NULL);
+            notifyMsgCache.insert(std::make_pair(notify,now));
+            already_notifyMsg.insert(std::make_pair(notify->msgId, now ));
+
         }else{
             std::cerr <<"Notify messageId:"<<notify->msgId <<" is already exists!"<<std::endl;
         }

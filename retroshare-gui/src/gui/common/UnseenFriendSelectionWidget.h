@@ -30,6 +30,8 @@
 #include "util/TokenQueue.h"
 #include "gui/common/UnseenContactSmartListModel.h"
 #include "gui/common/RSTreeWidgetItem.h"
+#include "retroshare/rsidentity.h"
+#include "retroshare/rsgxschats.h"
 
 //unseenp2p
 #include "util/TokenQueue.h"
@@ -58,7 +60,8 @@ public:
 		IDTYPE_GROUP,
 		IDTYPE_SSL,
 		IDTYPE_GPG,
-		IDTYPE_GXS
+        IDTYPE_GXS,
+        IDTYPE_GXS_CHAT_MEMBER
 	};
 
 	enum Modus
@@ -67,6 +70,13 @@ public:
 		MODUS_MULTI,
 		MODUS_CHECK
 	};
+
+    enum ShowFriendListMode
+    {
+        MODE_CREATE_GROUP,
+        MODE_EDIT_GROUP,
+        MODE_INVITE_FRIENDS
+    };
 
     enum ShowType {
         SHOW_NONE             = 0,
@@ -84,7 +94,6 @@ public:
     explicit UnseenFriendSelectionWidget(QWidget *parent = 0);
     ~UnseenFriendSelectionWidget();
 
-	void setHeaderText(const QString &text);
 	void setModus(Modus modus);
 	void setShowType(ShowTypes types);
 	int addColumn(const QString &title);
@@ -92,6 +101,7 @@ public:
 
 	bool isSortByState();
 	bool isFilterConnected();
+
 
 	int selectedItemCount();
 	std::string selectedId(IdType &idType);
@@ -124,11 +134,20 @@ public:
 	// Add QAction to context menu (action won't be deleted)
 	void addContextMenuAction(QAction *action);
 
+
+    virtual void updateDisplay(bool complete);
+
+    //úneenp2p
+    void setSelectedContacts(const std::set<GxsChatMember> list);
+    void getSelectedContacts(std::set<GxsChatMember> &list);
+    void setGxsGroupId(const RsGxsGroupId _groupChatId);
+    void setModeOfFriendList(ShowFriendListMode showMode);
+
 protected:
 	void changeEvent(QEvent *e);
 
 	virtual void loadRequest(const TokenQueue *queue,const TokenRequest& req);
-	virtual void updateDisplay(bool complete);
+
 
 signals:
 	void itemAdded(int idType, const QString &id, QTreeWidgetItem *item);
@@ -165,7 +184,7 @@ private:
     //New GUI
     void selectConversation(const QModelIndex& index);
 
-    void requestIdList();
+    void updateLineEditFromList();
 
 private:
 	bool mStarted;
@@ -184,7 +203,7 @@ private:
 
     Ui::UnseenFriendSelectionWidget *ui;
 
-	friend class FriendSelectionDialog ;
+    friend class UnseenFriendSelectionDialog ;
 
 	std::vector<RsGxsGroupId> gxsIds ;
 	TokenQueue *mIdQueue ;
@@ -214,6 +233,11 @@ private:
     RsGxsGroupId mIdToNavigate;
     int filter;
 
+    //unseenp2p
+    QString stringList;
+    std::set<GxsChatMember> selectedList;
+    RsGxsGroupId groupChatId;
+    ShowFriendListMode showMode;
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(UnseenFriendSelectionWidget::ShowTypes)

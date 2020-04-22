@@ -29,8 +29,6 @@ typedef QVector<unsigned int>                                       VectorUInt  
 // Client
 #include "gui/common/UnseenContactSmartListModel.h"
 #include "ringthemeutils.h"
-//#include "utils.h"
-//#include "lrcinstance.h"
 
 #include <ciso646>
 
@@ -53,21 +51,11 @@ UnseenContactItemDelegate::paint(QPainter* painter
     QStyleOptionViewItem opt(option);
     painter->setRenderHint(QPainter::Antialiasing, true);
 
-//    // Not having focus removes dotted lines around the item
-//    if (opt.state & QStyle::State_HasFocus)
-//        opt.state ^= QStyle::State_HasFocus;
-
-    auto isContextMenuOpen = index.data(static_cast<int>(UnseenContactSmartListModel::Role::ContextMenuOpen)).value<bool>();
     bool selected = false;
     if (option.state & QStyle::State_Selected) {
         selected = true;
         opt.state ^= QStyle::State_Selected;
     }
-//    else if (!isContextMenuOpen) {
-//        highlightMap_[index.row()] = option.state & QStyle::State_MouseOver;
-//    }
-
-    QString uriStr = index.data(static_cast<int>(UnseenContactSmartListModel::Role::URI)).value<QString>();
 
     QRect rect_(opt.rect.left() - 2*dx_,opt.rect.top(), opt.rect.width() + 2*dx_, opt.rect.height());
     auto rowHighlight = highlightMap_.find(index.row());
@@ -89,44 +77,6 @@ UnseenContactItemDelegate::paint(QPainter* painter
     drawDecoration(painter, opt, rectAvatar,
                    QPixmap::fromImage(index.data(Qt::DecorationRole).value<QImage>())
                    .scaled(sizeImage_, sizeImage_, Qt::KeepAspectRatio, Qt::SmoothTransformation));
-
-    QFont font(painter->font());
-
-    // If there's unread messages, a message count is displayed
-    if (auto messageCount = index.data(static_cast<int>(UnseenContactSmartListModel::Role::UnreadMessagesCount)).toInt())
-    {
-        QString messageCountText = (messageCount > 20) ? "20+" : QString::number(messageCount);
-#ifdef WINDOWS_SYS
-        int fontSize = messageCountText.count() > 1 ? 8 : 10;
-        if (messageCountText.count()>= 3) fontSize = 7;
-#else
-        int fontSize = messageCountText.count() > 1 ? 10 : 12;
-#endif
-
-        font.setPointSize(fontSize);
-
-        // ellipse
-        QPainterPath ellipse;
-#ifdef WINDOWS_SYS
-        qreal ellipseHeight = sizeImage_ / 4.5;
-#else
-        qreal ellipseHeight = sizeImage_ / 5;
-#endif
-
-        qreal ellipseWidth = ellipseHeight;
-        QPointF ellipseCenter(rectAvatar.right() - ellipseWidth + 1, rectAvatar.top() + ellipseHeight + 1);
-        QRect ellipseRect(ellipseCenter.x() - ellipseWidth, ellipseCenter.y() - ellipseHeight,
-                          ellipseWidth * 2, ellipseHeight * 2);
-        ellipse.addRoundedRect(ellipseRect, ellipseWidth, ellipseHeight);
-        painter->fillPath(ellipse, RingTheme::notificationRed_);
-
-        // text
-        painter->setPen(Qt::white);
-        painter->setOpacity(1);
-        painter->setFont(font);
-        ellipseRect.setTop(ellipseRect.top() - 2);
-        painter->drawText(ellipseRect, Qt::AlignCenter, messageCountText);
-    }
 
     // Presence indicator
     QString statusStr =  index.data(static_cast<int>(UnseenContactSmartListModel::Role::Presence)).value<QString>();
@@ -162,15 +112,9 @@ UnseenContactItemDelegate::paint(QPainter* painter
         }
     }
 
-    //unseenp2p - try to draw a line at bottom of every item, only when having data (using statusStr)
-    if (statusStr.length() > 0 && !selected)
-    {
-        QRect rect_line(opt.rect.left() + sizeImage_, opt.rect.top() + opt.rect.height(), opt.rect.width() + 2*dx_ - sizeImage_, 1);
-        painter->fillRect(rect_line, RingTheme::smartlistSelection_);
-    }
-
     paintConversationItem(painter, option, rect, index,
                           false);
+
 }
 
 QSize
@@ -215,14 +159,6 @@ UnseenContactItemDelegate::paintConversationItem(QPainter* painter,
     auto bottomMargin = 8;
 
     int rect1Width;
-//    if (!isTemporary) {
-//        // ATTENTION from unseenp2p: this rect1Width need to be changed in future by another calculation
-//        // rect1Width is the width of the rectName1 (Display name or group name), so it can be calculated as: infoTextWidth
-//        // but not rect.width() - infoTextWidth_
-//        rect1Width = rect.width() - leftMargin - infoTextWidth_ - infoTextWidthModifier - 8;
-//    } else {
-//        rect1Width = rect.width() - leftMargin - rightMargin;
-//    }
     rect1Width = rect.width() - leftMargin - 4*rightMargin - dx_;
 
     QRect rectName1(rect.left() + leftMargin,
@@ -283,13 +219,15 @@ UnseenContactItemDelegate::paintConversationItem(QPainter* painter,
     QString lastUsedStr = index.data(static_cast<int>(UnseenContactSmartListModel::Role::LastInteractionDate)).value<QString>();
     if (!lastUsedStr.isNull()) {
         font.setItalic(false);
-        font.setBold(false);
-        pen.setColor(RingTheme::grey_);
+        font.setBold(true);
+        pen.setColor(RingTheme::blue_);
         painter->setPen(pen);
-        font.setPointSize(fontSize_ - 2);
+        font.setPointSize(fontSize_ + 10);
         painter->setFont(font);
         lastUsedStr = fontMetrics.elidedText(lastUsedStr, Qt::ElideRight, rectInfo1.width());
         painter->drawText(rectInfo1, Qt::AlignVCenter | Qt::AlignRight, lastUsedStr);
+
+        painter->restore();
     }
 
     // bottom-right: last interaction snippet

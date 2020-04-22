@@ -37,7 +37,6 @@
 //const uint8_t RS_PKT_SUBTYPE_GXSID_GROUP_ITEM_deprecated   = 0x02;
 
 
-
 const uint8_t RS_PKT_SUBTYPE_GXSID_GROUP_ITEM      = 0x02;
 const uint8_t RS_PKT_SUBTYPE_GXSID_OPINION_ITEM    = 0x03;
 const uint8_t RS_PKT_SUBTYPE_GXSID_COMMENT_ITEM    = 0x04;

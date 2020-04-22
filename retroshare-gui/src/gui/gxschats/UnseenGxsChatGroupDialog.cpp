@@ -65,14 +65,14 @@ UnseenGxsChatGroupDialog::UnseenGxsChatGroupDialog(TokenQueue *tokenQueue, QWidg
 {
 }
 
-UnseenGxsChatGroupDialog::UnseenGxsChatGroupDialog(TokenQueue *tokenExternalQueue, RsTokenService *tokenService, Mode mode, RsGxsGroupId groupId, QWidget *parent)
-    : UnseenGxsGroupDialog(tokenExternalQueue, tokenService, mode, groupId, ChannelEditEnabledFlags, ChannelEditDefaultsFlags, parent)
+UnseenGxsChatGroupDialog::UnseenGxsChatGroupDialog(TokenQueue *tokenExternalQueue, RsTokenService *tokenService, Mode mode, RsGxsChatGroup::ChatType chatType, RsGxsGroupId groupId, QWidget *parent)
+    : UnseenGxsGroupDialog(tokenExternalQueue, tokenService, mode, chatType, groupId, ChannelEditEnabledFlags, ChannelEditDefaultsFlags, parent)
 {
     GxsChatMember chatId;
     rsGxsChats->getOwnMember(chatId);
     ownChatId=chatId;
     members.insert(chatId);
-    chattype=RsGxsChatGroup::GROUPCHAT;  //set default for now...
+    chattype=chatType;  //set default for now...
 
 
 }
@@ -116,24 +116,14 @@ QPixmap UnseenGxsChatGroupDialog::serviceImage()
 void UnseenGxsChatGroupDialog::prepareGxsChatGroup(RsGxsChatGroup &group, const RsGroupMetaData &meta)
 {
     group.mMeta = meta;
+    //group.mLastMessage =
     group.mDescription = getDescription().toUtf8().constData();
 
-    //unseenp2p - meiyousixin: try to get all member list from the Create Conversation Dialog
-    std::set<RsPeerId> shareList;
-    this->getShareFriends(shareList);
+    //unseenp2p a- meiyousixin: try to get all member list from the Create Conversation Dialog
+    std::set<GxsChatMember> selectedList;
+    this->getShareFriends(selectedList);
+    members = selectedList;
 
-    for(std::set<RsPeerId>::const_iterator it(shareList.begin());it!=shareList.end();++it)
-    {
-        GxsChatMember member;
-        RsPeerDetails detail;
-        if (rsPeers->getPeerDetails( *it, detail))
-        {
-            member.chatPeerId = (*it);
-            member.nickname = detail.name;
-            //member.chatGxsId = detail.
-            members.insert(member);
-        }
-    }
     //End of get member list
     //adding itself to the group, otherwise, your friend won't have your information to response to.
     GxsChatMember owner;

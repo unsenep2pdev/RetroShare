@@ -1013,6 +1013,8 @@ int RsDataService::updateGroup(const std::list<RsNxsGrp *> &grp)
         // if data is larger than max item size do not add
         if(!validSize(grpPtr)) continue;
 
+        //locked_clearGrpMetaCache(grpPtr->grpId);  //force to clear cache (unseen-dev team)
+
         /*!
          * STORE data, data len,
          * grpId, flags, publish time stamp, identity,
@@ -1229,7 +1231,7 @@ int RsDataService::retrieveNxsMsgs(const GxsMsgReq &reqIds, GxsMsgResult &msg, b
 
             std::string orderby = "";
             if(page>0){
-                orderby = " recv_time_stamp DESC ";
+                orderby = " timeStamp DESC ";
             }
 
             RetroCursor* c = mDb->sqlQuery(MSG_TABLE_NAME, withMeta ? mMsgColumnsWithMeta : mMsgColumns, KEY_GRP_ID+ "='" + grpId.toStdString() + "'", orderby, page);
@@ -1237,6 +1239,7 @@ int RsDataService::retrieveNxsMsgs(const GxsMsgReq &reqIds, GxsMsgResult &msg, b
             if(c)
             {
                 locked_retrieveMessages(c, msgSet, withMeta ? mColMsg_WithMetaOffset : 0);
+
             }
             delete c;
         }else{
@@ -1319,7 +1322,7 @@ int RsDataService::retrieveGxsMsgMetaData(const GxsMsgReq& reqIds, GxsMsgMetaRes
         if(msgIdV.empty()){
             std::string orderby = "";  //pagination if page is greater than 0
             if(page>0)
-                orderby = " recv_time_stamp DESC ";
+                orderby = " timeStamp DESC ";
 
             RetroCursor* c = mDb->sqlQuery(MSG_TABLE_NAME, mMsgMetaColumns, KEY_GRP_ID+ "='" + grpId.toStdString() + "'", orderby, page);
 
@@ -1328,7 +1331,14 @@ int RsDataService::retrieveGxsMsgMetaData(const GxsMsgReq& reqIds, GxsMsgMetaRes
                 locked_retrieveMsgMeta(c, metaSet);
 #ifdef RS_DATA_SERVICE_DEBUG_CACHE
               std::cerr << "Retrieving (all) Msg metadata grpId=" << grpId << ", " << std::dec << metaSet.size() << " messages" << std::endl;
+              if(page >0){
+                  std::cerr <<"Pagination Request[24-0] Page="<<page <<std::endl;
+                  for(auto it = metaSet.begin(); it !=metaSet.end(); it++){
+                      std::cerr <<"groupId: "<<(*it)->mGroupId<<" and  msgId: "<<(*it)->mMsgId <<" and PublishTS: "<<(*it)->mPublishTs<<std::endl;
+                  }
+              }
 #endif
+
             }
         }else{
 

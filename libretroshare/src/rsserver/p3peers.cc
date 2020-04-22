@@ -1373,6 +1373,13 @@ bool p3Peers::addGroup(RsGroupInfo &groupInfo, bool hide)
 		  return res ;
 }
 
+bool p3Peers::addGroupWithId(RsGroupInfo &groupInfo, bool hide)
+{
+    bool res = mPeerMgr->addGroupWithId(groupInfo, hide);
+    rsFiles->updateSinceGroupPermissionsChanged() ;
+    return res ;
+}
+
 bool p3Peers::editGroup(const RsNodeGroupId &groupId, RsGroupInfo &groupInfo)
 {
 #ifdef P3PEERS_DEBUG
@@ -1422,12 +1429,17 @@ bool p3Peers::getGroupInfoList(std::list<RsGroupInfo> &groupInfoList)
 	return mPeerMgr->getGroupInfoList(groupInfoList);
 }
 
+bool p3Peers::checkExistingOne2OneChat(const RsPgpId& pgpId)
+{
+    return mPeerMgr->checkExistingOne2OneChat(pgpId);
+}
+
 bool p3Peers::assignPeerToGroup(const RsNodeGroupId &groupId, const RsPgpId& peerId, bool assign)
 {
 	std::list<RsPgpId> peerIds;
 	peerIds.push_back(peerId);
 
-	return assignPeersToGroup(groupId, peerIds, assign);
+    return assignPeersToGroup(groupId, peerIds, assign);
 }
 
 bool p3Peers::assignPeersToGroup(const RsNodeGroupId &groupId, const std::list<RsPgpId> &peerIds, bool assign)
@@ -1436,7 +1448,7 @@ bool p3Peers::assignPeersToGroup(const RsNodeGroupId &groupId, const std::list<R
         std::cerr << "p3Peers::assignPeersToGroup()" << std::endl;
 #endif
 
-	bool res = mPeerMgr->assignPeersToGroup(groupId, peerIds, assign);
+    bool res = mPeerMgr->assignPeersToGroup(groupId, peerIds, assign);
 	rsFiles->updateSinceGroupPermissionsChanged() ;
 
 	return res ;
@@ -1567,6 +1579,16 @@ RsGroupInfo::RsGroupInfo()
 {
 	flag = 0;
 }
+
+RsGroupInfo::RsGroupInfo(const RsGroupInfo &info){
+    type = info.type;  //one2one,groupchat, and channel
+    id = info.id;
+    name = info.name;
+    flag=info.flag;
+    peerIds=info.peerIds;
+    gxsIds=info.gxsIds;
+}
+
 
 ServicePermissionFlags p3Peers::servicePermissionFlags(const RsPeerId& ssl_id) 
 {

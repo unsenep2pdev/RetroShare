@@ -37,8 +37,8 @@ public:
     /** Loads the settings for this page */
     virtual void load();
 
-    virtual QPixmap iconPixmap() const { return QPixmap(":/home/img/Setting/youtube-play-button_x.svg") ; }
-    virtual QString pageName() const { return tr("GxsChats") ; }
+    virtual QPixmap iconPixmap() const { return QPixmap(":/home/img/Setting/groupchat_x.svg") ; }
+    virtual QString pageName() const { return tr("New Chats") ; }
     virtual QString helpText() const { return ""; }
 
 protected slots:

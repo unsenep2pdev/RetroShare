@@ -42,7 +42,7 @@ QIcon PostedUserNotify::getIcon()
 
 QIcon PostedUserNotify::getMainIcon(bool hasNew)
 {
-    return hasNew ? QIcon(":/icons/png/posted-notify.png") : QIcon(":/icons/png/posted.png");
+    return hasNew ? QIcon(":/icons/png/posted-notify_v.png") : QIcon(":/icons/png/posted_tr.png");
 }
 
 void PostedUserNotify::iconClicked()

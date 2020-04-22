@@ -115,7 +115,7 @@ static inline void print_stacktrace(FILE *out = stderr, unsigned int max_frames 
 {
 	(void) max_frames;
 
-	fprintf(out, "TODO: 2016/01/01 print_stacktrace not implemented yet for WINDOWS_SYS and ANDROID\n");
+    //fprintf(out, "TODO: 2016/01/01 print_stacktrace not implemented yet for WINDOWS_SYS and ANDROID\n");
 }
 #endif // defined(__linux__) && defined(__GLIBC__)
 

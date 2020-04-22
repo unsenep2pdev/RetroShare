@@ -400,6 +400,7 @@ struct RsPeerCryptoParams
 struct RsGroupInfo : RsSerializable
 {
     RsGroupInfo();
+    RsGroupInfo(const RsGroupInfo &info);
     enum GroupType { ONE2ONE, GROUPCHAT, CHANNEL, DEFAULTS } ;
     GroupType  type;  //one2one,groupchat, and channel
 
@@ -408,7 +409,7 @@ struct RsGroupInfo : RsSerializable
     uint32_t        flag;
 
     std::set<RsPgpId> peerIds;
-
+    std::set<RsGxsId> gxsIds;
 	/// @see RsSerializable
 	void serial_process(
 	        RsGenericSerializer::SerializeJob j,
@@ -419,7 +420,29 @@ struct RsGroupInfo : RsSerializable
 		RS_SERIAL_PROCESS(flag);
 		RS_SERIAL_PROCESS(peerIds);
         RS_SERIAL_PROCESS(type);
+        RS_SERIAL_PROCESS(gxsIds);
 	}
+
+//    RsGroupInfo operator=(const RsGroupInfo info){
+//        type = info.type;  //one2one,groupchat, and channel
+//        id = info.id;
+//        name = info.name;
+//        flag=info.flag;
+//        peerIds=info.peerIds;
+//        gxsIds=info.gxsIds;
+//    }
+//    RsGroupInfo operator()(const RsGroupInfo info){
+//        type = info.type;  //one2one,groupchat, and channel
+//        id = info.id;
+//        name = info.name;
+//        flag=info.flag;
+//        peerIds=info.peerIds;
+//        gxsIds=info.gxsIds;
+//    }
+//    bool operator<(const RsGroupInfo info ) const{
+//        return id < info.id;
+//    }
+
 };
 
 std::ostream &operator<<(std::ostream &out, const RsPeerDetails &detail);
@@ -670,6 +693,8 @@ public:
 	 */
     virtual bool addGroup(RsGroupInfo& groupInfo, bool hide) = 0;
 
+    virtual bool addGroupWithId(RsGroupInfo &groupInfo, bool hide) = 0;
+
 	/**
 	 * @brief editGroup edit an existing group
 	 * @jsonapi{development}
@@ -713,6 +738,15 @@ public:
 	 */
     virtual bool getGroupInfoList(std::list<RsGroupInfo>& groupInfoList) = 0;
 
+    /**
+     * @brief checkExistingOne2OneChat add a peer to a group
+     * @jsonapi{development}
+     * @param[in] pgpId
+     * @return
+     */
+    virtual bool    checkExistingOne2OneChat(const RsPgpId& pgpId) = 0;
+
+
 	// groupId == "" && assign == false -> remove from all groups
 	/**
 	 * @brief assignPeerToGroup add a peer to a group
@@ -722,6 +756,7 @@ public:
 	 * @param[in] assign true to assign a peer, false to remove a peer
 	 * @return
 	 */
+
     virtual bool assignPeerToGroup(const RsNodeGroupId& groupId, const RsPgpId& peerId, bool assign) = 0;
 
 	/**

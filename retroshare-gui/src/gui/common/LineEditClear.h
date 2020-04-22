@@ -49,6 +49,7 @@ public:
 //#if QT_VERSION < 0x040700
 	// for Qt version with setPlaceholderText too to set the tooltip of the lineedit
 	void setPlaceholderText(const QString &text);
+    void disableTooltip(bool isDisable);
 //#endif
 
 signals:

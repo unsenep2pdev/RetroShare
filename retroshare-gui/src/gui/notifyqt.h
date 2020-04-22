@@ -10,6 +10,7 @@
 #include <QPoint>
 //#include <QMutex>
 
+#include <retroshare/rsgxschats.h>
 #include <string>
 
 class QTimer;
@@ -97,7 +98,10 @@ class NotifyQt: public QObject, public NotifyClient
 		void testToaster(ToasterNotify *toasterNotify, /*RshareSettings::enumToasterPosition*/ int position, QPoint margin);
 		void testToaster(QString tag, ToasterNotify *toasterNotify, /*RshareSettings::enumToasterPosition*/ int position, QPoint margin);
 
-		void notifySettingsChanged();
+        void notifySettingsChanged();
+
+        //unseenp2p: gxs bouncing signal: typing
+        virtual void receiveGxsChatTyping(const RsGxsGroupId, const std::string, const RsPeerId, const RsGxsId );
 
 	signals:
 		// It's beneficial to send info to the GUI using signals, because signals are thread-safe
@@ -162,10 +166,10 @@ class NotifyQt: public QObject, public NotifyClient
         void alreadySendChat(const ChatId&, std::string nickInGroupChat, long long current_time, std::string textmsg, bool);
         void newChatMessageReceive(const ChatId&, std::string nickInGroupChat, long long current_time, std::string textmsg, bool);
         /* meiyousixin - add more notification for sort by recent time for gxsChat*/
-        void alreadySendChat(const gxsChatId&, std::string nickInGroupChat, long long current_time, std::string textmsg, bool);
-        void newChatMessageReceive(const gxsChatId&, std::string nickInGroupChat, long long current_time, std::string textmsg, bool);
-
-	public slots:
+        void alreadySendChat(const gxsChatId&, const RsGxsChatMsg& gxsChatMsg, std::string nickInGroupChat, long long current_time, std::string textmsg, bool);
+        void newGxsChatMessageReceive(const gxsChatId&, const RsGxsChatMsg& gxsChatMsg, std::string nickInGroupChat, long long current_time, std::string textmsg, bool);
+        void notifyReceiveGxsChatTyping(const QString, const QString, const RsPeerId, const RsGxsId) ;
+public slots:
 		void UpdateGUI(); /* called by timer */
 		void SetDisableAll(bool bValue);
 		void resetCachedPassphrases() ;

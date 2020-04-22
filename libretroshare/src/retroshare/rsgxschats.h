@@ -74,8 +74,11 @@ class GxsChatMember: RsSerializable
     bool operator==(const GxsChatMember& comp ) const
     {
         //if chatId match exactly.
-        return chatPeerId== comp.chatPeerId && chatGxsId == comp.chatGxsId;
+        return chatPeerId== comp.chatPeerId ;
+        //current just use SSL as comparision unique memberid
+        //in the future, we should use gxsId to be primary chat ID: chatGxsId == comp.chatGxsId
     }
+
     bool operator()(const GxsChatMember& b) const
     {
         return chatPeerId < b.chatPeerId;
@@ -108,7 +111,7 @@ public:
     }
     void clear(){
         unreadMsgIds.clear();
-        update_ts = time(NULL); //set the latest timestamp
+        //update_ts = time(NULL); //set the latest timestamp
     }
     virtual void serial_process( RsGenericSerializer::SerializeJob j,
                              RsGenericSerializer::SerializeContext& ctx )
@@ -143,7 +146,7 @@ class RsGxsChatGroup : RsSerializable
         enum ChatType { ONE2ONE, GROUPCHAT, CHANNEL } ;
         ChatType  type;  //one2one,groupchat, and channel
         RsGroupMetaData mMeta;
-        std::string mDescription;   //conversation display name or groupname
+        std::string mDescription;   // conversation display name or groupname
         RsGxsImage  mImage; //conversation avatar image
         std::set<GxsChatMember> members;
         /// @see RsSerializable
@@ -182,6 +185,21 @@ class RsGxsChatMsg : RsSerializable
 
     RsGxsImage mThumbnail;
 
+    bool operator<(const RsGxsChatMsg bMsg) const{
+        return mMeta.mPublishTs < bMsg.mMeta.mPublishTs;
+    }
+    bool operator()(const RsGxsChatMsg bMsg){
+        return mMeta.mPublishTs < bMsg.mMeta.mPublishTs;
+    }
+
+    void operator=(const RsGxsChatMsg bMsg){
+        mMeta = bMsg.mMeta;
+        mOlderVersions = bMsg.mOlderVersions;
+        mMsg = bMsg.mMsg;
+        mCount = bMsg.mCount;
+        mSize   = bMsg.mSize;
+        mThumbnail = bMsg.mThumbnail;
+    }
 
     /// @see RsSerializable
     virtual void serial_process( RsGenericSerializer::SerializeJob j,
@@ -270,7 +288,9 @@ public:
      * @param[in] msgId
      * @param[in] read
      */
-    virtual void setLocalMessageStatus(uint32_t& token, const RsGxsGrpMsgIdPair& msgId, const std::string msg)=0;
+    virtual void setLocalMessageStatus(const RsGxsGrpMsgIdPair& msgId, const std::string msg)=0;
+    virtual bool getLocalMessageStatus(const RsGxsGroupId& groupId, LocalGroupInfo &localInfo)=0;
+
 
     /**
      * @brief Enable or disable auto-download for given channel

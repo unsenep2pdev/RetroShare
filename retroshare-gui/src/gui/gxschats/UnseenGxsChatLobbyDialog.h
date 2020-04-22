@@ -24,7 +24,7 @@
 #define _UNSEENGXSCHATLOBBYDIALOG_H
 
 #include "ui_UnseenGxsChatLobbyDialog.h"
-#include "ui_ChatLobbyDialog.h"
+//#include "ui_ChatLobbyDialog.h"
 #include "gui/common/RSTreeWidgetItem.h"
 #include "gui/chat/ChatDialog.h"
 
@@ -82,19 +82,27 @@ public:
     //unseenp2p - add for gxs groupchat
     RsGxsGroupId groupId() const {return mGroupId; }
 
+    void updateTitle(QString title);
+    void showChatTextInbox(bool iShow);
+public slots:
+    //unseenp2p - gxschat typing slot
+    void updateReceiveGxsChatTyping3( const QString nickname, const RsPeerId sslId, const RsGxsId gxsId) ;
+    void updateReceiveGxsChatTyping(const QString gxsGroupIdStr, const QString nickname,  const RsPeerId sslId, const RsGxsId gxsId);
 private slots:
 	void participantsTreeWidgetCustomPopupMenu( QPoint point );
 	void textBrowserAskContextMenu(QMenu* contextMnu, QString anchorForPosition, const QPoint point);
 	void inviteFriends() ;
-	void leaveLobby() ;
+    void leaveGxsGroupChat() ;
 	void filterChanged(const QString &text);
     void showInPeopleTab();
+
+
 signals:
-	void lobbyLeave(ChatLobbyId) ;
+    void gxsGroupLeave(RsGxsGroupId) ;
 	void typingEventReceived(ChatLobbyId) ;
-	void messageReceived(bool incoming, ChatLobbyId lobby_id, QDateTime time, QString senderName, QString msg) ;
+    //void messageReceived(bool incoming, ChatLobbyId lobby_id, QDateTime time, QString senderName, QString msg) ;
     //unseenp2p: for gxs groupchat
-    void messageReceived(bool incoming, RsGxsGroupId groupId, QDateTime time, QString senderName, QString msg) ;
+    void gxsMessageReceived(RsGxsChatMsg gxsChatMsg, bool incoming, gxsChatId groupChatId, QDateTime time, QString senderName, QString msg) ;
 
 	void peerJoined(ChatLobbyId) ;
 	void peerLeft(ChatLobbyId) ;
@@ -137,17 +145,21 @@ private:
 	
 	ChatLobbyId lobbyId;
 	//meiyousixin - add this one to identify the chat id
-	ChatId cId;
+    ChatId cId;           //for old chat
+    gxsChatId gxsChat_Id; //for gxs chat (new chat)
+
 	QString _lobby_name ;
 	time_t lastUpdateListTime;
 
         RSTreeWidgetItemCompareRole *mParticipantCompareRole ;
 
     QToolButton *inviteFriendsButton ;
-	QToolButton *unsubscribeButton ;
+    QToolButton *membersListButton ;
+    QToolButton *membersListButton2 ;
+    QToolButton *unsubscribeButton ;
 
 	/** Qt Designer generated object */
-	Ui::ChatLobbyDialog ui;
+    Ui::UnseenGxsChatLobbyDialog ui;
 	
 	/** Ignored Users in Chatlobby by nickname until we had implemented Peer Ids in ver 0.6 */
     std::set<RsGxsId> mutedParticipants;
@@ -170,7 +182,7 @@ private:
 
     //unseenp2p - add for gxs groupchat
     //RsGxsGroupId  mGXSGroupId;
-    std::set<RsPeerId> old_participating_friends;
+    std::set<GxsChatMember> old_participating_friends;
 
     ////////////////////////////////////////////////////////////////////////////////////////////
     ///             THESE ARE FOR 4 CLASS THAT THIS CLASS NEED TO DO                ////////////
@@ -192,11 +204,11 @@ public:
     const std::set<TurtleRequestId>& getSearchResults() ;
 
     RsGxsIfaceHelper *interfaceHelper() { return mInterfaceHelper; }
-
+    virtual void updateDisplay(bool complete);
 protected:
     virtual void showEvent(QShowEvent *event);
     // This is overloaded in subclasses. -> now it will in one class only
-    virtual void updateDisplay(bool complete);
+    //virtual void updateDisplay(bool complete); move to public to call from the UnseenGxsGroupFrameDialog
 
 private slots:
     void fillDisplay(bool complete);
@@ -205,6 +217,8 @@ private:
     RsGxsUpdateBroadcastBase *mBase;
     RsGxsIfaceHelper *mInterfaceHelper;
     bool showAllPostOnlyOnce;
+    std::set<RsGxsMessageId> allDownloadedMsgs;
+    rstime_t      mLatestHistoryMsgTimestamp;
 //END of copy from RsGxsUpdateBroadcastWidget
 
 
@@ -214,6 +228,7 @@ private:
 
 public:
 
+    gxsChatId getGxsChatId();
     const RsGxsGroupId &groupId();  //need to consider with the
     void setGroupId(const RsGxsGroupId &groupId);
     void setAllMessagesRead(bool read);

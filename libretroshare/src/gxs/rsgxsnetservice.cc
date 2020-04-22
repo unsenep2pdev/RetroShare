@@ -366,7 +366,7 @@ static std::ostream& gxsnetdebug(const RsPeerId& peer_id,const RsGxsGroupId& grp
 
 #endif
 
-const uint32_t RsGxsNetService::FRAGMENT_SIZE = 150000;
+const uint32_t RsGxsNetService::FRAGMENT_SIZE = 5000000;
 
 RsGxsNetService::RsGxsNetService(uint16_t servType, RsGeneralDataService *gds,
                                  RsNxsNetMgr *netMgr, RsNxsObserver *nxsObs,
@@ -2054,7 +2054,7 @@ void RsGxsNetService::data_tick()
         //Start waiting as nothing to do in runup
         rstime::rs_usleep((int) (timeDelta * 1000 * 1000)); // timeDelta sec
 
-        if(mUpdateCounter >= 120) // 60 seconds
+        if(mUpdateCounter >= mSYNC_PERIOD*2) // mSYNC_PERIOD seconds
         {
             updateServerSyncTS();
 #ifdef TO_REMOVE

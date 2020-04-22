@@ -128,7 +128,7 @@ public:
 	 * @param mode This determines whether the dialog starts in show or edit mode (Edit not supported yet)
 	 * @param parent
 	 */
-    UnseenGxsGroupDialog(TokenQueue *tokenExternalQueue, RsTokenService *tokenService, Mode mode, RsGxsGroupId groupId, uint32_t enableFlags, uint32_t defaultFlags, QWidget *parent = NULL);
+    UnseenGxsGroupDialog(TokenQueue *tokenExternalQueue, RsTokenService *tokenService, Mode mode, RsGxsChatGroup::ChatType _chatType, RsGxsGroupId groupId, uint32_t enableFlags, uint32_t defaultFlags, QWidget *parent = NULL);
 
     ~UnseenGxsGroupDialog();
 
@@ -137,13 +137,13 @@ public:
 	// overloaded from TokenResponse
 	virtual void loadRequest(const TokenQueue *queue, const TokenRequest &req);
 
-    void getShareFriends(std::set<RsPeerId> &shareList);
+    void getShareFriends(std::set<GxsChatMember> &selectedList);
     RsGxsChatGroup::ChatType getChatType();
 
 private:
 	void newGroup();
     //void init(const std::set<RsPeerId>& friends_list, const std::set<RsPgpId>& peer_list2);
-    void init(const std::set<RsPgpId>& peer_list2, const std::set<RsPeerId>& peer_list, const std::set<RsGxsId>& peer_list3);
+    void init(UnseenFriendSelectionWidget::ShowFriendListMode _showMode, const std::set<RsPgpId>& peer_list2, const std::set<RsPeerId>& peer_list, const std::set<RsGxsId>& peer_list3);
 	void initMode();
 
 	// Functions that can be overloaded for specific stuff.
@@ -151,6 +151,7 @@ private:
 protected slots:
 	void submitGroup();
 	void addGroupLogo();
+    void editAndUpdateGroup();
 
 protected:
 	virtual void showEvent(QShowEvent*);
@@ -264,8 +265,11 @@ private:
 	uint32_t mReadonlyFlags;
 	uint32_t mDefaultsFlags;
 
+    QString oldGroupName;
+    std::set<GxsChatMember> oldMemberList;
+
     std::set<RsPeerId> mShareFriends;
-    std::set<RsPgpId> mShareGpgIds;
+    std::set<GxsChatMember> mSelectedList;
     RsGxsChatGroup::ChatType chatType;
     uint32_t circleType; //groupchat and channel: public = GXS_CIRCLE_TYPE_PUBLIC            = 0x0001 ;
                          //                       private = GXS_CIRCLE_TYPE_YOUR_FRIENDS_ONLY = 0x0003 ;

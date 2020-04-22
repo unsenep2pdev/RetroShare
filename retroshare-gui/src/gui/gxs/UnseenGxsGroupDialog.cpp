@@ -57,10 +57,11 @@ UnseenGxsGroupDialog::UnseenGxsGroupDialog(TokenQueue *tokenExternalQueue, uint3
     std::set<RsPeerId> friends;
     std::set<RsPgpId> pgpFriends;
     std::set<RsGxsId> gxsFriends;
-    init(pgpFriends, friends, gxsFriends);
+
+    init(UnseenFriendSelectionWidget::MODE_CREATE_GROUP, pgpFriends, friends, gxsFriends);
 }
 
-UnseenGxsGroupDialog::UnseenGxsGroupDialog(TokenQueue *tokenExternalQueue, RsTokenService *tokenService, Mode mode, RsGxsGroupId groupId, uint32_t enableFlags, uint32_t defaultFlags, QWidget *parent)
+UnseenGxsGroupDialog::UnseenGxsGroupDialog(TokenQueue *tokenExternalQueue, RsTokenService *tokenService, Mode mode, RsGxsChatGroup::ChatType _chatType, RsGxsGroupId groupId, uint32_t enableFlags, uint32_t defaultFlags, QWidget *parent)
     : QDialog(parent, Qt::WindowSystemMenuHint | Qt::WindowTitleHint | Qt::WindowCloseButtonHint), mTokenService(NULL), mExternalTokenQueue(tokenExternalQueue), mInternalTokenQueue(NULL), mGrpMeta(), mMode(mode), mEnabledFlags(enableFlags), mReadonlyFlags(0), mDefaultsFlags(defaultFlags)
 {
 	/* Invoke the Qt Designer generated object setup routine */
@@ -69,11 +70,12 @@ UnseenGxsGroupDialog::UnseenGxsGroupDialog(TokenQueue *tokenExternalQueue, RsTok
 	mTokenService = tokenService;
 	mInternalTokenQueue = new TokenQueue(tokenService, this);
 	mGrpMeta.mGroupId = groupId;
+    chatType = _chatType;
 
     std::set<RsPeerId> friends;
     std::set<RsPgpId> pgpFriends;
     std::set<RsGxsId> gxsFriends;
-    init(pgpFriends, friends, gxsFriends);
+    init(UnseenFriendSelectionWidget::MODE_EDIT_GROUP, pgpFriends, friends, gxsFriends);
 }
 
 UnseenGxsGroupDialog::~UnseenGxsGroupDialog()
@@ -84,12 +86,29 @@ UnseenGxsGroupDialog::~UnseenGxsGroupDialog()
 	}
 }
 
-void UnseenGxsGroupDialog::init(const std::set<RsPgpId>& peer_list2, const std::set<RsPeerId>& peer_list, const std::set<RsGxsId>& peer_list3)
+void UnseenGxsGroupDialog::init(UnseenFriendSelectionWidget::ShowFriendListMode _showMode, const std::set<RsPgpId>& peer_list2, const std::set<RsPeerId>& peer_list, const std::set<RsGxsId>& peer_list3)
 {
 	// connect up the buttons.
 	connect(ui.buttonBox, SIGNAL(accepted()), this, SLOT(submitGroup()));
 	connect(ui.buttonBox, SIGNAL(rejected()), this, SLOT(cancelDialog()));
-    ui.typeGroup->setChecked(true);
+
+    if(_showMode == UnseenFriendSelectionWidget::MODE_EDIT_GROUP)
+    {
+        switch (chatType) {
+        case RsGxsChatGroup::ONE2ONE:
+            ui.typeOne2One->setChecked(true);
+            break;
+        case RsGxsChatGroup::GROUPCHAT:
+            ui.typeGroup->setChecked(true);
+            break;
+        case RsGxsChatGroup::CHANNEL:
+            ui.typeChannel->setChecked(true);
+            break;
+        }
+
+    }
+    else
+        ui.typeGroup->setChecked(true);
 
     setDefaultOptions();
 
@@ -97,13 +116,10 @@ void UnseenGxsGroupDialog::init(const std::set<RsPgpId>& peer_list2, const std::
     connect(ui.typeGroup, SIGNAL(clicked()), this , SLOT(setDefaultOptions()));
     connect(ui.typeChannel, SIGNAL(clicked()), this , SLOT(setDefaultOptions()));
 
-    /* initialize key share list */
-    ui.keyShareList->setHeaderText(tr("Contacts:"));
-
-
     //ui.keyShareList->setModus(FriendSelectionWidget::MODUS_CHECK);
     ui.keyShareList->setModus(UnseenFriendSelectionWidget::MODUS_CHECK);
     ui.keyShareList->setShowType(UnseenFriendSelectionWidget::SHOW_GPG);
+    ui.keyShareList->setModeOfFriendList(_showMode);
     ui.keyShareList->start();
 
     ui.keyShareList->setSelectedIds<RsGxsId,UnseenFriendSelectionWidget::IDTYPE_GXS>(peer_list3, false);
@@ -111,6 +127,9 @@ void UnseenGxsGroupDialog::init(const std::set<RsPgpId>& peer_list2, const std::
     ui.keyShareList->setSelectedIds<RsPgpId,UnseenFriendSelectionWidget::IDTYPE_GPG>(peer_list2, false);
 
 	initMode();
+
+    ui.keyShareList->setFocus();
+
 	Settings->loadWidgetInformation(this);
 }
 
@@ -174,6 +193,7 @@ void UnseenGxsGroupDialog::initMode()
 		{
             ui.stackedWidget->setCurrentIndex(0);
 			ui.buttonBox->setStandardButtons(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
+
 			newGroup();
 		}
 		break;
@@ -191,18 +211,71 @@ void UnseenGxsGroupDialog::initMode()
 		case MODE_EDIT:
 		{
             ui.stackedWidget->setCurrentIndex(0);
-            ui.buttonBox->setStandardButtons(QDialogButtonBox::Apply | QDialogButtonBox::Cancel);
-            //ui.buttonBox->button(QDialogButtonBox::Ok)->setText(tr("Submit Group Changes"));
+            //ui.buttonBox->setStandardButtons(QDialogButtonBox::Cancel | QDialogButtonBox::Apply);
+
+            connect(ui.buttonBox, SIGNAL(accepted()), this, SLOT(editAndUpdateGroup()));
 			requestGroup(mGrpMeta.mGroupId);
 		}
 		break;
 	}
 }
 
+void UnseenGxsGroupDialog::editAndUpdateGroup()
+{
+    //Need to compare the member list/ group name before and after click on the Apply button
+    //if there is different, so need to update the group
+
+    std::set<GxsChatMember> newMemberList;
+    ui.keyShareList->getSelectedContacts(newMemberList);
+    QString newName = ui.groupName->text();
+    if (newName != oldGroupName || newMemberList != oldMemberList)
+    {
+
+        std::list<RsGxsGroupId> groupChatId;
+        groupChatId.push_back(mGrpMeta.mGroupId);
+        std::vector<RsGxsChatGroup> chatsInfo;
+        if (rsGxsChats->getChatsInfo(groupChatId, chatsInfo))
+        {
+
+            if (chatsInfo.size() > 0)
+            {
+                if (newName != oldGroupName)
+                {
+                    std::cerr << " The new group name changed to: " << newName.toStdString() << std::endl;
+                    chatsInfo[0].mMeta.mGroupName = newName.toStdString();
+
+                }
+                if (newMemberList != oldMemberList)
+                {
+                    std::cerr << " The member list changed: " << std::endl;
+
+                    chatsInfo[0].members = newMemberList;
+                }
+                //for both case: even not change the member list, need to add the own member,
+                // because on the choosen list there is no own member
+                GxsChatMember chatId;
+                rsGxsChats->getOwnMember(chatId);
+                chatsInfo[0].members.insert(chatId);
+
+                uint32_t token;
+                rsGxsChats->updateGroup(token, chatsInfo[0]);
+            }
+        }
+
+    }
+    else
+    {
+        std::cerr << " There is no change with the group "  << std::endl;
+    }
+
+    close();
+
+}
+
 void UnseenGxsGroupDialog::clearForm()
 {
 	ui.groupName->clear();
-    //ui.groupDesc->clear();
+
 	ui.groupName->setFocus();
 }
 
@@ -284,7 +357,7 @@ void UnseenGxsGroupDialog::setupVisibility()
     ui.distribGroupBox->setVisible(true);
     ui.typeGroup->setVisible(true);
     ui.label_2->setVisible(true);
-    ui.keyShareList->setVisible(true);
+    //ui.keyShareList->setVisible(true);
 
     ui.label->setVisible(true);
 
@@ -312,15 +385,17 @@ void UnseenGxsGroupDialog::newGroup()
 	setupVisibility();
 	setupReadonly();
 	clearForm();
+    ui.keyShareList->updateDisplay(true);
+    ui.keyShareList->start();
 }
 
 void UnseenGxsGroupDialog::updateFromExistingMeta(const QString &description)
 {
-    std::cerr << "void GxsGroupDialog::updateFromExistingMeta()";
+    std::cerr << "void UnseenGxsGroupDialog::updateFromExistingMeta()";
     std::cerr << std::endl;
 
     circleType = mGrpMeta.mCircleType;
-    std::cerr << "void GxsGroupDialog::updateFromExistingMeta() mGrpMeta.mCircleType: ";
+    std::cerr << "void UnseenGxsGroupDialog::updateFromExistingMeta() mGrpMeta.mCircleType: ";
     std::cerr << mGrpMeta.mCircleType << " Internal: " << mGrpMeta.mInternalCircle;
     std::cerr << " External: " << mGrpMeta.mCircleId;
     std::cerr << std::endl;
@@ -359,6 +434,7 @@ void UnseenGxsGroupDialog::updateFromExistingMeta(const QString &description)
         break;
     case MODE_EDIT:{
     }
+
         break;
     }
     /* set description */
@@ -371,7 +447,7 @@ void UnseenGxsGroupDialog::updateFromExistingMeta(const QString &description)
 
 void UnseenGxsGroupDialog::submitGroup()
 {
-	std::cerr << "GxsGroupDialog::submitGroup()";
+    std::cerr << "UnseenGxsGroupDialog::submitGroup()";
 	std::cerr << std::endl;
 
 	/* switch depending on mode */
@@ -401,7 +477,7 @@ void UnseenGxsGroupDialog::submitGroup()
 
 void UnseenGxsGroupDialog::editGroup()
 {
-	std::cerr << "GxsGroupDialog::editGroup()" << std::endl;
+    std::cerr << "UnseenGxsGroupDialog::editGroup()" << std::endl;
 
 	RsGroupMetaData newMeta;
 	newMeta.mGroupId = mGrpMeta.mGroupId;
@@ -413,8 +489,10 @@ void UnseenGxsGroupDialog::editGroup()
 		return; //Don't add  a empty name!!
 	}
 
-	std::cerr << "GxsGroupDialog::editGroup() calling service_EditGroup";
+    std::cerr << "UnseenGxsGroupDialog::editGroup() calling service_EditGroup";
 	std::cerr << std::endl;
+
+    editAndUpdateGroup();
 
 	uint32_t token;
 	if (service_EditGroup(token, newMeta))
@@ -425,7 +503,7 @@ void UnseenGxsGroupDialog::editGroup()
 	}
 	else
 	{
-		std::cerr << "GxsGroupDialog::editGroup() ERROR";
+        std::cerr << "UnseenGxsGroupDialog::editGroup() ERROR";
 		std::cerr << std::endl;
 	}
 
@@ -434,7 +512,7 @@ void UnseenGxsGroupDialog::editGroup()
 
 bool UnseenGxsGroupDialog::prepareGroupMetaData(RsGroupMetaData &meta)
 {
-	std::cerr << "GxsGroupDialog::prepareGroupMetaData()";
+    std::cerr << "UnseenGxsGroupDialog::prepareGroupMetaData()";
 	std::cerr << std::endl;
 
     QString name;
@@ -442,34 +520,22 @@ bool UnseenGxsGroupDialog::prepareGroupMetaData(RsGroupMetaData &meta)
     {
         name = getName();
     }
-    else
-    {
-        RsPeerDetails detail;
-        for(std::set<RsPeerId>::const_iterator it(mShareFriends.begin());it!=mShareFriends.end();++it)
-        {
-            if (rsPeers->getPeerDetails( *it, detail))
-            {
-                name = QString::fromStdString(detail.name);
-                break;
-                //QMessageBox::warning(this, "UnseenP2P", tr("You want to chat with ") + name, QMessageBox::Ok, QMessageBox::Ok);
-            }
-        }
-    }
 
+    // Fill in the MetaData as best we can.
+    meta.mGroupName = std::string(name.toUtf8());
 
-    if(chatType!= RsGxsChatGroup::ONE2ONE && name.isEmpty()) {
-		std::cerr << "GxsGroupDialog::prepareGroupMetaData()";
+    if(chatType!= RsGxsChatGroup::ONE2ONE && meta.mGroupName.length() == 0) {
+        std::cerr << "UnseenGxsGroupDialog::prepareGroupMetaData()";
 		std::cerr << " Invalid GroupName";
 		std::cerr << std::endl;
 		return false;
 	}
 
 	// Fill in the MetaData as best we can.
-	meta.mGroupName = std::string(name.toUtf8());
     meta.mSignFlags = getGroupSignFlags();
 
 
-	std::cerr << "void GxsGroupDialog::prepareGroupMetaData() meta.mCircleType: ";
+    std::cerr << "void UnseenGxsGroupDialog::prepareGroupMetaData() meta.mCircleType: ";
 	std::cerr << meta.mCircleType << " Internal: " << meta.mInternalCircle;
 	std::cerr << " External: " << meta.mCircleId;
 	std::cerr << std::endl;
@@ -479,7 +545,7 @@ bool UnseenGxsGroupDialog::prepareGroupMetaData(RsGroupMetaData &meta)
 
 void UnseenGxsGroupDialog::createGroup()
 {
-	std::cerr << "GxsGroupDialog::createGroup()";
+    std::cerr << "UnseenGxsGroupDialog::createGroup()";
 	std::cerr << std::endl;
     RsGroupInfo::GroupType groupType = RsGroupInfo::DEFAULTS;
 
@@ -503,9 +569,38 @@ void UnseenGxsGroupDialog::createGroup()
     std::set<RsGxsId>  gxsFriends;
     ui.keyShareList->selectedIds<RsPeerId,UnseenFriendSelectionWidget::IDTYPE_SSL>(mShareFriends, false);
     ui.keyShareList->selectedIds<RsPgpId,UnseenFriendSelectionWidget::IDTYPE_GPG>(gpgIds, false);
-
     ui.keyShareList->selectedIds<RsGxsId, UnseenFriendSelectionWidget::IDTYPE_GXS>(gxsFriends, false);
-    //ui.keyShareList->selectedIds<RsPeerId,FriendSelectionWidget::IDTYPE_SSL>(mShareFriends, false);
+    ui.keyShareList->getSelectedContacts(mSelectedList);
+
+    //Begin to create gxsgroup for 3 types: one2one chat, groupchat (private or public), and channel
+    /*
+     *  One2one chat:
+     *      meta.mGroupFlags = flags = FLAG_PRIVACY_PUBLIC = 0x00000004; // anyone can publish, publish key pair not needed.
+     *      + With one2one we just keep the group name as contact name, then the backend will can change then
+     *      + One2one chat is private groupchat with 2 members, no bounce, no invite
+     *          meta.mInternalCircle:
+     *          + private ( GXS_CIRCLE_TYPE_YOUR_FRIENDS_ONLY)
+     *      + meta.mGroupName = Goku|meiyousixin,
+     *      + group node name = GxsId of contact
+     *    BEFORE creating ONE2ONE chat: need to check if existing that ONE2ONE chat with that contact:
+     *    checkExistingOne2OneChat(pgpId), if true, than switch to the existing window, if not, continue to create.
+
+     *  Groupchat:
+     *      meta.mGroupFlags = flags = FLAG_PRIVACY_PUBLIC = 0x00000004; // anyone can publish, publish key pair not needed.
+     *      meta.mInternalCircle:
+     *         + private ( GXS_CIRCLE_TYPE_YOUR_FRIENDS_ONLY)
+               + public ( GXS_CIRCLE_TYPE_PUBLIC)
+
+     *
+     * Channel:
+     *      meta.mGroupFlags = flags =FLAG_PRIVACY_RESTRICTED = 0x00000002; // publish private key needed to publish. Typical usage: channels.
+            meta.mInternalCircle:
+     *         + private ( GXS_CIRCLE_TYPE_YOUR_FRIENDS_ONLY)
+               + public ( GXS_CIRCLE_TYPE_PUBLIC)
+           - allow comments
+           - not allow comments
+
+     */
 
 	/* Check name */
 	QString name = getName();
@@ -529,39 +624,53 @@ void UnseenGxsGroupDialog::createGroup()
             QMessageBox::warning(this, "UnseenP2P", tr("Please choose only one contact for chat"), QMessageBox::Ok, QMessageBox::Ok);
             return;
         }
+        std::set<RsPgpId>::iterator it;
+        std::string contactNick;
+        RsPgpId contactPgpId;
+        for (it = gpgIds.begin(); it != gpgIds.end(); ++it)
+        {
+            RsPeerDetails detail;
+
+            if (rsPeers->getGPGDetails(*it, detail))
+            {
+                contactPgpId = (*it);
+                contactNick = detail.name;
+                break;
+            }
+        }
+        std::string thisContactNick  = rsPeers->getPeerName(rsPeers->getOwnId());
+        name = QString::fromStdString(thisContactNick) + "|" + QString::fromStdString(contactNick) ;
+
+        std::cerr << "Create one2one groupname is: " << name.toStdString() << std::endl;
+        //need to check the gxs One2One chat existing or not?
+        if(rsPeers->checkExistingOne2OneChat(contactPgpId))
+        {
+            QMessageBox::warning(this, "UnseenP2P", tr("This conversation with this contact already existed, just enter the existing conversation to chat."), QMessageBox::Ok, QMessageBox::Ok);
+            //enter to the existing conversation because it was already created
+            close();
+            return;
+        }
     }
-
-    //Begin to create gxsgroup for 3 types: one2one chat, groupchat (private or public), and channel
-    /*
-     *  One2one chat:
-     *      meta.mGroupFlags = flags = FLAG_PRIVACY_PUBLIC = 0x00000004; // anyone can publish, publish key pair not needed.
-     *      + With one2one we just keep the group name as contact name, then the backend will can change then
-     *      + One2one chat is private groupchat with 2 members, no bounce, no invite
-     *  Groupchat:
-     *      meta.mGroupFlags = flags = FLAG_PRIVACY_PUBLIC = 0x00000004; // anyone can publish, publish key pair not needed.
-     *      meta.mInternalCircle:
-     *         + private ( GXS_CIRCLE_TYPE_YOUR_FRIENDS_ONLY)
-               + public ( GXS_CIRCLE_TYPE_PUBLIC)
-
-     *
-     * Channel:
-     *      meta.mGroupFlags = flags =FLAG_PRIVACY_RESTRICTED = 0x00000002; // publish private key needed to publish. Typical usage: channels.
-            meta.mInternalCircle:
-     *         + private ( GXS_CIRCLE_TYPE_YOUR_FRIENDS_ONLY)
-               + public ( GXS_CIRCLE_TYPE_PUBLIC)
-           - allow comments
-           - not allow comments
-
-     */
-
 
     RsGroupInfo groupInfo;
     groupInfo.id.clear(); // RS will generate an ID
-    groupInfo.name = name.toStdString();
+     if (!ui.typeOne2One->isChecked())
+            groupInfo.name = name.toStdString();
+     else if(ui.typeOne2One->isChecked())
+     {
+         std::set<RsGxsId>::iterator it;
+         std::string contactNick;
+          for (it = gxsFriends.begin(); it != gxsFriends.end(); ++it)
+          {
+              groupInfo.name = (*it).toStdString();
+              break;
+          }
+     }
     groupInfo.type = groupType;
 
     if(!rsPeers->addGroup(groupInfo, true))
     {
+        QMessageBox::warning(this, "UnseenP2P", tr("Can not create group because the app can not create local group circle "), QMessageBox::Ok, QMessageBox::Ok);
         return;
     }
 
@@ -575,7 +684,12 @@ void UnseenGxsGroupDialog::createGroup()
 
     uint32_t flags;
 
-    if (ui.typeGroup->isChecked())
+    if (ui.typeOne2One->isChecked())
+    {
+        flags = GXS_SERV::FLAG_PRIVACY_PUBLIC;
+        meta.mCircleType = GXS_CIRCLE_TYPE_YOUR_FRIENDS_ONLY;
+    }
+    else if (ui.typeGroup->isChecked())
     {
         flags = GXS_SERV::FLAG_PRIVACY_PUBLIC;
          if (ui.groupTypeComboBox->currentIndex() == 0)
@@ -599,9 +713,15 @@ void UnseenGxsGroupDialog::createGroup()
              meta.mCircleType = GXS_CIRCLE_TYPE_PUBLIC;
          }
     }
+
     meta.mInternalCircle = RsGxsCircleId(groupInfo.id);
     meta.mGroupFlags = flags;
     meta.mSignFlags = getGroupSignFlags();
+    meta.mGroupName = name.toStdString();
+    std::list<RsGxsId> ownIds;
+    rsIdentity->getOwnIds(ownIds);
+    if(!ownIds.empty())
+        meta.mAuthorId = ownIds.front();
 
 	if (!prepareGroupMetaData(meta))
 	{
@@ -691,6 +811,37 @@ void UnseenGxsGroupDialog::setDefaultOptions()
             ui.typeOne2One->setDisabled(true);
             ui.typeChannel->setDisabled(true);
             ui.groupTypeComboBox->setDisabled(true);
+
+            //need to check the selected contacts in the groupchat, and the inbox string list
+            // at first get all the member in the list, remove myself and set it to the UnseenFriendSelectWIdget
+            std::list<RsGxsGroupId> groupChatId;
+            groupChatId.push_back(mGrpMeta.mGroupId);
+            std::vector<RsGxsChatGroup> chatsInfo;
+            if (rsGxsChats->getChatsInfo(groupChatId, chatsInfo))
+            {
+
+                if (chatsInfo.size() > 0)
+                {
+                    oldGroupName = QString::fromStdString(chatsInfo[0].mMeta.mGroupName);
+                    std::set<GxsChatMember> memberList;
+                    memberList.clear();
+                    for (auto it(chatsInfo[0].members.begin()); it != chatsInfo[0].members.end(); ++it)
+                    {
+                        RsIdentityDetails detail;
+                        if (rsIdentity->getIdDetails((*it).chatGxsId, detail))
+                        {
+                            //do not add myself into the contact list
+                            if (detail.mPgpId == rsPeers->getGPGOwnId() ) continue;
+                        }
+                        memberList.insert((*it));
+                    }
+
+                    oldMemberList = memberList;
+                    ui.keyShareList->setSelectedContacts(memberList);
+                }
+             }
+
+
         }
     }
     else if (ui.typeChannel->isChecked())
@@ -711,6 +862,35 @@ void UnseenGxsGroupDialog::setDefaultOptions()
             ui.typeOne2One->setDisabled(true);
             ui.typeGroup->setDisabled(true);
             ui.channelType->setDisabled(true);
+
+            //need to check the selected contacts in the groupchat, and the inbox string list
+            // at first get all the member in the list, remove myself and set it to the UnseenFriendSelectWIdget
+            std::list<RsGxsGroupId> groupChatId;
+            groupChatId.push_back(mGrpMeta.mGroupId);
+            std::vector<RsGxsChatGroup> chatsInfo;
+            if (rsGxsChats->getChatsInfo(groupChatId, chatsInfo))
+            {
+
+                if (chatsInfo.size() > 0)
+                {
+                    oldGroupName = QString::fromStdString(chatsInfo[0].mMeta.mGroupName);
+                    std::set<GxsChatMember> memberList;
+                    memberList.clear();
+                    for (auto it(chatsInfo[0].members.begin()); it != chatsInfo[0].members.end(); ++it)
+                    {
+                        RsIdentityDetails detail;
+                        if (rsIdentity->getIdDetails((*it).chatGxsId, detail))
+                        {
+                            //do not add myself into the contact list
+                            if (detail.mPgpId == rsPeers->getGPGOwnId() ) continue;
+                        }
+                        memberList.insert((*it));
+                    }
+
+                    oldMemberList = memberList;
+                    ui.keyShareList->setSelectedContacts(memberList);
+                }
+             }
         }
     }
 
@@ -729,7 +909,7 @@ bool UnseenGxsGroupDialog::setCircleParameters(RsGroupMetaData &meta)
 
 void UnseenGxsGroupDialog::cancelDialog()
 {
-	std::cerr << "GxsGroupDialog::cancelDialog() Should Close!";
+    std::cerr << "UnseenGxsGroupDialog::cancelDialog() Should Close!";
 	std::cerr << std::endl;
 
 	close();
@@ -843,7 +1023,7 @@ void UnseenGxsGroupDialog::requestGroup(const RsGxsGroupId &groupId)
 	std::list<RsGxsGroupId> groupIds;
 	groupIds.push_back(groupId);
 
-	std::cerr << "GxsGroupDialog::requestGroup() Requesting Group Summary(" << groupId << ")";
+    std::cerr << "UnseenGxsGroupDialog::requestGroup() Requesting Group Summary(" << groupId << ")";
 	std::cerr << std::endl;
 
 	uint32_t token;
@@ -853,7 +1033,7 @@ void UnseenGxsGroupDialog::requestGroup(const RsGxsGroupId &groupId)
 
 void UnseenGxsGroupDialog::loadGroup(uint32_t token)
 {
-	std::cerr << "GxsGroupDialog::loadGroup(" << token << ")";
+    std::cerr << "UnseenGxsGroupDialog::loadGroup(" << token << ")";
 	std::cerr << std::endl;
 
 	QString description;
@@ -865,7 +1045,7 @@ void UnseenGxsGroupDialog::loadGroup(uint32_t token)
 
 void UnseenGxsGroupDialog::loadRequest(const TokenQueue *queue, const TokenRequest &req)
 {
-	std::cerr << "GxsGroupDialog::loadRequest() UserType: " << req.mUserType;
+    std::cerr << "UnseenGxsGroupDialog::loadRequest() UserType: " << req.mUserType;
 	std::cerr << std::endl;
 
 	if (queue == mInternalTokenQueue)
@@ -877,16 +1057,17 @@ void UnseenGxsGroupDialog::loadRequest(const TokenQueue *queue, const TokenReque
 				loadGroup(req.mToken);
 				break;
 			default:
-				std::cerr << "GxsGroupDialog::loadGroup() UNKNOWN UserType ";
+                std::cerr << "UnseenGxsGroupDialog::loadGroup() UNKNOWN UserType ";
 				std::cerr << std::endl;
 				break;
 		}
 	}
 }
 
-void UnseenGxsGroupDialog::getShareFriends(std::set<RsPeerId> &shareList)
+void UnseenGxsGroupDialog::getShareFriends(std::set<GxsChatMember> &selectedList)
 {
-    shareList = mShareFriends;
+    selectedList = mSelectedList;
+
 }
 
 RsGxsChatGroup::ChatType UnseenGxsGroupDialog::getChatType()

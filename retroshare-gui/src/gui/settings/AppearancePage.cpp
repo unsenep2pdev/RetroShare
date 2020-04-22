@@ -85,7 +85,7 @@ AppearancePage::AppearancePage(QWidget * parent, Qt::WindowFlags flags)
 	foreach (QString name, styleSheets.keys()) {
 		ui.cmboStyleSheet->addItem(name, styleSheets[name]);
 	}
-
+    ui.grpToolBar->hide(); //hide toolBar setting
 	connect(ui.cmboTollButtonsSize,           SIGNAL(currentIndexChanged(int)), this, SLOT(updateCmboToolButtonSize() ));
 //	connect(ui.cmboListItemSize,              SIGNAL(currentIndexChanged(int)), this, SLOT(updateCmboListItemSize()   ));
 	connect(ui.cmboTollButtonsStyle,          SIGNAL(currentIndexChanged(int)), this, SLOT(updateCmboToolButtonStyle()));
@@ -149,16 +149,16 @@ void AppearancePage::updateCmboToolButtonStyle()
 		case 0:
 			Settings->setToolButtonStyle(Qt::ToolButtonIconOnly);
 		break;
-		case 1:
-			Settings->setToolButtonStyle(Qt::ToolButtonTextOnly);
-		break;
-		case 2:
+//		case 1:
+//			Settings->setToolButtonStyle(Qt::ToolButtonTextOnly);
+//		break;
+        case 1:
 			Settings->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
 		break;
-		case 3:
-		default:
+        case 2:
+        default:
 			Settings->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
-
+        break;
 	}
     NotifyQt::getInstance()->notifySettingsChanged();
 }
@@ -246,15 +246,15 @@ void AppearancePage::load()
 		case Qt::ToolButtonIconOnly:
 			whileBlocking(ui.cmboTollButtonsStyle)->setCurrentIndex(0);
 		break;
-		case Qt::ToolButtonTextOnly:
-			whileBlocking(ui.cmboTollButtonsStyle)->setCurrentIndex(1);
-		break;
+//		case Qt::ToolButtonTextOnly:
+//			whileBlocking(ui.cmboTollButtonsStyle)->setCurrentIndex(1);
+//		break;
 		case Qt::ToolButtonTextBesideIcon:
-			whileBlocking(ui.cmboTollButtonsStyle)->setCurrentIndex(2);
+            whileBlocking(ui.cmboTollButtonsStyle)->setCurrentIndex(1);
 		break;
 		case Qt::ToolButtonTextUnderIcon:
 		default:
-			whileBlocking(ui.cmboTollButtonsStyle)->setCurrentIndex(3);
+            whileBlocking(ui.cmboTollButtonsStyle)->setCurrentIndex(2);
 	}
 	switch (Settings->getToolButtonSize())
 	{

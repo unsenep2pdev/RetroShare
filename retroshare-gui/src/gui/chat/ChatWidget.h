@@ -34,6 +34,9 @@
 #include "gui/style/RSStyle.h"
 #include "ChatLobbyUserNotify.h"
 
+//unseenp2p
+#include "gui/gxschats/GxsChatUserNotify.h"
+
 #include <retroshare/rsmsgs.h>
 #include <retroshare/rsfiles.h>
 #include <retroshare/rsgxschats.h>
@@ -75,23 +78,27 @@ public:
 	enum MsgType { MSGTYPE_NORMAL, MSGTYPE_HISTORY, MSGTYPE_OFFLINE, MSGTYPE_SYSTEM };
     //Unseenp2p - add more 3 types of Chattypes: GXSGROUPCHAT, GXSONE2ONE, GXSCHANNEL
     enum ChatType { CHATTYPE_UNKNOWN, CHATTYPE_PRIVATE, CHATTYPE_LOBBY, CHATTYPE_DISTANT, CHATTYPE_GXSGROUPCHAT, CHATTYPE_GXSONE2ONE, CHATTYPE_GXSCHANNEL };
+    enum RsGxsChatGroup::ChatType gxsChatType;
 
 	explicit ChatWidget(QWidget *parent = 0);
 	~ChatWidget();
 
-        void init(const ChatId &chat_id, const QString &title);
-        //unseenp2p
-        void init(const gxsChatId &chat_id, const QString &title);
+    void init(const ChatId &chat_id, const QString &title);
+    //unseenp2p
+    void init(const gxsChatId &chat_id, const QString &title);
 
-        ChatId getChatId();
-        ChatType chatType();
+    void setGxsChatType(RsGxsChatGroup::ChatType gxsChatType);
+    RsGxsChatGroup::ChatType getGxsChatType();
+    ChatId getChatId();
+    ChatType chatType();
 
-        //unseenp2p
-        gxsChatId getGxsChatId();
+    //unseenp2p
+    gxsChatId getGxsChatId();
+    void showChatInbox(bool iShow);
 
-        // allow/disallow sendng of messages
-        void blockSending(QString msg);
-        void unblockSending();
+    // allow/disallow sendng of messages
+    void blockSending(QString msg);
+    void unblockSending();
 
 	bool hasNewMessages() { return newMessages; }
 	bool isTyping() { return typing; }
@@ -99,6 +106,8 @@ public:
 	void focusDialog();
 	QToolButton* getNotifyButton();
 	void setNotify(ChatLobbyUserNotify* clun);
+
+    void setGxsNotify(GxsChatUserNotify *gxsUn);
 	void scrollToAnchor(QString anchor);
 	void addToParent(QWidget *newParent);
 	void removeFromParent(QWidget *oldParent);
@@ -106,6 +115,7 @@ public:
 	void setWelcomeMessage(QString &text);
 	void addChatMsg(bool incoming, const QString &name, const QDateTime &sendTime, const QDateTime &recvTime, const QString &message, MsgType chatType);
 	void addChatMsg(bool incoming, const QString &name, const RsGxsId gxsId, const QDateTime &sendTime, const QDateTime &recvTime, const QString &message, MsgType chatType);
+    void addChatMsg(bool incoming, const QString &name, const RsGxsChatMsg gxsChatMsg, const QDateTime &sendTime, const QDateTime &recvTime, const QString &message, MsgType chatType);
       void updateStatusString(const QString &statusMask, const QString &statusString, bool permanent = false);
 
 	void addToolsAction(QAction *action);
@@ -114,8 +124,6 @@ public:
 	int getPeerStatus() { return peerStatus; }
 	void setName(const QString &name);
     void setTitle(const QString &title);
-
-
 	bool setStyle();
 	const RSStyle *getStyle() { return &style; }
 
@@ -136,10 +144,15 @@ public:
 
 	const QList<ChatWidgetHolder*> &chatWidgetHolderList() { return mChatWidgetHolder; }
 
+    void disableTextInbox();
+    void updateCustomStateStringInGroup( const QString& status_string, bool permanent);
+
+
 public slots:
 	void updateStatus(const QString &peer_id, int status);
 	void setUseCMark(const bool bUseCMark);
 	void updateCMPreview();
+    void updatePeersCustomStateString(const QString& peer_id, const QString& status_string) ;
 
 private slots:
 	//void pasteCreateMsgLink() ;
@@ -147,6 +160,7 @@ private slots:
 	void deleteChatHistory();
 	void messageHistory();
 	void resetStatusBar() ;
+    void resetStatusStringInGroup();
 
 signals:
 	void infoChanged(ChatWidget*);
@@ -198,8 +212,6 @@ private slots:
 	void updateLenOfChatTextEdit();
 	void sendChat();
 
-	void updatePeersCustomStateString(const QString& peer_id, const QString& status_string) ;
-
 	bool fileSave();
 	bool fileSaveAs();
 
@@ -222,6 +234,9 @@ private:
 
 	void completeNickname(bool reverse);
     QAbstractItemModel *modelFromPeers();
+
+    RsGxsChatGroup getGxsChatGroup();
+    QString getStatusForThisGroup();
 
    // bool convertFromAttachmentsToGxsFiles( std::list<RsGxsFile>& files);
 
@@ -279,6 +294,9 @@ private:
 
 	QList<ChatWidgetHolder*> mChatWidgetHolder;
 	ChatLobbyUserNotify* notify;
+
+    //unseenp2p
+    GxsChatUserNotify* gxsChatNotify;
 
 	Ui::ChatWidget *ui;
 

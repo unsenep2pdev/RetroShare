@@ -27,6 +27,7 @@
 #include <QItemDelegate>
 
 #include <ciso646>
+#include <iostream>
 
 UnseenContactSmartListView::UnseenContactSmartListView(QWidget *parent) :
     QTreeView(parent)
@@ -94,4 +95,5 @@ void UnseenContactSmartListView::drawRow(QPainter* painter, const QStyleOptionVi
         indexWidget(index)->setVisible(false);
     }
     QTreeView::drawRow(painter, option, index);
+
 }

@@ -133,7 +133,7 @@ QString GxsChatDialog::icon(IconType type)
 {
     switch (type) {
     case ICON_NAME:
-        return ":/home/img/face_icon/youtube-play-button_xu_128.png";      //d: update icon
+        return ":/home/img/Setting/groupchat_x.PNG";      //d: update icon
     case ICON_NEW:
         return ":/icons/png/add.png";
     case ICON_YOUR_GROUP:
@@ -164,9 +164,9 @@ UnseenGxsGroupDialog *GxsChatDialog::createNewGroupDialog(TokenQueue *tokenQueue
 }
 
 // When user click on Edit details of gxs groupchat/ channel/ one2one
-UnseenGxsGroupDialog *GxsChatDialog::createGroupDialog(TokenQueue *tokenQueue, RsTokenService *tokenService, UnseenGxsGroupDialog::Mode mode, RsGxsGroupId groupId)
+UnseenGxsGroupDialog *GxsChatDialog::createGroupDialog(TokenQueue *tokenQueue, RsTokenService *tokenService, UnseenGxsGroupDialog::Mode mode, RsGxsChatGroup::ChatType chatType, RsGxsGroupId groupId)
 {
-    return new UnseenGxsChatGroupDialog(tokenQueue, tokenService, mode, groupId, this);
+    return new UnseenGxsChatGroupDialog(tokenQueue, tokenService, mode,chatType, groupId, this);
     //return new GxsChatGroupDialog(tokenQueue, tokenService, mode, groupId, this); //old code
 }
 
@@ -304,8 +304,35 @@ void GxsChatDialog::toggleAutoDownload()
         std::cerr << std::endl;
     }
 }
+//use RsGxsChatGroup for unseenp2p
+void GxsChatDialog::loadGroupSummaryToken2(const uint32_t &token, std::list<RsGxsChatGroup> &groupInfo, RsUserdata *&userdata)
+{
+    std::vector<RsGxsChatGroup> groups;
+    rsGxsChats->getGroupData(token, groups);
+
+    /* Save groups to fill icons and description */
+    GxsChatGroupInfoData *gxschatData = new GxsChatGroupInfoData;
+    userdata = gxschatData;
+
+    std::vector<RsGxsChatGroup>::iterator groupIt;
+    for (groupIt = groups.begin(); groupIt != groups.end(); ++groupIt) {
+        RsGxsChatGroup &group = *groupIt;
+        groupInfo.push_back(group);
+
+        if (group.mImage.mData != NULL) {
+            QPixmap image;
+            image.loadFromData(group.mImage.mData, group.mImage.mSize, "PNG");
+            gxschatData->mIcon[group.mMeta.mGroupId] = image;
+        }
+
+        if (!group.mDescription.empty()) {
+            gxschatData->mDescription[group.mMeta.mGroupId] = QString::fromUtf8(group.mDescription.c_str());
+        }
+    }
+}
 
 void GxsChatDialog::loadGroupSummaryToken(const uint32_t &token, std::list<RsGroupMetaData> &groupInfo, RsUserdata *&userdata)
+
 {
     std::vector<RsGxsChatGroup> groups;
     rsGxsChats->getGroupData(token, groups);

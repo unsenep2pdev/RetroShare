@@ -52,6 +52,8 @@ class p3GxsChats: public RsGenExchange,  public RsGxsChats,
 public:
     p3GxsChats( RsGeneralDataService* gds, RsNetworkExchangeService* nes,
                    RsGixs* gixs);
+    ~p3GxsChats();
+
     virtual RsServiceInfo getServiceInfo();
 
     virtual void service_tick();
@@ -86,7 +88,6 @@ protected:
 
 
     //p3chatservice callback to process gxs messages/groups
-
     virtual void receiveNewChatMesesage(std::vector<GxsNxsChatMsgItem*>& messages);
     virtual void receiveNewChatGroup(std::vector<GxsNxsChatGroupItem*>& groups);
     virtual void receiveNotifyMessages(std::vector<RsNxsNotifyChat*>& notifyMessages);
@@ -97,11 +98,12 @@ protected:
 
 
     virtual RsGenExchange::ServiceCreate_Return service_CreateGroup(RsGxsGrpItem* grpItem, RsTlvSecurityKeySet& keySet);
-    virtual RsGenExchange::ServiceCreate_Return service_PublishGroup(RsNxsGrp *grp);
+    virtual RsGenExchange::ServiceCreate_Return service_UpateGroup(RsGxsGrpItem* grpItem, const RsTlvSecurityKeySet& keySet);
+    virtual RsGenExchange::ServiceCreate_Return service_PublishGroup(RsNxsGrp *grp, bool update=false);
     virtual RsGenExchange::ServiceCreate_Return service_CreateMessage(RsNxsMsg* msg);
 
-    virtual ServiceCreate_Return service_RecvBounceGroup(RsNxsGrp *grp, bool isNew);
-    virtual ServiceCreate_Return service_RecvBounceMessage(RsNxsMsg* msg, bool isNew);
+    virtual RsGenExchange::ServiceCreate_Return service_RecvBounceGroup(RsNxsGrp *grp, bool isNew);
+    virtual RsGenExchange::ServiceCreate_Return service_RecvBounceMessage(RsNxsMsg* msg, bool isNew);
 
 
     virtual void notifyReceivePublishKey(const RsGxsGroupId &grpId, const RsPeerId &peerid);
@@ -151,7 +153,7 @@ virtual bool getOwnMember(GxsChatMember &member);
      * \param grpMeta Group metadata to check
      * \return
      */
-    virtual bool acceptNewMessage(const RsGxsMsgMetaData* grpMeta, uint32_t size );
+    virtual bool acceptNewMessage(const RsNxsMsg* msg, uint32_t size );
 
 
     /// @see RsGxsChannels::turtleSearchRequest
@@ -203,7 +205,9 @@ virtual bool subscribeToGroup(uint32_t &token, const RsGxsGroupId &groupId, bool
     // Set Statuses.
 virtual void setMessageProcessedStatus(uint32_t& token, const RsGxsGrpMsgIdPair& msgId, bool processed);
 virtual void setMessageReadStatus(uint32_t& token, const RsGxsGrpMsgIdPair& msgId, const std::string shortMsg, bool read);
-virtual void setLocalMessageStatus(uint32_t& token, const RsGxsGrpMsgIdPair& msgId, const std::string msg);
+
+virtual void setLocalMessageStatus(const RsGxsGrpMsgIdPair& msgId, const std::string msg);
+virtual bool getLocalMessageStatus(const RsGxsGroupId& groupId, LocalGroupInfo &localInfo);
 
     // File Interface
     virtual bool ExtraFileHash(const std::string& path);

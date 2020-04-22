@@ -120,11 +120,10 @@ UnseenFriendSelectionWidget::UnseenFriendSelectionWidget(QWidget *parent)
     ui->friendList->setContextMenuPolicy(Qt::CustomContextMenu) ;
     ui->friendList->header()->hide();
 
+    emit ui->friendList->model()->layoutChanged();
+    ui->friendList->show();
 
 	connect(ui->friendList, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(contextMenuRequested(QPoint)));
-	connect(ui->friendList, SIGNAL(itemDoubleClicked(QTreeWidgetItem*,int)), this, SLOT(itemDoubleClicked(QTreeWidgetItem*,int)));
-	connect(ui->friendList, SIGNAL(itemChanged(QTreeWidgetItem*,int)), this, SLOT(itemChanged(QTreeWidgetItem*,int)));
-	connect(ui->friendList, SIGNAL(itemSelectionChanged()), this, SIGNAL(itemSelectionChanged()));
 	connect(ui->filterLineEdit, SIGNAL(textChanged(QString)), this, SLOT(filterItems(QString)));
 
 	connect(NotifyQt::getInstance(), SIGNAL(groupsChanged(int)), this, SLOT(groupsChanged(int)));
@@ -135,28 +134,16 @@ UnseenFriendSelectionWidget::UnseenFriendSelectionWidget(QWidget *parent)
 	mActionSortByState->setCheckable(true);
 	connect(mActionSortByState, SIGNAL(toggled(bool)), this, SLOT(sortByState(bool)));
     // old GUI
-    //ui->friendList->addContextMenuAction(mActionSortByState);
-	mActionFilterConnected = new QAction(tr("Filter only connected"), this);
+    mActionFilterConnected = new QAction(tr("Filter only connected"), this);
 	mActionFilterConnected->setCheckable(true);
 	connect(mActionFilterConnected, SIGNAL(toggled(bool)), this, SLOT(filterConnected(bool)));
 
-    // old GUI
-    //ui->friendList->addContextMenuAction(mActionFilterConnected);
-
-	/* initialize list */
-//	ui->friendList->setColumnCount(COLUMN_COUNT);
-//	ui->friendList->headerItem()->setText(COLUMN_NAME, tr("Name"));
-//	ui->friendList->setFilterReasonRole(ROLE_FILTER_REASON);
-
-	/* sort list by name ascending */
-    //ui->friendList->sortItems(COLUMN_NAME, Qt::AscendingOrder);
-	sortByState(false);
-
-	ui->filterLineEdit->setPlaceholderText(tr("Search Friends"));
-	ui->filterLineEdit->showFilterIcon();
+    ui->filterLineEdit->disableTooltip(true);
 
 	/* Refresh style to have the correct text color */
 	Rshare::refreshStyleSheet(this, false);
+
+    updateDisplay(true);
 }
 
 UnseenFriendSelectionWidget::~UnseenFriendSelectionWidget()
@@ -176,12 +163,6 @@ void UnseenFriendSelectionWidget::changeEvent(QEvent *e)
 		// remove compiler warnings
 		break;
 	}
-}
-
-void UnseenFriendSelectionWidget::setHeaderText(const QString &text)
-{
-    // old GUI
-    //ui->friendList->headerItem()->setText(COLUMN_NAME, text);
 }
 
 void UnseenFriendSelectionWidget::setModus(Modus modus)
@@ -213,7 +194,6 @@ int UnseenFriendSelectionWidget::addColumn(const QString &title)
     // old GUI
 //	int column = ui->friendList->columnCount();
 //	ui->friendList->setColumnCount(column + 1);
-//	ui->friendList->headerItem()->setText(column, title);
     int column = 2;
     return column;
 }
@@ -221,7 +201,7 @@ int UnseenFriendSelectionWidget::addColumn(const QString &title)
 void UnseenFriendSelectionWidget::start()
 {
 	mStarted = true;
-    //secured_fillList();
+    secured_fillList();
 
     updateDisplay(true);
     // old GUI
@@ -282,26 +262,99 @@ void UnseenFriendSelectionWidget::loadRequest(const TokenQueue */*queue*/, const
 	std::vector<RsGxsIdGroup> datavector;
 	std::vector<RsGxsIdGroup>::iterator vit;
 
+    gxsIds.clear() ;
+
+    //here we can set the gxsIds with different options:
+    // 1 - all Identities: MODE_CREATE_GROUP, MODE_EDIT_GROUP (for Admin)
+    // 2 - only Identities without existing members: MODE_INVITE_FRIENDS
+
 	if (!rsIdentity->getGroupData(token, datavector))
 	{
         std::cerr << "UnseenFriendSelectionWidget::loadRequest() ERROR. Cannot load data from rsIdentity." << std::endl;
 		return ;
 	}
 
-	gxsIds.clear() ;
+    std::list<RsGxsId> own_ids ;
+    rsIdentity->getOwnIds(own_ids) ;
 
-	for(uint32_t i=0;i<datavector.size();++i)
-	{
-		gxsIds.push_back(datavector[i].mMeta.mGroupId) ;
-		//std::cerr << "  got ID = " << datavector[i].mMeta.mGroupId << std::endl;
-	}
+    //try to use but it can not work
+    std::set<RsGxsMyContact> contactList;
+    rsIdentity->getMyContacts(contactList);
+
+    std::list<RsPgpId> pgpList;
+    if(rsPeers->getGPGAcceptedList(pgpList))
+    {
+        //this is for MODE_CREATE_GROUP || MODE_EDIT_GROUP
+        for(uint32_t i=0;i<datavector.size();++i)
+        {
+            std::list<RsPgpId>::iterator it2 = std::find(pgpList.begin(), pgpList.end(), datavector[i].mPgpId);
+            if(it2 != pgpList.end())
+                gxsIds.push_back(datavector[i].mMeta.mGroupId) ;
+//            else
+//                std::cerr << "My RsGxsGroupId = " << datavector[i].mMeta.mGroupId << std::endl;
+        }
+
+        //if mode is invited so need to remove from gxsIds those the existing members in member list
+        if (showMode == MODE_INVITE_FRIENDS)
+        {
+            std::list<RsGxsGroupId> groupChatIdList;
+            groupChatIdList.push_back(groupChatId);
+            std::vector<RsGxsChatGroup> chatsInfo;
+            if (rsGxsChats->getChatsInfo(groupChatIdList, chatsInfo))
+            {
+                if (chatsInfo.size() > 0)
+                {
+                    std::set<RsGxsGroupId> memberList;
+                    memberList.clear();
+                    for ( std::set<GxsChatMember>::iterator it =chatsInfo[0].members.begin(); it != chatsInfo[0].members.end(); ++it)
+                    {
+                        std::vector<RsGxsGroupId>::iterator it2 = std::find(gxsIds.begin(), gxsIds.end(), RsGxsGroupId((*it).chatGxsId));
+                        if (it2 != gxsIds.end() )
+                        {
+                            gxsIds.erase(it2);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+
+//    if (showMode == MODE_CREATE_GROUP || showMode == MODE_EDIT_GROUP)
+//    {
+//        for(std::set<RsGxsMyContact>::iterator it = contactList.begin(); it != contactList.end(); ++it)
+//        {
+//            gxsIds.push_back(RsGxsGroupId((*it).gxsId));
+//        }
+//    }
+//    else if (showMode == MODE_INVITE_FRIENDS)
+//    {
+//        std::list<RsGxsGroupId> groupChatIdList;
+//        groupChatIdList.push_back(groupChatId);
+//        std::vector<RsGxsChatGroup> chatsInfo;
+//        if (rsGxsChats->getChatsInfo(groupChatIdList, chatsInfo))
+//        {
+//            if (chatsInfo.size() > 0)
+//            {
+//                std::set<RsGxsGroupId> memberList;
+//                memberList.clear();
+//                for ( std::set<GxsChatMember>::iterator it =chatsInfo[0].members.begin(); it != chatsInfo[0].members.end(); ++it)
+//                {
+//                    std::vector<RsGxsGroupId>::iterator it2 = std::find(gxsIds.begin(), gxsIds.end(), RsGxsGroupId((*it).chatGxsId));
+//                    if (it2 != gxsIds.end() )
+//                    {
+//                         gxsIds.erase(it2);
+//                    }
+//                }
+//            }
+//        }
+//    }
 
     //unseenp2p - save the gxsIds to the smartlistmodel
     smartListModel_->setAllIdentites(gxsIds);
-
     emit ui->friendList->model()->layoutChanged();
 
-
+    ui->friendList->show();
 	//std::cerr << "Got all " << datavector.size() << " ids from rsIdentity. Calling update of list." << std::endl;
 	fillList() ;
 }
@@ -719,7 +772,7 @@ void UnseenFriendSelectionWidget::requestGXSIdList()
 	if (!mIdQueue)
 		return;
 
-	//mStateHelper->setLoading(IDDIALOG_IDLIST, true);
+    //mStateHelper->setLoading(IDDIALOG_IDLIST, true);
 	//mStateHelper->setLoading(IDDIALOG_IDDETAILS, true);
 	//mStateHelper->setLoading(IDDIALOG_REPLIST, true);
 
@@ -731,25 +784,6 @@ void UnseenFriendSelectionWidget::requestGXSIdList()
 	uint32_t token;
 
 	mIdQueue->requestGroupInfo(token, RS_TOKREQ_ANSTYPE_DATA, opts, IDDIALOG_IDLIST);
-}
-
-void UnseenFriendSelectionWidget::requestIdList()
-{
-    //Disable by default, will be enable by insertIdDetails()
-
-    if (!mIdQueue)
-        return;
-
-    //mStateHelper->setLoading(IDDIALOG_IDLIST, true);
-
-    mIdQueue->cancelActiveRequestTokens(IDDIALOG_IDLIST);
-
-    RsTokReqOptions opts;
-    opts.mReqType = GXS_REQUEST_TYPE_GROUP_DATA;
-
-    uint32_t token;
-
-    mIdQueue->requestGroupInfo(token, RS_TOKREQ_ANSTYPE_DATA, opts, IDDIALOG_IDLIST);
 }
 
 template<> inline void UnseenFriendSelectionWidget::setSelectedIds<RsGxsId,UnseenFriendSelectionWidget::IDTYPE_GXS>(const std::set<RsGxsId>& ids, bool add)
@@ -806,82 +840,6 @@ void UnseenFriendSelectionWidget::peerStatusChanged(const QString& peerId, int s
 			}
 		}
 	}
-    // old GUI
-//	QTreeWidgetItemIterator itemIterator(ui->friendList);
-//	QTreeWidgetItem *item;
-//	while ((item = *itemIterator) != NULL) {
-//		++itemIterator;
-
-//		bool bFoundGPG = false;
-//		bool bFoundSSL = false;
-
-//		switch (idTypeFromItem(item)) {
-//		case IDTYPE_NONE:
-//		case IDTYPE_GROUP:
-//		case IDTYPE_GXS:
-//			break;
-//		case IDTYPE_GPG:
-//			{
-//				if (item->data(COLUMN_DATA, ROLE_ID).toString() == gpgId) {
-//					QColor color;
-//					if (status != (int) RS_STATUS_OFFLINE) {
-//						color = textColorOnline();
-//					} else {
-//						color = ui->friendList->palette().color(QPalette::Text);
-//					}
-
-//					item->setTextColor(COLUMN_NAME, color);
-//					item->setIcon(COLUMN_NAME, QIcon(StatusDefs::imageUser(gpgStatus)));
-
-//					item->setData(COLUMN_NAME, ROLE_SORT_STATE, gpgStatus);
-
-//					bFoundGPG = true;
-//				}
-//			}
-//			break;
-//		case IDTYPE_SSL:
-//			{
-//				if (item->data(COLUMN_DATA, ROLE_ID).toString() == peerId) {
-//					QColor color;
-//					if (status != (int) RS_STATUS_OFFLINE) {
-//						color = textColorOnline();
-//					} else {
-//						color = ui->friendList->palette().color(QPalette::Text);
-//					}
-
-//					item->setTextColor(COLUMN_NAME, color);
-//					item->setIcon(COLUMN_NAME, QIcon(StatusDefs::imageUser(status)));
-
-//					item->setData(COLUMN_NAME, ROLE_SORT_STATE, status);
-
-//					bFoundSSL = true;
-//				}
-//			}
-//			break;
-//		}
-
-//		if (bFoundGPG) {
-//			if (mShowTypes & SHOW_GROUP) {
-//				// a friend can be assigned to more than one group
-//			} else {
-//				if (mShowTypes & SHOW_SSL) {
-//					// search for ssl id
-//				} else {
-//					break;
-//				}
-//			}
-//		}
-//		if (bFoundSSL) {
-//			if (mShowTypes & SHOW_GROUP) {
-//				// a friend can be assigned to more than one group
-//			} else {
-//				break;
-//			}
-//		}
-//	}
-
-//	ui->friendList->resort();
-//	filterConnected(isFilterConnected());
 }
 
 void UnseenFriendSelectionWidget::addContextMenuAction(QAction *action)
@@ -1036,10 +994,12 @@ void UnseenFriendSelectionWidget::itemChanged(QTreeWidgetItem *item, int column)
 
 void UnseenFriendSelectionWidget::filterItems(const QString& text)
 {
-    // old GUI
-//	ui->friendList->filterItems(COLUMN_NAME, text);
-//	ui->friendList->resort();
-	filterConnected(isFilterConnected());
+    if (text.isEmpty())
+    {
+        selectedList.clear();
+        smartListModel_->setChoosenIdentities(selectedList);
+        emit ui->friendList->model()->layoutChanged();
+    }
 }
 
 int UnseenFriendSelectionWidget::selectedItemCount()
@@ -1064,65 +1024,33 @@ std::string UnseenFriendSelectionWidget::selectedId(IdType &idType)
 
 void UnseenFriendSelectionWidget::selectedIds(IdType idType, std::set<std::string> &ids, bool onlyDirectSelected)
 {
-    //OLD GUI
-//	QTreeWidgetItemIterator itemIterator(ui->friendList);
-//	QTreeWidgetItem *item;
-//	while ((item = *itemIterator) != NULL) {
-//		++itemIterator;
 
-//		std::string id;
+    if (idType == IDTYPE_GPG)
+    {
+        for(std::set<GxsChatMember>::iterator it2 = selectedList.begin(); it2 != selectedList.end(); ++it2)
+        {
+           RsIdentityDetails detail;
+           if (rsIdentity->getIdDetails(it2->chatGxsId,detail))
+           {
+                ids.insert(detail.mPgpId.toStdString());
+           }
+        }
+    }
+    else if (idType == IDTYPE_GXS || idType == IDTYPE_GXS_CHAT_MEMBER)
+    {
+        for(std::set<GxsChatMember>::iterator it2 = selectedList.begin(); it2 != selectedList.end(); ++it2)
+        {
+           ids.insert(it2->chatGxsId.toStdString());
+        }
+    }
+    else if (idType == IDTYPE_SSL)
+    {
+        for(std::set<GxsChatMember>::iterator it2 = selectedList.begin(); it2 != selectedList.end(); ++it2)
+        {
+           ids.insert(it2->chatPeerId.toStdString());
+        }
+    }
 
-//		switch (idTypeFromItem(item)) {
-//		case IDTYPE_NONE:
-//			break;
-//		case IDTYPE_GROUP:
-//			if (idType == IDTYPE_GROUP) {
-//				if (isSelected(mListModus, item)) {
-//					id = idFromItem(item);
-//				}
-//			}
-//			break;
-//		case IDTYPE_GPG:
-//        case IDTYPE_GXS:
-//            if (idType == IDTYPE_GPG || idType == IDTYPE_GXS)
-//            {
-//				if (isSelected(mListModus, item)) {
-//					id = idFromItem(item);
-//				} else {
-//					if (!onlyDirectSelected) {
-//						QTreeWidgetItem *itemParent = item;
-//						while ((itemParent = itemParent->parent()) != NULL) {
-//							if (isSelected(mListModus, itemParent)) {
-//								id = idFromItem(item);
-//								break;
-//							}
-//						}
-//					}
-//				}
-//			}
-//			break;
-//		case IDTYPE_SSL:
-//			if (idType == IDTYPE_SSL) {
-//				if (isSelected(mListModus, item)) {
-//					id = idFromItem(item);
-//				} else {
-//					if (!onlyDirectSelected) {
-//						QTreeWidgetItem *itemParent = item;
-//						while ((itemParent = itemParent->parent()) != NULL) {
-//							if (isSelected(mListModus, itemParent)) {
-//								id = idFromItem(item);
-//								break;
-//							}
-//						}
-//					}
-//				}
-//			}
-//			break;
-//		}
-//		if (!id.empty() && std::find(ids.begin(), ids.end(), id) == ids.end()) {
-//            ids.insert(id);
-//		}
-//	}
 }
 
 void UnseenFriendSelectionWidget::deselectAll()
@@ -1137,61 +1065,57 @@ void UnseenFriendSelectionWidget::selectAll()
 //		setSelected(mListModus, *itemIterator, true);
 }
 
+//for NEW GUI
+void UnseenFriendSelectionWidget::setSelectedContacts(const std::set<GxsChatMember> list)
+{
+    selectedList = list;
+    smartListModel_->setChoosenIdentities(selectedList);
+    emit ui->friendList->model()->layoutChanged();
+    updateLineEditFromList();
+}
+
+void UnseenFriendSelectionWidget::getSelectedContacts(std::set<GxsChatMember> &list)
+{
+    for(std::set<GxsChatMember>::iterator it2 = selectedList.begin(); it2 != selectedList.end(); ++it2)
+    {
+       list.insert(*it2);
+    }
+    //list = selectedList;
+}
+
+void UnseenFriendSelectionWidget::setGxsGroupId(const RsGxsGroupId _groupChatId)
+{
+    groupChatId = _groupChatId;
+}
+
+void UnseenFriendSelectionWidget::setModeOfFriendList(UnseenFriendSelectionWidget::ShowFriendListMode _showMode)
+{
+    showMode = _showMode;
+}
+
+void UnseenFriendSelectionWidget::updateLineEditFromList()
+{
+    //create the string list and set on the search
+    stringList.clear();
+    for(std::set<GxsChatMember>::iterator it2 = selectedList.begin(); it2 != selectedList.end(); ++it2)
+    {
+       QString name = QString::fromStdString(it2->nickname);
+       //add the nickname on the search box and ";" to the list when user click on the item
+       stringList += name + ";";
+    }
+    ui->filterLineEdit->setText(stringList);
+}
+
 void UnseenFriendSelectionWidget::setSelectedIds(IdType idType, const std::set<std::string> &ids, bool add)
 {
-//	QTreeWidgetItemIterator itemIterator(ui->friendList);
-//	QTreeWidgetItem *item;
-//	while ((item = *itemIterator) != NULL) {
-//		++itemIterator;
-
-//		std::string id = idFromItem(item);
-//		IdType itemType = idTypeFromItem(item);
-
-//		switch (itemType) {
-//		case IDTYPE_NONE:
-//			break;
-//		case IDTYPE_GROUP:
-//		case IDTYPE_GPG:
-//		case IDTYPE_SSL:
-//        case IDTYPE_GXS:
-//            if (idType == itemType) {
-//                if (ids.find(id) != ids.end()) {
-//					setSelected(mListModus, item, true);
-//					break;
-//				}
-//			}
-//			if (!add) {
-//				setSelected(mListModus, item, false);
-//			}
-//			break;
-//		}
-//	}
 }
 
 void UnseenFriendSelectionWidget::itemsFromId(IdType idType, const std::string &id, QList<QTreeWidgetItem*> &items)
 {
-//	QTreeWidgetItemIterator itemIterator(ui->friendList);
-//	QTreeWidgetItem *item;
-//	while ((item = *itemIterator) != NULL) {
-//		++itemIterator;
-
-//		if (idType == idTypeFromItem(item) && idFromItem(item) == id) {
-//			items.push_back(item);
-//		}
-//	}
 }
 
 void UnseenFriendSelectionWidget::items(QList<QTreeWidgetItem*> &_items, IdType idType)
 {
-//	QTreeWidgetItemIterator itemIterator(ui->friendList);
-//	QTreeWidgetItem *item;
-//	while ((item = *itemIterator) != NULL) {
-//		++itemIterator;
-
-//		if (idType == IDTYPE_NONE || idType == idTypeFromItem(item)) {
-//			_items.push_back(item);
-//		}
-//	}
 }
 
 UnseenFriendSelectionWidget::IdType UnseenFriendSelectionWidget::idTypeFromItem(QTreeWidgetItem *item)
@@ -1286,19 +1210,42 @@ void UnseenFriendSelectionWidget::selectConversation(const QModelIndex& index)
         return ;
     }
 
-    QString name = QString::fromStdString(detail.mNickname.c_str());
-     QMessageBox::warning(this, "UnseenP2P", tr("You want to add ") + name + tr("to this group"), QMessageBox::Ok, QMessageBox::Ok);
-    //MessagesDialog:
+    //the first click on this item: need to add to the list,
+    //get the sslId from pgpId
+    RsPeerDetails details;
+    RsPeerId sslId;
+    if (rsPeers->getGPGDetails(detail.mPgpId, details))
+    {
+        std::list<RsPeerId> sslIds;
+        rsPeers->getAssociatedSSLIds(detail.mPgpId, sslIds);
+        if (sslIds.size() >= 1) {
+             sslId = sslIds.front();
+        }
+    }
+    RsGxsMyContact::STATUS status;
+    if (!sslId.isNull())
+    {
+        status = RsGxsMyContact::TRUSTED;
+    }
+    else status = RsGxsMyContact::UNKNOWN;
 
+    GxsChatMember contact;
+    contact.chatGxsId = detail.mId;
+    contact.chatPeerId= sslId;
+    contact.nickname = detail.mNickname;
+    contact.status = status;
+    std::set<GxsChatMember>::iterator it = selectedList.find(contact) ;
+    if(it != selectedList.end())
+    {
+        selectedList.erase(contact);
+    }
+    else
+    {
+        selectedList.insert(contact);
+    }
 
-//    UnseenGroupItemInfo gxsGroupItem = list.at(index.row());
-
-//    std::cerr << " gxsGroupItem info, name : " << gxsGroupItem.name.toStdString() << std::endl;
-
-//    mGroupId = RsGxsGroupId(gxsGroupItem.id.toStdString());
-
-//    showGxsGroupChatMVC(gxsChatId(mGroupId));
-
+    smartListModel_->setChoosenIdentities(selectedList);
+    updateLineEditFromList();
 }
 
 //QString UnseenFriendSelectionWidget::itemIdAt(QPoint &point)

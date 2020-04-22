@@ -244,6 +244,9 @@ void p3Notify::notifyDownloadComplete           (const std::string& fileHash)   
 void p3Notify::notifyDownloadCompleteCount      (uint32_t           count    )                                                  { FOR_ALL_NOTIFY_CLIENTS (*it)->notifyDownloadCompleteCount      (count) ; }
 void p3Notify::notifyHistoryChanged             (uint32_t           msgId    , int type)                                        { FOR_ALL_NOTIFY_CLIENTS (*it)->notifyHistoryChanged             (msgId,type) ; }
 
+//unseenp2p - gxs notify
+void p3Notify::receiveGxsChatTyping(const RsGxsGroupId groupId, const std::string nickname, const RsPeerId sslId, const RsGxsId gxsId) { FOR_ALL_NOTIFY_CLIENTS (*it)->receiveGxsChatTyping(groupId, nickname, sslId, gxsId); }
+
 bool p3Notify::cachePgpPassphrase(const std::string& s)
 {
     clearPgpPassphrase() ;

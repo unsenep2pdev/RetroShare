@@ -25,7 +25,7 @@
 
 #include "gui/gxs/GxsGroupFrameDialog.h"
 #include "gui/gxs/UnseenGxsGroupFrameDialog.h"
-#define IMAGE_GXSCHANNELS       ":/home/img/face_icon/youtube-play-button_128.png"      //d
+#define IMAGE_GXSCHANNELS       ":/home/img/Setting/groupchat_tr.svg"      //d
 
 class GxsChatDialog : public UnseenGxsGroupFrameDialog
 {
@@ -38,7 +38,7 @@ public:
     ~GxsChatDialog();
 
     virtual QIcon iconPixmap() const { return QIcon(IMAGE_GXSCHANNELS) ; } //MainPage
-    virtual QString pageName() const { return tr("GxsChats") ; } //MainPage
+    virtual QString pageName() const { return tr("New Chats") ; } //MainPage
     virtual QString helpText() const { return ""; } //MainPage
 
     virtual UserNotify *getUserNotify(QObject *parent);
@@ -68,7 +68,7 @@ private:
     virtual QString icon(IconType type);
     virtual QString settingsGroupName() { return "ChatDialog"; }
     virtual UnseenGxsGroupDialog *createNewGroupDialog(TokenQueue *tokenQueue);
-    virtual UnseenGxsGroupDialog *createGroupDialog(TokenQueue *tokenQueue, RsTokenService *tokenService, UnseenGxsGroupDialog::Mode mode, RsGxsGroupId groupId);
+    virtual UnseenGxsGroupDialog *createGroupDialog(TokenQueue *tokenQueue, RsTokenService *tokenService, UnseenGxsGroupDialog::Mode mode,RsGxsChatGroup::ChatType chatType, RsGxsGroupId groupId);
     virtual int shareKeyType();
     virtual GxsMessageFrameWidget *createMessageFrameWidget(const RsGxsGroupId &groupId);
     virtual void groupTreeCustomActions(RsGxsGroupId grpId, int subscribeFlags, QList<QAction*> &actions);
@@ -76,6 +76,7 @@ private:
     virtual QWidget *createCommentHeaderWidget(const RsGxsGroupId &grpId, const RsGxsMessageId &msgId);
     virtual uint32_t requestGroupSummaryType() { return GXS_REQUEST_TYPE_GROUP_DATA; } // request complete group data
     virtual void loadGroupSummaryToken(const uint32_t &token, std::list<RsGroupMetaData> &groupInfo, RsUserdata* &userdata);
+    virtual void loadGroupSummaryToken2(const uint32_t &token, std::list<RsGxsChatGroup> &groupInfo, RsUserdata* &userdata); //unseenep2p
 };
 
 

@@ -126,6 +126,9 @@ public:
 	virtual void setDefaultKeepAge(uint32_t t) { mDefaultMsgStorePeriod = t ; }
 	virtual void setDefaultSyncAge(uint32_t t) { mDefaultMsgSyncPeriod = t ; }
 
+    virtual uint32_t setSynchronizationInterval(uint32_t interval=60){ mSYNC_PERIOD = interval;}
+    virtual uint32_t getSynchronizationInterval() {return mSYNC_PERIOD;}
+
     /*!
      * \brief Search methods.
      * 			These four methods are used to request distant search and receive the results.
@@ -572,7 +575,7 @@ private:
     uint32_t mLastKeyPublishTs;
     uint32_t mLastCleanRejectedMessages;
 
-    const uint32_t mSYNC_PERIOD;
+    uint32_t mSYNC_PERIOD;
     int mUpdateCounter ;
 
     RsGcxs* mCircles;

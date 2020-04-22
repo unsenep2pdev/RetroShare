@@ -19,8 +19,6 @@ libresapihttpserver {
 
 !include("../../libretroshare/src/use_libretroshare.pri"):error("Including")
 
-
-
 #QMAKE_CFLAGS += -fmudflap 
 #LIBS *= /usr/lib/gcc/x86_64-linux-gnu/4.4/libmudflap.a /usr/lib/gcc/x86_64-linux-gnu/4.4/libmudflapth.a
 
@@ -294,16 +292,17 @@ wikipoos {
 
 HEADERS +=      Browser/BrowserProcess.h \
                                 Browser/BrowserProcess_p.h \
-                                Browser/BrowserManager.h
+                                Browser/BrowserManager.h \
+                                gui/BrowserPage.h
+FORMS   +=      gui/BrowserPage.ui
 
 SOURCES +=      Browser/BrowserProcess.cpp \
-                                Browser/BrowserManager.cpp
+                                Browser/BrowserManager.cpp \
+                                gui/BrowserPage.cpp
+
 
 #GxsChats
 FORMS   +=      gui/common/UnseenFriendSelectionWidget.ui \
-                                gui/gxs/UnseenGxsGroupFrameDialog.ui \
-                                gui/gxschats/UnseenGxsChatLobbyDialog.ui \
-                                gui/gxs/UnseenGxsGroupDialog.ui \
                                 gui/gxs/UnseenGxsGroupFrameDialog.ui \
                                 gui/gxschats/UnseenGxsChatLobbyDialog.ui \
                                 gui/gxs/UnseenGxsGroupDialog.ui
@@ -319,7 +318,8 @@ SOURCES +=      gui/common/UnseenFriendSelectionWidget.cpp \
                                 gui/UnseenGxsConversationitemdelegate.cpp \
                                 gui/gxschats/UnseenGxsChatLobbyDialog.cpp \
                                 gui/gxschats/UnseenGxsChatGroupDialog.cpp \
-                                gui/gxs/UnseenGxsGroupDialog.cpp
+                                gui/gxs/UnseenGxsGroupDialog.cpp \
+                                gui/common/UnseenFriendSelectionDialog.cpp
 
 HEADERS +=      gui/common/UnseenFriendSelectionWidget.h \
                                 gui/common/UnseenContactSmartListView.h \
@@ -331,7 +331,8 @@ HEADERS +=      gui/common/UnseenFriendSelectionWidget.h \
                                 gui/UnseenGxsConversationitemdelegate.h \
                                 gui/gxschats/UnseenGxsChatLobbyDialog.h \
                                 gui/gxschats/UnseenGxsChatGroupDialog.h \
-                                gui/gxs/UnseenGxsGroupDialog.h
+                                gui/gxs/UnseenGxsGroupDialog.h \
+                                gui/common/UnseenFriendSelectionDialog.h
 
 
 # Tor controller

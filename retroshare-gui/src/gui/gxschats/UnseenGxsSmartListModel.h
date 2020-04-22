@@ -23,6 +23,8 @@
 #include <QAbstractItemModel>
 #include <QDateTime>
 #include <QIcon>
+#include "retroshare/rsgxschats.h"
+//#include "retroshare/rsmsgs.h"
 
 class UnseenGroupItemInfo
 {
@@ -45,6 +47,31 @@ public:
     quint32  max_visible_posts ;
     long long lastMsgDatetime;  //unseenp2p: for sorting: lastpost --> QDateTime::currentDateTime().toTime_t()
     QString authorOfLastMsg;    //unseenp2p: for show on the gxs conversation list
+    std::set<GxsChatMember> members; //unseenp2p
+    RsGxsChatGroup::ChatType type;  //unseenp2p
+    /////////////////// all these following using for the gxs conversation list (model-view GUI) //////////
+    std::string nickInGroupChat;        // unseenp2p, only in groupchat
+    unsigned int UnreadMessagesCount = 0; //unseenp2p, using from the conversationItem
+    std::string LastInteractionDate;    // unseenp2p, using from the conversationItem: date for last message
+    std::string lastMessage;            //unseenp2p, using from the conversationItem
+    bool isOtherLastMsg;            //unseenp2p, using from the conversationItem: true if receiving msg, false if sending msg
+
+    RsGxsGroupId gxsGroupId;
+    LocalGroupInfo localMsgInfo;
+    /*
+     * std::string displayName;            //group name or contact name
+    std::string nickInGroupChat;        // only in groupchat
+    unsigned int UnreadMessagesCount = 0;
+    std::string LastInteractionDate;    // date for last message
+    long long lastMsgDatetime;               // QDateTime::currentDateTime().toTime_t()
+    std::string lastMessage;
+    bool isOtherLastMsg;            // true if receiving msg, false if sending msg
+    int contactType;                // 0 - groupchat, 1 - contact chat
+    int groupChatType;              // 0 - public, 1: private
+    std::string rsPeerIdStr;            // for contact (chatId.toPeerId) and groupchat (chatId.toLobbyId)
+    ChatLobbyId chatLobbyId;
+    std::string uId;
+     */
 };
 
 class UnseenGxsSmartListModel : public QAbstractItemModel
@@ -83,10 +110,19 @@ public:
     // hack for context menu highlight retention
     bool isContextMenuOpen{ false };
     std::vector<UnseenGroupItemInfo> getGxsGroupList();
+    std::vector<RsGxsChatGroup> getGxsChatGroupList();
     void setGxsGroupList(std::vector<UnseenGroupItemInfo> allList);
+    void setFilterGxsGroupListAndMode(std::vector<UnseenGroupItemInfo> allList, uint32_t mode);
+    void setFilterGxsChatGroupListAndMode(std::vector<RsGxsChatGroup> allList, uint32_t mode);
     void sortGxsConversationListByRecentTime();
+    void setGxsChatGroupList(std::vector<RsGxsChatGroup> allList);
+
 private:
     std::string accId_;
     bool contactList_;
     std::vector<UnseenGroupItemInfo> allGxsGroupList;
+    std::vector<UnseenGroupItemInfo> filterGxsGroupList;
+    uint32_t conversationMode;
+    std::vector<RsGxsChatGroup> allGxsChatGroupList;
+    std::vector<RsGxsChatGroup> filteredGxsChatGroupList;
 };

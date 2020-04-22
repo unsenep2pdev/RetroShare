@@ -60,6 +60,9 @@
 #include "gui/gxs/RsGxsUpdateBroadcastBase.h"
 #include "gui/common/UIStateHelper.h"
 #include "gui/gxschats/CreateGxsChatMsg.h"
+#include "gui/common/UnseenFriendSelectionDialog.h"
+
+#include "gui/notifyqt.h"
 
 #define COLUMN_NAME      0
 #define COLUMN_ACTIVITY  1
@@ -97,6 +100,13 @@ UnseenGxsChatLobbyDialog::UnseenGxsChatLobbyDialog( const RsGxsGroupId& id, QWid
     connect(ui.participantsList, SIGNAL(itemDoubleClicked(QTreeWidgetItem*,int)), this, SLOT(participantsTreeWidgetDoubleClicked(QTreeWidgetItem*,int)));
 
     connect(ui.filterLineEdit, SIGNAL(textChanged(QString)), this, SLOT(filterChanged(QString)));
+
+    //notify when receive the gxschat typing
+    QObject::connect(NotifyQt::getInstance(), SIGNAL(notifyReceiveGxsChatTyping(const QString, const QString, const RsPeerId, const RsGxsId)), this, SLOT(updateReceiveGxsChatTyping( const QString, const QString, const RsPeerId, const RsGxsId)));
+
+
+    //Hide Search list
+    ui.toolBarFrame->hide();
 
         int S = QFontMetricsF(font()).height() ;
     ui.participantsList->setIconSize(QSize(1.4*S,1.4*S));
@@ -188,12 +198,15 @@ UnseenGxsChatLobbyDialog::UnseenGxsChatLobbyDialog( const RsGxsGroupId& id, QWid
     connect(ui.chatWidget, SIGNAL(textBrowserAskContextMenu(QMenu*,QString,QPoint)), this, SLOT(textBrowserAskContextMenu(QMenu*,QString,QPoint)));
 //    connect(ownIdChooser,SIGNAL(currentIndexChanged(int)),this,SLOT(changeNickname())) ;
 
+
+
+// Add a  Unsubscribe Button
     unsubscribeButton = new QToolButton;
     unsubscribeButton->setMinimumSize(icon_size);
     unsubscribeButton->setMaximumSize(icon_size);
     unsubscribeButton->setText(QString()) ;
     unsubscribeButton->setAutoRaise(true) ;
-    unsubscribeButton->setToolTip(tr("Leave this group chat"));
+    unsubscribeButton->setToolTip(tr("Leave this conversation"));
 
     {
     QIcon icon ;
@@ -202,21 +215,69 @@ UnseenGxsChatLobbyDialog::UnseenGxsChatLobbyDialog( const RsGxsGroupId& id, QWid
     unsubscribeButton->setIconSize(icon_size);
     }
 
+
+
     /* Initialize splitter */
     ui.splitter->setStretchFactor(0, 1);
     ui.splitter->setStretchFactor(1, 0);
     ui.splitter->setCollapsible(0, false);
     ui.splitter->setCollapsible(1, false);
 
-    connect(unsubscribeButton, SIGNAL(clicked()), this , SLOT(leaveLobby()));
+    connect(unsubscribeButton, SIGNAL(clicked()), this , SLOT(leaveGxsGroupChat()));
 
     getChatWidget()->addTitleBarWidget(unsubscribeButton) ;
 
     old_participating_friends.clear();
+    allDownloadedMsgs.clear();
 
     //////////////////////////////////////////////////////////////////////////////
     /// //END of Keep for UnseenGxsChatLobbyDialog
     //////////////////////////////////////////////////////////////////////////////
+
+    // Add a members List Button
+        membersListButton = new QToolButton ;
+        membersListButton->setMinimumSize(icon_size);
+        membersListButton->setMaximumSize(icon_size);
+        membersListButton->setText(QString()) ;
+        membersListButton->setAutoRaise(true) ;
+        membersListButton->setToolTip(tr("Show members list"));
+
+            {
+            QIcon icon ;
+            icon.addPixmap(QPixmap(":/icons/png/showmemberslist.png")) ;
+            membersListButton->setIcon(icon) ;
+            membersListButton->setIconSize(icon_size);
+            }
+
+            getChatWidget()->addTitleBarWidget(membersListButton) ;
+
+            membersListButton2 = new QToolButton ;
+            membersListButton2->setMinimumSize(icon_size);
+            membersListButton2->setMaximumSize(icon_size);
+            membersListButton2->setText(QString()) ;
+            membersListButton2->setAutoRaise(true) ;
+            membersListButton2->setToolTip(tr("Hide members list"));
+
+            {
+            QIcon icon ;
+            icon.addPixmap(QPixmap(":/icons/png/closememberslist.png")) ;
+            membersListButton2->setIcon(icon) ;
+            membersListButton2->setIconSize(icon_size);
+            }
+
+            getChatWidget()->addTitleBarWidget(membersListButton2) ;
+
+            ui.participantsFrame->hide();
+            this->membersListButton2->hide();
+            connect(membersListButton, SIGNAL(clicked()), membersListButton  , SLOT(hide()));
+            connect(membersListButton, SIGNAL(clicked()), membersListButton2 , SLOT(show()));
+            connect(membersListButton, SIGNAL(clicked()), ui.participantsFrame , SLOT(show()));
+
+            connect(membersListButton2, SIGNAL(clicked()), membersListButton2  , SLOT(hide()));
+            connect(membersListButton2, SIGNAL(clicked()), membersListButton , SLOT(show()));
+            connect(membersListButton2, SIGNAL(clicked()), ui.participantsFrame , SLOT(hide()));
+
+
 
 
     //////////////////////////////////////////////////////////////////////////////
@@ -254,28 +315,73 @@ UnseenGxsChatLobbyDialog::UnseenGxsChatLobbyDialog( const RsGxsGroupId& id, QWid
 
 }
 
-void UnseenGxsChatLobbyDialog::leaveLobby()
+void UnseenGxsChatLobbyDialog::leaveGxsGroupChat()
 {
     //TODO: change leave group with gxs groupchat
-    //emit lobbyLeave(id()) ;
+    //Need to update the group with gxsChat->updateGroup with new member list for other before unsubscribe
+    if ((QMessageBox::question(this, tr("Really leave?"), tr("Do you really want to leave and delete this conversation?"), QMessageBox::Yes|QMessageBox::No, QMessageBox::No))== QMessageBox::Yes)
+    {
+        std::list<RsGxsGroupId> groupChatId;
+        groupChatId.push_back(mGroupId);
+        std::vector<RsGxsChatGroup> chatsInfo;
+        if (rsGxsChats->getChatsInfo(groupChatId, chatsInfo))
+        {
+            if (chatsInfo.size() > 0)
+            {
+                GxsChatMember myown;
+                rsGxsChats->getOwnMember(myown);
+                if(chatsInfo[0].members.find(myown)!= chatsInfo[0].members.end())
+                    chatsInfo[0].members.erase(myown);
+                uint32_t token;
+                rsGxsChats->updateGroup(token, chatsInfo[0]);
+            }
+        }
+        emit gxsGroupLeave(groupId()) ;
+    }
 }
 void UnseenGxsChatLobbyDialog::inviteFriends()
 {
     std::cerr << "Inviting friends" << std::endl;
 
-    std::set<RsPeerId> ids = FriendSelectionDialog::selectFriends_SSL(NULL,tr("Invite friends"),tr("Select friends to invite:"), FriendSelectionWidget::MODUS_CHECK, FriendSelectionWidget::SHOW_SSL) ;
+    std::set<GxsChatMember> invitedMemberList = UnseenFriendSelectionDialog::selectFriends_GxsChatMember(NULL,mGroupId, tr("Invite friends"),tr(""), UnseenFriendSelectionWidget::MODUS_CHECK,UnseenFriendSelectionWidget::SHOW_CONTACTS) ;
 
-    std::cerr << "Inviting these friends:" << std::endl;
+    //UnseenFriendSelectionDialog dialog(parent,"",UnseenFriendSelectionWidget::MODUS_CHECK,UnseenFriendSelectionWidget::SHOW_CONTACTS,UnseenFriendSelectionWidget::IDTYPE_SSL,psids) ;
 
-    if (!mChatId.isLobbyId())
-        return ;
-
-    for(std::set<RsPeerId>::const_iterator it(ids.begin());it!=ids.end();++it)
+    std::cerr << " All new invited friends: " << std::endl;
+    for(std::set<GxsChatMember>::iterator it = invitedMemberList.begin(); it != invitedMemberList.end(); ++it)
     {
-        std::cerr << "    " << *it  << std::endl;
+        std::cerr << " Member: " << (*it).nickname <<  std::endl;
+    }
 
-        //TODO: change invite member to group with gxs groupchat function
-        //rsMsgs->invitePeerToLobby(mChatId.toLobbyId(),*it) ;
+    //logic for member invite members:
+    std::list<RsGxsGroupId> groupChatId;
+    groupChatId.push_back(mGroupId);
+    std::vector<RsGxsChatGroup> chatsInfo;
+    if (rsGxsChats->getChatsInfo(groupChatId, chatsInfo))
+    {
+        if (chatsInfo.size() > 0)
+        {
+            if(chatsInfo[0].mMeta.mInternalCircle.isNull())
+            {
+                RsGroupInfo groupInfo;
+                if(rsPeers->getGroupInfo(RsNodeGroupId(RsGxsCircleId(chatsInfo[0].mMeta.mGroupId)), groupInfo)){
+                    std::cerr << "mInternalCircle: " << groupInfo.id <<std::endl;
+                    chatsInfo[0].mMeta.mInternalCircle = RsGxsCircleId(groupInfo.id);
+                }
+                else
+                    chatsInfo[0].mMeta.mInternalCircle= RsGxsCircleId(chatsInfo[0].mMeta.mGroupId);
+            }
+
+            for(std::set<GxsChatMember>::iterator it = invitedMemberList.begin(); it != invitedMemberList.end(); ++it)
+            {
+                if(chatsInfo[0].members.find(*it)== chatsInfo[0].members.end())
+                    chatsInfo[0].members.insert(*it);
+            }
+            uint32_t token;
+            rsGxsChats->updateGroup(token, chatsInfo[0]);
+
+
+        }
     }
 }
 
@@ -363,11 +469,18 @@ void UnseenGxsChatLobbyDialog::showInPeopleTab()
     idDialog->navigate(nickname);
 }
 
+gxsChatId UnseenGxsChatLobbyDialog::getGxsChatId()
+{
+    return  gxsChat_Id;
+}
+
 void UnseenGxsChatLobbyDialog::init(const gxsChatId &id, const QString &/*title*/)
 {
     ChatLobbyInfo linfo ;
 
     QString title;
+
+    gxsChat_Id = id;
 
     //TODO:  use id (gxsChatId) to get the gxsGroupChat Info: replace this by gxs groupchat function
 
@@ -401,7 +514,8 @@ void UnseenGxsChatLobbyDialog::init(const gxsChatId &id, const QString &/*title*
 //        else
 //            rstime::rs_usleep(1000*300) ;
 
-    ui.chatWidget->setName(QString::fromUtf8(details.mNickname.c_str()));
+    if(rsIdentity->getIdDetails((RsGxsId)id.toGxsGroupId(),details))
+        ui.chatWidget->setName(QString::fromUtf8(details.mNickname.c_str()));
     //ui.chatWidget->addToolsAction(ui.actionChangeNickname);
     ui.chatWidget->setDefaultExtraFileFlags(RS_FILE_REQ_ANONYMOUS_ROUTING);
 
@@ -416,6 +530,32 @@ void UnseenGxsChatLobbyDialog::init(const gxsChatId &id, const QString &/*title*
 
     /** List of muted Participants */
     mutedParticipants.clear() ;
+
+
+    RsGxsChatGroup gxsChatGroup;
+    if (unseenGxsChatLobbyPage)
+    {
+        gxsChatGroup = unseenGxsChatLobbyPage->gxsGroupFromList(gxsChat_Id.toGxsGroupId());
+        if(gxsChat_Id.gxsChatType == RsGxsChatGroup::ONE2ONE)
+        {
+            inviteFriendsButton->hide();
+            unsubscribeButton->hide();
+            membersListButton->hide();
+            membersListButton2->hide();
+        }
+        else if(gxsChat_Id.gxsChatType == RsGxsChatGroup::GROUPCHAT || gxsChat_Id.gxsChatType == RsGxsChatGroup::CHANNEL)
+        {
+            //version 0.8.0: Only owner can invite friends, other members can not invite their friends, so need to hide the invite button in their side
+            if (!IS_GROUP_ADMIN(gxsChatGroup.mMeta.mSubscribeFlags) && IS_GROUP_SUBSCRIBED(gxsChatGroup.mMeta.mSubscribeFlags))
+            {
+                inviteFriendsButton->hide();
+            }
+            else if (IS_GROUP_ADMIN(gxsChatGroup.mMeta.mSubscribeFlags))
+            {
+                inviteFriendsButton->show();
+            }
+        }
+    }
 
     //try to update the member status on member list
     updateParticipantsList();
@@ -530,7 +670,7 @@ void UnseenGxsChatLobbyDialog::addChatMsg(const ChatMessage& msg)
     QString message = QString::fromUtf8(msg.msg.c_str());
     RsGxsId gxs_id = msg.lobby_peer_gxs_id ;
 
-    if(!isParticipantMuted(gxs_id))
+    //if(!isParticipantMuted(gxs_id))
     {
         // We could change addChatMsg to display the peers icon, passing a ChatId
 
@@ -543,7 +683,7 @@ void UnseenGxsChatLobbyDialog::addChatMsg(const ChatMessage& msg)
             name = QString::fromUtf8(msg.peer_alternate_nickname.c_str()) + " (" + QString::fromStdString(gxs_id.toStdString()) + ")" ;
 
         ui.chatWidget->addChatMsg(msg.incoming, name, gxs_id, sendTime, recvTime, message, ChatWidget::MSGTYPE_NORMAL);
-        emit messageReceived(msg.incoming, id(), sendTime, name, message) ;
+        //emit messageReceived(msg.incoming, gxsChatId(groupId()), sendTime, name, message) ;
 
         // This is a trick to translate HTML into text.
         QTextEdit editor;
@@ -573,6 +713,18 @@ void UnseenGxsChatLobbyDialog::addChatMsg(const ChatMessage& msg)
     }
 }
 
+void UnseenGxsChatLobbyDialog::updateTitle(QString title)
+{
+    ui.chatWidget->setTitle(title);
+}
+
+void UnseenGxsChatLobbyDialog::showChatTextInbox(bool iShow)
+{
+    //publisher can send the msg
+    ui.chatWidget->showChatInbox(iShow);
+
+}
+
 /**
  * Regenerate the QTreeWidget participant list of a Chat Lobby
  *
@@ -594,37 +746,78 @@ void UnseenGxsChatLobbyDialog::updateParticipantsList()
             RsGxsChatGroup thisGroup = chatsInfo[0];
             //at first we can add the own member to the groupData and sync for others
             std::set<GxsChatMember> members_update2;
-            GxsChatMember myown;
-            std::set<RsPeerId> new_participating_friends ;
+
+            std::set<GxsChatMember> new_participating_friends;
+            new_participating_friends.clear();
             bool isIdentical = true;
             if (old_participating_friends.size() > 0) // that mean it already saved the member list at least one time
             {
+                //THIS FEATURE NEED TO BE WAITED FROM BACKEND
+                //at first check this user has in the member list or not, if you, that mean the admin already remove this user
+//                bool isAdminRemoveYou = true;
+//                for (auto it(chatsInfo[0].members.begin()); it != chatsInfo[0].members.end(); ++it)
+//                {
+//                    if ((*it).chatPeerId == rsPeers->getOwnId())
+//                    {
+//                        isAdminRemoveYou = false;
+//                        break;
+//                    }
+//                }
+//                if (isAdminRemoveYou)
+//                {
+//                    //warning about the admin remove you in the content, disable the inbox, user then remove the window himself
+//                    ui.chatWidget->addChatMsg(true, tr("Chat room management"), QDateTime::currentDateTime(), QDateTime::currentDateTime(), tr("The admin already remove you from this room."), ChatWidget::MSGTYPE_SYSTEM);
+//                    //ui.chatWidget-
+//                    return;
+//                }
 
                 //need to compare the new list and the old list, if there is only one different so need to update all again!
                 // if the 2 lists are identical, just return and do nothing. Need to check this option first!
                 for (auto it(chatsInfo[0].members.begin()); it != chatsInfo[0].members.end(); ++it)
                 {
                     //at first get all new list, and check in the old one
-                    if (new_participating_friends.find((*it).chatPeerId) == new_participating_friends.end())
+                    if (new_participating_friends.find((*it)) == new_participating_friends.end())
                     {
-                        new_participating_friends.insert((*it).chatPeerId);
+                        new_participating_friends.insert((*it));
                         //only if check there is one new member that not exist in the old list
-                        if (old_participating_friends.find((*it).chatPeerId) == old_participating_friends.end())
+                        if (old_participating_friends.find((*it)) == old_participating_friends.end())
                         {
                             isIdentical = false;
-                            break;
+                            //update the system message about new users joining
+                            if (thisGroup.type == RsGxsChatGroup::GROUPCHAT)
+                                ui.chatWidget->addChatMsg(true, tr("Chat Group management"), QDateTime::currentDateTime(), QDateTime::currentDateTime(), tr("%1 joined the group.").arg(RsHtml::plainText((*it).nickname)), ChatWidget::MSGTYPE_SYSTEM);
+                            else if (thisGroup.type == RsGxsChatGroup::CHANNEL)
+                                ui.chatWidget->addChatMsg(true, tr("Chat Channel management"), QDateTime::currentDateTime(), QDateTime::currentDateTime(), tr("%1 joined the channel.").arg(RsHtml::plainText((*it).nickname)), ChatWidget::MSGTYPE_SYSTEM);
                         }
                     }
+
                 }
+
+                //The removed member will be in the old list, but not in the current (new) list:
+                for (auto it(old_participating_friends.begin()); it != old_participating_friends.end(); ++it)
+                {
+                     if (new_participating_friends.find((*it)) == new_participating_friends.end())
+                     {
+                         isIdentical = false;
+                         //update the system message about old users leave group
+                         if (thisGroup.type == RsGxsChatGroup::GROUPCHAT)
+                            ui.chatWidget->addChatMsg(true, tr("Chat group management"), QDateTime::currentDateTime(), QDateTime::currentDateTime(), tr("%1 leaved the group.").arg(RsHtml::plainText((*it).nickname)), ChatWidget::MSGTYPE_SYSTEM);
+                         else if (thisGroup.type == RsGxsChatGroup::CHANNEL)
+                             ui.chatWidget->addChatMsg(true, tr("Chat Channel management"), QDateTime::currentDateTime(), QDateTime::currentDateTime(), tr("%1 leaved the channel.").arg(RsHtml::plainText((*it).nickname)), ChatWidget::MSGTYPE_SYSTEM);
+
+                     }
+                }
+
 
                 if (new_participating_friends == old_participating_friends)
                 {
                     isIdentical = true;
                 }
-                // if the member number in the new list is less than member number in the old list (it removed at least one member)
-                if (new_participating_friends.size() < old_participating_friends.size() )
+                else
                 {
                     isIdentical = false;
+                    //Need to check which new users join, then show joining warnings in the chat content
+
                 }
 
                 // if 2 lists are the same, just return and do nothing
@@ -637,16 +830,18 @@ void UnseenGxsChatLobbyDialog::updateParticipantsList()
 
             if (old_participating_friends.size() == 0 || !isIdentical)       // this mean this is the first time, need to do at first time
             {
+                GxsChatMember myown;
                 for (auto it(chatsInfo[0].members.begin()); it != chatsInfo[0].members.end(); ++it)
                 {
-                    if (old_participating_friends.find((*it).chatPeerId) == old_participating_friends.end())
+                    if (old_participating_friends.find((*it)) == old_participating_friends.end())
                     {
-                        old_participating_friends.insert((*it).chatPeerId);
+                        old_participating_friends.insert((*it));
                     }
-                    if (new_participating_friends.find((*it).chatPeerId) == new_participating_friends.end())
+                    if (new_participating_friends.find((*it)) == new_participating_friends.end())
                     {
-                        new_participating_friends.insert((*it).chatPeerId);
+                        new_participating_friends.insert((*it));
                     }
+
 
                     //check own ssld
                     if (it->chatPeerId == rsPeers->getOwnId())
@@ -669,16 +864,31 @@ void UnseenGxsChatLobbyDialog::updateParticipantsList()
                 }
                members_update2.insert(myown);
                thisGroup.members = members_update2;
-               uint32_t token;
-               rsGxsChats->updateGroup(token, thisGroup);
 
 //               std::cerr << "   Participating friends: " << std::endl;
 //               std::cerr << "   groupchat name: " << chatsInfo[0].mDescription<< std::endl;
 //               std::cerr << "   Participating nick names (sslId): " << std::endl;
 
 
+               QList<QTreeWidgetItem*>  qlOldParticipants=ui.participantsList->findItems("*",Qt::MatchWildcard,COLUMN_ID);
+
+               std::set<RsGxsId> gxs_ids;
+               for (auto it2(thisGroup.members.begin()); it2 != thisGroup.members.end(); ++it2)
+                   gxs_ids.insert((*it2).chatGxsId);
+
+               foreach(QTreeWidgetItem *qtwiCur,qlOldParticipants)
+                   if(gxs_ids.find(RsGxsId((*qtwiCur).text(COLUMN_ID).toStdString())) == gxs_ids.end())
+                   {
+                       //Old Participant go out, remove it
+                       int index = ui.participantsList->indexOfTopLevelItem(qtwiCur);
+                       delete ui.participantsList->takeTopLevelItem(index);
+                   }
+
                for (auto it2(thisGroup.members.begin()); it2 != thisGroup.members.end(); ++it2)
                {
+                   //do not show yourself and the empty member
+                   if ((*it2).nickname == "" || (*it2).chatPeerId == rsPeers->getOwnId()) continue;
+
                    std::cerr << " nick:  " <<(*it2).nickname << ", sslId:  " << (*it2).chatPeerId.toStdString() << ", gxsId:  " << (*it2).chatGxsId.toStdString() << std::endl;
                    QString participant = QString::fromUtf8( it2->chatGxsId.toStdString().c_str() );
 
@@ -692,8 +902,9 @@ void UnseenGxsChatLobbyDialog::updateParticipantsList()
                        // TE: Add Wigdet to participantsList with Checkbox, to mute Participant
                        unsWidgetItem = new UnseenMemberTreeWidgetItem(mParticipantCompareRole,GxsIdDetails::ICON_TYPE_AVATAR);
                        unsWidgetItem->setMember((*it2), COLUMN_NAME, true) ;
+                       unsWidgetItem->setId((*it2).chatGxsId,COLUMN_NAME, true) ;
                        unsWidgetItem->setText(COLUMN_ACTIVITY,QString::number(time(NULL) - timeToInactivity));
-                       unsWidgetItem->setText(COLUMN_ID,QString::fromStdString(it2->chatPeerId.toStdString()));
+                       unsWidgetItem->setText(COLUMN_ID,QString::fromStdString(it2->chatGxsId.toStdString()));
 
                        ui.participantsList->addTopLevelItem(unsWidgetItem);
                        hasNewMemberJoin = true;
@@ -738,48 +949,11 @@ void UnseenGxsChatLobbyDialog::updateParticipantsList()
                        unsWidgetItem->setIcon(COLUMN_ICON, bullet_unknown_128 );
                    }
                }
+
+            old_participating_friends = new_participating_friends;
             }
-
-
         }
-
-
     }
-
-
-
-
-////            if(isParticipantMuted(it2->first))
-////                widgetitem->setIcon(COLUMN_ICON, bullet_red_128);
-////            else if (tLastAct + timeToInactivity < now)
-////                widgetitem->setIcon(COLUMN_ICON, bullet_grey_128 );
-////            else
-////                widgetitem->setIcon(COLUMN_ICON, bullet_green_128);
-
-////            RsGxsId gxs_id;
-////            rsMsgs->getIdentityForChatLobby(lobbyId, gxs_id);
-
-////            if (RsGxsId(participant.toStdString()) == gxs_id)
-////                widgetitem->setIcon(COLUMN_ICON, bullet_green_128);
-
-//            widgetitem->updateBannedState();
-
-//            QTime qtLastAct=QTime(0,0,0).addSecs(now-tLastAct);
-////            widgetitem->setToolTip(COLUMN_ICON,tr("Right click to mute/unmute participants<br/>Double click to address this person<br/>")
-////                                   +tr("This participant is not active since:")
-////                                   +qtLastAct.toString()
-////                                   +tr(" seconds")
-////                                   );
-//        }
-
-//    }
-//    if (hasNewMemberJoin)
-//    {
-//        //rsMsgs->saveGroupChatInfo();
-//    }
-    //ui.participantsList->setSortingEnabled(true);
-    //sortParcipants();
-    //filterIds();
 }
 
 /**
@@ -822,21 +996,6 @@ void UnseenGxsChatLobbyDialog::participantsTreeWidgetDoubleClicked(QTreeWidgetIt
         getChatWidget()->pasteText("@" + RsHtml::plainText(item->text(COLUMN_NAME))) ;
         return ;
     }
-
-//	if (column == COLUMN_ICON) {
-//		return;
-//	}
-//
-//	QString nickname = item->text(COLUMN_NAME);
-//	if (isParticipantMuted(nickname)) {
-//		unMuteParticipant(nickname);
-//	} else {
-//		muteParticipant(nickname);
-//	}
-//
-//	mutedParticipants->removeDuplicates();
-//
-//	updateParticipantsList();
 }
 
 void UnseenGxsChatLobbyDialog::distantChatParticipant()
@@ -1003,7 +1162,7 @@ void UnseenGxsChatLobbyDialog::displayLobbyEvent(int event_type, const RsGxsId& 
 
         QString newname= getParticipantName(RsGxsId(str.toStdString())) ;
 
-        ui.chatWidget->addChatMsg(true, tr("Chat room management"), QDateTime::currentDateTime(),
+        ui.chatWidget->addChatMsg(true, tr("Chat Group management"), QDateTime::currentDateTime(),
                                   QDateTime::currentDateTime(),
                                   tr("%1 changed his name to: %2").arg(RsHtml::plainText(name)).arg(RsHtml::plainText(newname)),
                                   ChatWidget::MSGTYPE_SYSTEM);
@@ -1081,6 +1240,26 @@ void UnseenGxsChatLobbyDialog::filterIds()
     ui.participantsList->filterItems(filterColumn, text);
 }
 
+void UnseenGxsChatLobbyDialog::updateReceiveGxsChatTyping3(const QString nickname,  const RsPeerId sslId, const RsGxsId gxsId)
+{
+    QString status = nickname  + " is typing...";
+    ui.chatWidget->updateStatusString(nickname + " %1", "is typing...");
+
+    ui.chatWidget->updateCustomStateStringInGroup(status, false);
+
+}
+
+void UnseenGxsChatLobbyDialog::updateReceiveGxsChatTyping(const QString gxsGroupIdStr, const QString nickname,  const RsPeerId sslId, const RsGxsId gxsId)
+{
+    if(groupId().toStdString() == gxsGroupIdStr.toStdString())
+    {
+        QString status = nickname  + " is typing...";
+        ui.chatWidget->updateStatusString(nickname + " %1", "is typing...");
+        ui.chatWidget->updateCustomStateStringInGroup(status, false);
+    }
+
+}
+
 //////////////////////////////////////////////////////////////////////////////////////////////////
 /// ALL FROM RsGxsUpdateBroadcastWidget                                                       ////
 //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1089,6 +1268,7 @@ void UnseenGxsChatLobbyDialog::fillComplete()
 {
     mBase->fillComplete();
 }
+
 
 void UnseenGxsChatLobbyDialog::setUpdateWhenInvisible(bool update)
 {
@@ -1228,6 +1408,18 @@ void UnseenGxsChatLobbyDialog::GxsMessageFrameWidgetloadRequest(const TokenQueue
 ///     ALL  from GxsUpdateBroadcastWidget
 /////////////////////////////////////////////////////////////////////////////////////////////
 
+static QString filterContactFromGroupname(QString groupname)
+{
+    QString ownerNick = groupname.left(groupname.indexOf("|"));
+    QString contactNick = groupname.right(groupname.indexOf("|"));
+    QString thisContactNick  = QString::fromStdString(rsPeers->getPeerName(rsPeers->getOwnId()));
+
+    if (thisContactNick == contactNick )
+        return ownerNick;
+    else
+        return contactNick;
+}
+
 //COPY from GxsUpdateBroadcastWidget
 void sortGxsMsgChat(std::vector<RsGxsChatMsg> &list)
 {
@@ -1258,12 +1450,16 @@ void UnseenGxsChatLobbyDialog::insertGxsChatPosts(std::vector<RsGxsChatMsg> &pos
     std::cerr << "After sorting..." << std::endl;
 #endif
 
-    sortGxsMsgChat(posts);
+    //sortGxsMsgChat(posts);
     std::vector<uint32_t> new_versions ;
     for (uint32_t i=0;i<posts.size();++i)
     {
         if(posts[i].mMeta.mOrigMsgId == posts[i].mMeta.mMsgId)
             posts[i].mMeta.mOrigMsgId.clear();
+
+        //save all the msgId to set, to avoid the duplication when request/load or show:
+        if(allDownloadedMsgs.find(posts[i].mMeta.mMsgId) != allDownloadedMsgs.end()) continue;
+        else allDownloadedMsgs.insert(posts[i].mMeta.mMsgId);
 
 #ifdef DEBUG_CHAT
         //std::cerr << "  " << i << ": msg_id=" << posts[i].mMeta.mMsgId <<" : msg timestamp= " << posts[i].mMeta.mPublishTs << " : msg = " << posts[i].mMsg << std::endl;
@@ -1274,7 +1470,7 @@ void UnseenGxsChatLobbyDialog::insertGxsChatPosts(std::vector<RsGxsChatMsg> &pos
 
         //unseenp2p - try to add msg into chat content
         QDateTime sendTime = QDateTime::fromSecsSinceEpoch(posts[i].mMeta.mPublishTs);
-        QDateTime recvTime =QDateTime::currentDateTime();
+        QDateTime recvTime = sendTime;
         RsGxsId gxs_id = posts[i].mMeta.mAuthorId;
         QString mmsg = QString::fromUtf8(posts[i].mMsg.c_str());
         bool incomming = !rsIdentity->isOwnId(gxs_id);
@@ -1287,7 +1483,6 @@ void UnseenGxsChatLobbyDialog::insertGxsChatPosts(std::vector<RsGxsChatMsg> &pos
         }
 
         //try to show all files from post.files: if image, show thumbnail + link, if not, only show link
-
         std::list<RsGxsFile> fileList; // = posts[i].mFiles;
         std::list<RsGxsFile>::iterator fit;
         for(fit = posts[i].mFiles.begin(); fit != posts[i].mFiles.end(); ++fit)
@@ -1299,9 +1494,68 @@ void UnseenGxsChatLobbyDialog::insertGxsChatPosts(std::vector<RsGxsChatMsg> &pos
             fileList.push_back(fi);
         }
 
+
         //uneenp2p - need to check if these are files sharing, need to show "Download" link
-        ui.chatWidget->addChatMsg(incomming, nickname, gxs_id, sendTime, recvTime, mmsg, ChatWidget::MSGTYPE_NORMAL);
-        updateParticipantsList();
+        //ui.chatWidget->addChatMsg(incomming, nickname, gxs_id, sendTime, recvTime, mmsg, ChatWidget::MSGTYPE_NORMAL);
+        //Need to separate the HISTORY MSG and CURRENT MSG HERE: using timestamp:
+        // to separate 2 msg type ChatWidget::MSGTYPE_HISTORY and ChatWidget::MSGTYPE_NORMAL
+        // need to save the timestamp of the latest history msg,
+        // if the current msg go here need to compare with that timestamp of latest history msg (latestHistoryMsgTimetamp)
+        // at first the latestHistoryMsgTimetamp of every chat will be the timestamp of latest recent msg
+        // if the sendTime (posts[i].mMeta.mPublishTs) < latestHistoryMsgTimetamp then it will be HISTORY msg
+        // else it will be the current (NORMAL) msg
+        ChatWidget::MsgType msgType;
+        if (posts[i].mMeta.mPublishTs <= mLatestHistoryMsgTimestamp)
+        {
+            msgType = ChatWidget::MSGTYPE_HISTORY;
+            recvTime = QDateTime::fromSecsSinceEpoch(posts[i].mMeta.mPublishTs);
+        }
+        else
+        {
+            msgType = ChatWidget::MSGTYPE_NORMAL;
+            recvTime = QDateTime::currentDateTime();
+        }
+
+        ui.chatWidget->addChatMsg(incomming, nickname, posts[i], sendTime, recvTime, mmsg, msgType);
+        //this is when we receive absolute new incoming msg (not history)
+        if(posts[i].mMsg.length() > 0 && incomming &&  msgType == ChatWidget::MSGTYPE_NORMAL )
+        {
+            emit gxsMessageReceived(posts[i], incomming, gxsChatId(groupId()), sendTime, nickname, mmsg) ;
+        }
+
+        // This is a trick to translate HTML into text.
+        QTextEdit editor;
+        editor.setHtml(mmsg);
+        QString notifyMsg = nickname + ": " + editor.toPlainText();
+
+        if(incomming && msgType == ChatWidget::MSGTYPE_NORMAL)
+        {
+            if(gxsChat_Id.gxsChatType == RsGxsChatGroup::GROUPCHAT)
+            {
+                if(notifyMsg.length() > 30)
+                    MainWindow::displayLobbySystrayMsg(tr("Group chat") + ": " + mGroupName, notifyMsg.left(30) + QString("..."));
+                else
+                    MainWindow::displayLobbySystrayMsg(tr("Group chat") + ": " + mGroupName, notifyMsg);
+            }
+            else if (gxsChat_Id.gxsChatType == RsGxsChatGroup::CHANNEL)
+            {
+                if(notifyMsg.length() > 30)
+                    MainWindow::displayLobbySystrayMsg(tr("Channel") + ": " + mGroupName, notifyMsg.left(30) + QString("..."));
+                else
+                    MainWindow::displayLobbySystrayMsg(tr("Channel") + ": " + mGroupName, notifyMsg);
+            }
+            else if (gxsChat_Id.gxsChatType == RsGxsChatGroup::ONE2ONE)
+            {
+                QString notifyMsg2 = editor.toPlainText();
+                if(notifyMsg2.length() > 30)
+                    MainWindow::displayLobbySystrayMsg(nickname, notifyMsg2.left(30) + QString("..."));
+                else
+                    MainWindow::displayLobbySystrayMsg(nickname, notifyMsg2);
+            }
+
+        }
+
+        //updateParticipantsList();
     }
 
 #ifdef DEBUG_CHAT
@@ -1382,36 +1636,36 @@ void UnseenGxsChatLobbyDialog::insertGxsChatPosts(std::vector<RsGxsChatMsg> &pos
     std::cerr << "Now adding posts..." << std::endl;
 #endif
 
-    for (std::vector<RsGxsChatMsg>::const_reverse_iterator it = posts.rbegin(); it != posts.rend(); ++it)
-    {
-#ifdef DEBUG_CHAT
-        std::cerr << "  adding post: " << (*it).mMeta.mMsgId ;
-#endif
+//    for (std::vector<RsGxsChatMsg>::const_reverse_iterator it = posts.rbegin(); it != posts.rend(); ++it)
+//    {
+//#ifdef DEBUG_CHAT
+//        std::cerr << "  adding post: " << (*it).mMeta.mMsgId ;
+//#endif
 
-        if(!(*it).mMeta.mMsgId.isNull())
-        {
-#ifdef DEBUG_CHAT
-            std::cerr << " added" << std::endl;
-#endif
+//        if(!(*it).mMeta.mMsgId.isNull())
+//        {
+//#ifdef DEBUG_CHAT
+//            std::cerr << " added" << std::endl;
+//#endif
 
-            if (thread && thread->stopped())
-                break;
+//            if (thread && thread->stopped())
+//                break;
 
-            if (thread)
-                thread->emitAddPost(qVariantFromValue(*it), related, ++pos, count);
-            else
-                createPostItem(*it, related);
-        }
-#ifdef DEBUG_CHAT
-        else
-            std::cerr << " skipped" << std::endl;
-#endif
-    }
+//            if (thread)
+//                thread->emitAddPost(qVariantFromValue(*it), related, ++pos, count);
+//            else
+//                createPostItem(*it, related);
+//        }
+//#ifdef DEBUG_CHAT
+//        else
+//            std::cerr << " skipped" << std::endl;
+//#endif
+//    }
 
-    if (!thread) {
-        //TODO: GUI
-        //ui->feedWidget->setSortingEnabled(true);
-    }
+//    if (!thread) {
+//        //TODO: GUI
+//        //ui->feedWidget->setSortingEnabled(true);
+//    }
 }
 
 void UnseenGxsChatLobbyDialog::insertAllPosts(const uint32_t &token, GxsMessageFramePostThread2 *thread)
@@ -1426,12 +1680,12 @@ void UnseenGxsChatLobbyDialog::insertAllPosts(const uint32_t &token, GxsMessageF
 void UnseenGxsChatLobbyDialog::updateDisplay(bool complete)
 {
     if (complete) {
-        /* Fill complete */
+        /* Fill complete */ // --> Fill complete here mean: load all messages!
         //fix the duplication of show all messages
         if (!showAllPostOnlyOnce)   //we get all msg only once, the next time will not show all again!
         {
             requestGroupData();
-            requestAllPosts();
+            requestAllPosts(); // get all messages here!!! --> Here we can get only 25 recent msgs
             showAllPostOnlyOnce = true;
         }
 
@@ -1461,10 +1715,37 @@ void UnseenGxsChatLobbyDialog::updateDisplay(bool complete)
     } else {
         std::map<RsGxsGroupId, std::set<RsGxsMessageId> > msgs;
         getAllMsgIds(msgs);
-        if (!msgs.empty()) {
-            auto mit = msgs.find(groupId());
-            if (mit != msgs.end()) {
-                requestPosts(mit->second);
+        if (!msgs.empty())
+        {
+            std::map<RsGxsGroupId, std::set<RsGxsMessageId> >::iterator mit2 = msgs.find(groupId());
+
+            if (mit2 != msgs.end())
+            {
+
+                std::set<RsGxsMessageId> notReceiveSet;
+                 notReceiveSet.clear();
+                if(mit2->second.size() > 0)
+                {
+                    std::set<RsGxsMessageId>::iterator msgIdIt;
+                    for (msgIdIt = mit2->second.begin(); msgIdIt != mit2->second.end(); ++msgIdIt)
+                    {
+                        if (allDownloadedMsgs.find(*msgIdIt) == allDownloadedMsgs.end())
+                        {
+                            notReceiveSet.insert(*msgIdIt);
+                        }
+                    }
+                }
+                if (notReceiveSet.size() == 0)
+                {
+                    return;
+                }
+                else
+                {
+                    requestPosts(notReceiveSet);
+                    notReceiveSet.clear();
+                }
+
+
             }
         }
     }
@@ -1724,7 +2005,32 @@ void UnseenGxsChatLobbyDialog::loadRequest(const TokenQueue *queue, const TokenR
         }
 
         if (req.mUserType == mTokenTypeAllPosts) {
-            loadAllPosts(req.mToken);
+            //loadAllPosts(req.mToken);
+            std::vector<RsGxsChatMsg> msgs;
+            std::list<RsGxsGroupId> list;
+            list.push_back(groupId());
+            rsGxsChats->getChatsContent(list, msgs, 1);
+            //Here we can set the latestHistoryMsgTimestamp for msgs[0]
+
+            // show the msg info here for checking:
+            std::cerr << "Here is 24 msgs we want to check: " << std::endl;
+
+            for (uint32_t i=0;i<msgs.size();++i)
+            {
+                if(msgs[i].mMeta.mOrigMsgId == msgs[i].mMeta.mMsgId)
+                    msgs[i].mMeta.mOrigMsgId.clear();
+
+        #ifdef DEBUG_CHAT
+                std::cerr << "  " << i << ": msg_id=" << msgs[i].mMeta.mMsgId <<" : msg timestamp= " << msgs[i].mMeta.mPublishTs << " : msg = " << msgs[i].mMsg << std::endl;
+        #endif
+            }
+
+            //sortGxsMsgChat(msgs);
+            if (msgs.size()> 0)
+                mLatestHistoryMsgTimestamp = msgs[msgs.size() - 1].mMeta.mPublishTs;
+            std::cerr <<  "mLatestHistoryMsgTimestamp: " << mLatestHistoryMsgTimestamp << std::endl;
+            insertGxsChatPosts(msgs, NULL, true);
+
             return;
         }
 

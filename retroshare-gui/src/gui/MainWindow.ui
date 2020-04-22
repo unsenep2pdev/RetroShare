@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1090</width>
-    <height>600</height>
+    <height>680</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -128,7 +128,7 @@
        <property name="minimumSize">
         <size>
          <width>830</width>
-         <height>0</height>
+         <height>610</height>
         </size>
        </property>
        <property name="styleSheet">
@@ -155,6 +155,9 @@ background-color: rgb(7,120,171);</string>
    <property name="contextMenuPolicy">
     <enum>Qt::CustomContextMenu</enum>
    </property>
+   <property name="layoutDirection">
+    <enum>Qt::LeftToRight</enum>
+   </property>
    <property name="styleSheet">
     <string notr="true">color: rgb(255, 255, 255);
 background-color: rgb(43, 164, 220);
@@ -166,6 +169,9 @@ selection-background-color: rgb(7,120,171);</string>
    </property>
    <property name="allowedAreas">
     <set>Qt::LeftToolBarArea</set>
+   </property>
+   <property name="orientation">
+    <enum>Qt::Vertical</enum>
    </property>
    <property name="toolButtonStyle">
     <enum>Qt::ToolButtonTextUnderIcon</enum>
@@ -309,7 +315,7 @@ selection-background-color: rgb(7,120,171);</string>
   <customwidget>
    <class>MainPageStack</class>
    <extends>QWidget</extends>
-   <header location="global">gui/mainpagestack.h</header>
+   <header>gui/mainpagestack.h</header>
   </customwidget>
  </customwidgets>
  <tabstops>

@@ -1482,6 +1482,7 @@ int RsServer::StartupRetroShare()
                 mReputations, mGxsCircles,mGxsIdService,
                 pgpAuxUtils,mGxsNetTunnel,true,true,true);
 
+    gxschats_ns->setSynchronizationInterval(20); //chat sync every 20 seconds
     mGxsChats->setNetworkExchangeService(gxschats_ns) ;
 
 

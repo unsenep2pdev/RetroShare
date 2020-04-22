@@ -80,6 +80,8 @@ uint32_t msecs_of_day()
  * #define GXSID_GEN_DUMMY_DATA	1
  ****/
 
+//#define DEBUG_IDS	1
+
 #define ID_REQUEST_LIST		    0x0001
 #define ID_REQUEST_IDENTITY	    0x0002
 #define ID_REQUEST_REPUTATION	0x0003
@@ -643,11 +645,14 @@ void	p3IdService::service_tick()
 
 bool p3IdService::acceptNewGroup(const RsGxsGrpMetaData *grpMeta)
 {
+
     bool res = !rsReputations->isIdentityBanned(RsGxsId(grpMeta->mGroupId)) ;
 
 #ifdef DEBUG_IDS
     std::cerr << "p3IdService::acceptNewGroup: ID=" << grpMeta->mGroupId << ": " << (res?"ACCEPTED":"DENIED") << std::endl;
 #endif
+
+    std::cerr << "p3IdService::acceptNewGroup: ID=" << grpMeta->mGroupId << ": " << (res?"ACCEPTED":"DENIED") << std::endl;
 
     return res ;
 }
@@ -688,19 +693,19 @@ void p3IdService::notifyChanges(std::vector<RsGxsNotify *> &changes)
         /* shouldn't need to worry about groups - as they need to be subscribed to */
         if (groupChange && !groupChange->metaChange())
         {
-#ifdef DEBUG_IDS
+//#ifdef DEBUG_IDS
             std::cerr << "p3IdService::notifyChanges() Found Group Change Notification";
             std::cerr << std::endl;
-#endif
+//#endif
             std::list<RsGxsGroupId> &groupList = groupChange->mGrpIdList;
             std::list<RsGxsGroupId>::iterator git;
 
             for(git = groupList.begin(); git != groupList.end();)
             {
-#ifdef DEBUG_IDS
+//#ifdef DEBUG_IDS
                 std::cerr << "p3IdService::notifyChanges() Auto Subscribe to Incoming Groups: " << *git;
                 std::cerr << std::endl;
-#endif
+//#endif
                 if(!rsReputations->isIdentityBanned(RsGxsId(*git)))
                 {
                     uint32_t token;

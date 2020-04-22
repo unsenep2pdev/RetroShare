@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>446</width>
-    <height>320</height>
+    <width>450</width>
+    <height>613</height>
    </rect>
   </property>
   <layout class="QVBoxLayout" name="FriendSelectionWidgetVLayout">
@@ -31,34 +31,28 @@
     </layout>
    </item>
    <item>
-
-  <widget class="UnseenContactSmartListView" name="friendList">
-  <property name="minimumSize">
-      <size>
-       <width>20</width>
-       <height>0</height>
-      </size>
+    <widget class="UnseenContactSmartListView" name="friendList">
+     <property name="enabled">
+      <bool>true</bool>
+     </property>
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
      </property>
      <property name="contextMenuPolicy">
       <enum>Qt::CustomContextMenu</enum>
      </property>
-     <property name="editTriggers">
-      <set>QAbstractItemView::NoEditTriggers</set>
+     <property name="iconSize" stdset="0">
+      <size>
+       <width>19</width>
+       <height>19</height>
+      </size>
      </property>
-     <property name="sortingEnabled">
+     <property name="allColumnsShowFocus" stdset="0">
       <bool>true</bool>
      </property>
-     <property name="allColumnsShowFocus">
-      <bool>true</bool>
-     </property>
-     <property name="expandsOnDoubleClick">
-      <bool>false</bool>
-     </property>
-     <column>
-      <property name="text">
-       <string/>
-      </property>
-     </column>
     </widget>
    </item>
   </layout>
@@ -70,10 +64,10 @@
    <header location="global">gui/common/LineEditClear.h</header>
   </customwidget>
   <customwidget>
- <class>UnseenContactSmartListView</class>
+   <class>UnseenContactSmartListView</class>
    <extends>QTreeWidget</extends>
    <header>gui/common/UnseenContactSmartListView.h</header>
- </customwidget>
+  </customwidget>
  </customwidgets>
  <resources/>
  <connections/>
