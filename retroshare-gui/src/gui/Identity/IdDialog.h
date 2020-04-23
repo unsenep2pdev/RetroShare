@@ -57,7 +57,7 @@ public:
 	~IdDialog();
 
 	virtual QIcon iconPixmap() const { return QIcon(IMAGE_IDDIALOG) ; } //MainPage
-	virtual QString pageName() const { return tr("Contacts by Identities") ; } //19 Sep 2018 - meiyousixin - change "people" to "contacts"
+    virtual QString pageName() const { return tr("People") ; } //19 Sep 2018 - meiyousixin - change "people" to "contacts"
 	virtual QString helpText() const { return ""; } //MainPage
 
 	void loadRequest(const TokenQueue *queue, const TokenRequest &req);

@@ -1782,7 +1782,7 @@ void MainWindow::expandToolBar()
 {
     ui->toolBarPage->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
     ui->toolBarPage->setStyleSheet("QToolBar {background: rgb(43, 164, 220); color: rgb(255, 255, 255);}"
-                                   "QToolButton {background-color: rgb(43, 164, 220); color: rgb(255, 255, 255); height:32px; width: 150px;}");
+                                   "QToolButton {background-color: rgb(43, 164, 220); color: rgb(255, 255, 255); height:32px; width: 100px;}");
     ui->toolBarPage->actions().at(14)->setVisible(false);
     ui->toolBarPage->actions().at(15)->setVisible(true);
 
