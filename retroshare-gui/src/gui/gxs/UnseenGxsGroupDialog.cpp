@@ -40,10 +40,14 @@
 
 #include <iostream>
 
+#include "gui/chat/ChatDialog.h"
+
 
 #define GXSGROUP_NEWGROUPID         1
 #define GXSGROUP_LOADGROUP          2
 #define GXSGROUP_INTERNAL_LOADGROUP 3
+
+#define GXSGROUP_NEWGROUPID_2         6
 
 /** Constructor */
 UnseenGxsGroupDialog::UnseenGxsGroupDialog(TokenQueue *tokenExternalQueue, uint32_t enableFlags, uint32_t defaultFlags, QWidget *parent)
@@ -733,9 +737,11 @@ void UnseenGxsGroupDialog::createGroup()
 	if (service_CreateGroup(token, meta))
 	{
 		// get the Queue to handle response.
-		if(mExternalTokenQueue != NULL)
-			mExternalTokenQueue->queueRequest(token, TOKENREQ_GROUPINFO, RS_TOKREQ_ANSTYPE_ACK, GXSGROUP_NEWGROUPID);
+        if(mExternalTokenQueue != nullptr)
+            //mExternalTokenQueue->queueRequest(token, TOKENREQ_GROUPINFO, RS_TOKREQ_ANSTYPE_ACK, GXSGROUP_NEWGROUPID);
+            mExternalTokenQueue->queueRequest(token, TOKENREQ_GROUPINFO, RS_TOKREQ_ANSTYPE_ACK, GXSGROUP_NEWGROUPID_2);
 	}
+
 	close();
 }
 	
@@ -1056,7 +1062,7 @@ void UnseenGxsGroupDialog::loadRequest(const TokenQueue *queue, const TokenReque
 			case GXSGROUP_INTERNAL_LOADGROUP:
 				loadGroup(req.mToken);
 				break;
-			default:
+            default:
                 std::cerr << "UnseenGxsGroupDialog::loadGroup() UNKNOWN UserType ";
 				std::cerr << std::endl;
 				break;

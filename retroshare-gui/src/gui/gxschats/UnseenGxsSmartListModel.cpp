@@ -45,10 +45,10 @@
 
 #define IMAGE_GROUP_PUBLIC          ":/chat/img/groundchat.png"               //copy from ChatLobbyWidget
 #define IMAGE_GROUP_PRIVATE         ":/chat/img/groundchat_private.png"       //copy from ChatLobbyWidget
-#define IMAGE_UNSEEN          ":/app/images/unseen32.png"
+#define IMAGE_UNSEEN                ":/app/images/unseen32.png"
 
-#define IMAGE_CHANNEL_PUBLIC          ":/chat/img/channel-private.png"
-#define IMAGE_CHANNEL_PRIVATE         ":/chat/img/channel-public.png"
+#define IMAGE_CHANNEL_PUBLIC          ":/chat/img/channel-public.png"
+#define IMAGE_CHANNEL_PRIVATE         ":/chat/img/channel-private.png"
 
 
 class UnseenGroupItemInfo;
@@ -131,17 +131,13 @@ QVariant UnseenGxsSmartListModel::data(const QModelIndex &index, int role) const
     if (allGxsChatGroupList.size() == 0) return  QVariant();
     else
     {
-
-        //std::vector<UnseenGroupItemInfo> list; // = rsMsgs->getConversationItemList();
         std::vector<RsGxsChatGroup> chatList;
         if (conversationMode == 0x0000)
         {
-            //list = allGxsGroupList;
             chatList = allGxsChatGroupList;
         }
         else if (conversationMode == 0x0001)
         {
-            //list = filterGxsGroupList;
             chatList = filteredGxsChatGroupList;
         }
 
@@ -159,9 +155,6 @@ QVariant UnseenGxsSmartListModel::data(const QModelIndex &index, int role) const
 
         //STATUS FOR CONTACT
         QString presenceForChat = "no-status"; //for groupchat
-
-
-
         QImage avatar(IMAGE_GROUP_PUBLIC);    //default is public group chat avatar for UnseenP2P
 
         bool isAdmin      =  IS_GROUP_ADMIN(gxsChatItem.mMeta.mSubscribeFlags); // IS_GROUP_ADMIN(chatItem.subscribeFlags);
@@ -172,7 +165,7 @@ QVariant UnseenGxsSmartListModel::data(const QModelIndex &index, int role) const
             if (gxsChatItem.mMeta.mCircleType == GXS_CIRCLE_TYPE_YOUR_FRIENDS_ONLY)
                 avatar = QImage(IMAGE_GROUP_PRIVATE); // IMAGE_PRIVATE = green
             else if (gxsChatItem.mMeta.mCircleType == GXS_CIRCLE_TYPE_PUBLIC)
-                avatar =  QImage(IMAGE_GROUP_PUBLIC); // IMAGE_PUBLIC = public
+                avatar =  QImage(IMAGE_GROUP_PUBLIC); // IMAGE_PUBLIC = blue
 
         }
         else if (gxsChatItem.type == RsGxsChatGroup::CHANNEL)
@@ -180,7 +173,7 @@ QVariant UnseenGxsSmartListModel::data(const QModelIndex &index, int role) const
             if (gxsChatItem.mMeta.mCircleType == GXS_CIRCLE_TYPE_YOUR_FRIENDS_ONLY)
                 avatar = QImage(IMAGE_CHANNEL_PRIVATE); // IMAGE_PRIVATE = green
             else if (gxsChatItem.mMeta.mCircleType == GXS_CIRCLE_TYPE_PUBLIC)
-                avatar =  QImage(IMAGE_CHANNEL_PUBLIC); // IMAGE_PUBLIC = public
+                avatar =  QImage(IMAGE_CHANNEL_PUBLIC); // IMAGE_PUBLIC = blue
         }
         else if (gxsChatItem.type == RsGxsChatGroup::ONE2ONE)
         {
@@ -256,11 +249,8 @@ QVariant UnseenGxsSmartListModel::data(const QModelIndex &index, int role) const
             // (SystemLocale)	"11/9/19 5:49 PM"	QString --> get this one: 11/9/19
             QString sysLocal = dateTime.toString(Qt::SystemLocaleDate);
             timedateForMsgResult = sysLocal.mid(0,8);
-            //timedateForMsgResult.append(timedateForMsg.mid(19,4));
         }
-
         //GET LAST MSG from html format
-        //QString lastMsgQstr = QString::fromStdString(chatItem.localMsgInfo.msg);
         QString lastMsgQstr = QString::fromStdString(localInfo.msg);
         QDomDocument docCheck;
         QString temp = lastMsgQstr;
@@ -275,18 +265,13 @@ QVariant UnseenGxsSmartListModel::data(const QModelIndex &index, int role) const
         {
             nickname = QString::fromStdString(details.mNickname);
         }
-        //if (chatItem.type == RsGxsChatGroup::GROUPCHAT)
         if (gxsChatItem.type == RsGxsChatGroup::GROUPCHAT)
         {
             if (docCheck.setContent(temp))
                 lastMsg = readMsgFromXml(temp);
-                //lastMsg =nickname + ": " + readMsgFromXml(temp);
-                //lastMsg =QString::fromStdString(chatItem.nickInGroupChat) + ": " + readMsgFromXml(temp);
             else
             {
                 lastMsg = lastMsgQstr;
-                //lastMsg = nickname + ": " + lastMsgQstr;
-                //lastMsg =QString::fromStdString(chatItem.nickInGroupChat) + ": " + lastMsgQstr;
             }
         }
         else
@@ -296,12 +281,7 @@ QVariant UnseenGxsSmartListModel::data(const QModelIndex &index, int role) const
             else lastMsg = lastMsgQstr;
         }
 
-
-        //TODO: GET status of last msg, check if the last msg is "You" or other?
-
-
         QString lastMsgStatus = (incomming? "": "sent" ); //  (chatItem.isOtherLastMsg? "": "sent");
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////// BEGIN TO CHOOSE value after PREPARING ALLs.                          ////////////////////
@@ -327,12 +307,6 @@ QVariant UnseenGxsSmartListModel::data(const QModelIndex &index, int role) const
                     //on meiyousixin: thisContactNick = meiyousixin, check if meiyousixin == contactNick(meiyousixin) --> return goku
 
                     QString thisContactNick  = QString::fromStdString(rsPeers->getPeerName(rsPeers->getOwnId()));
-
-                    std::cerr << "one2one groupname is: " << groupname.toStdString() << std::endl;
-                    std::cerr << "ownerNick is: " << ownerNick.toStdString() << std::endl;
-                    std::cerr << "contactNick  is: " << contactNick.toStdString() << std::endl;
-                    std::cerr << "thisContactNick  is: " << thisContactNick.toStdString() << std::endl;
-
                     if (thisContactNick == contactNick )
                         return QVariant(ownerNick);
                     else

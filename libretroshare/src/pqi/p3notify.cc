@@ -246,6 +246,7 @@ void p3Notify::notifyHistoryChanged             (uint32_t           msgId    , i
 
 //unseenp2p - gxs notify
 void p3Notify::receiveGxsChatTyping(const RsGxsGroupId groupId, const std::string nickname, const RsPeerId sslId, const RsGxsId gxsId) { FOR_ALL_NOTIFY_CLIENTS (*it)->receiveGxsChatTyping(groupId, nickname, sslId, gxsId); }
+void p3Notify::NotifyCreateNewGroup(const RsGxsGroupId groupId)                                                                         { FOR_ALL_NOTIFY_CLIENTS (*it)->NotifyCreateNewGroup(groupId );}
 
 bool p3Notify::cachePgpPassphrase(const std::string& s)
 {

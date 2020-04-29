@@ -160,7 +160,7 @@ UnseenGxsGroupDialog *GxsChatDialog::createNewGroupDialog(TokenQueue *tokenQueue
     // UnseenGxsChatGroupDialog will take GxsChatGroupDialog functions and add some new functions
 
     return new UnseenGxsChatGroupDialog(tokenQueue, this);
-    //return new GxsChatGroupDisalog(tokenQueue, this); //old code
+    //return new GxsChatGroupDialog(tokenQueue, this); //old code
 }
 
 // When user click on Edit details of gxs groupchat/ channel/ one2one

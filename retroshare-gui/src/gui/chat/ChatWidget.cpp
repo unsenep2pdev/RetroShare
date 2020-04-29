@@ -474,24 +474,26 @@ void ChatWidget::showChatInbox(bool iShow)
 void ChatWidget::init(const gxsChatId &chat_id, const QString &title)
 {
     this->mGxsChatId = chat_id;
+    this->mGxsChatId.gxsChatType = chat_id.gxsChatType;
     this->title = title;
 
+    std::cerr << "In ChatWidget:: here we need to set the gxsChatType: " << chat_id.gxsChatType << std::endl;
     this->setGxsChatType(chat_id.gxsChatType);
 
     RsGxsChatGroup gxsChatGroup = getGxsChatGroup();
 
     if(gxsChatGroup.type == RsGxsChatGroup::CHANNEL)
     {
-            if (!IS_GROUP_ADMIN(gxsChatGroup.mMeta.mSubscribeFlags) && IS_GROUP_SUBSCRIBED(gxsChatGroup.mMeta.mSubscribeFlags))
-            {
-                showChatInbox(false);
+        if (!IS_GROUP_ADMIN(gxsChatGroup.mMeta.mSubscribeFlags) && IS_GROUP_SUBSCRIBED(gxsChatGroup.mMeta.mSubscribeFlags))
+        {
+            showChatInbox(false);
 
-            }
-            else if (!IS_GROUP_ADMIN(gxsChatGroup.mMeta.mSubscribeFlags) && IS_GROUP_PUBLISHER(gxsChatGroup.mMeta.mSubscribeFlags))
-            {
-                //publisher can send the msg
-               showChatInbox(true);
-            }
+        }
+        else if (!IS_GROUP_ADMIN(gxsChatGroup.mMeta.mSubscribeFlags) && IS_GROUP_PUBLISHER(gxsChatGroup.mMeta.mSubscribeFlags))
+        {
+            //publisher can send the msg
+            showChatInbox(true);
+        }
     }
 
     ui->statusLabel->hide();
@@ -528,7 +530,8 @@ void ChatWidget::init(const gxsChatId &chat_id, const QString &title)
     uint32_t hist_chat_type = RS_HISTORY_TYPE_GXSGROUPCHAT; // a value larger than the biggest RS_HISTORY_TYPE_* value
     int messageCount=0;
 
-    if (chatType() == CHATTYPE_GXSGROUPCHAT || this->chatType() == CHATTYPE_GXSONE2ONE || this->chatType() == CHATTYPE_GXSCHANNEL)
+    ChatWidget::ChatType _chatType = this->chatType();
+    if (_chatType == CHATTYPE_GXSGROUPCHAT || _chatType == CHATTYPE_GXSONE2ONE || _chatType == CHATTYPE_GXSCHANNEL)
     {
         messageCount=100;   //just for testing gxs groupchat
     }
@@ -541,31 +544,6 @@ void ChatWidget::init(const gxsChatId &chat_id, const QString &title)
         if (messageCount > 0)
         {
             //TODO: need to replace this one by gxs groupchat function
-//            rsHistory->getMessages(chatId, historyMsgs, messageCount);
-
-//            std::list<HistoryMsg>::iterator historyIt;
-//            for (historyIt = historyMsgs.begin(); historyIt != historyMsgs.end(); ++historyIt)
-//            {
-//                // it can happen that a message is first added to the message history
-//                // and later the gui receives the message through notify
-//                // avoid this by not adding history entries if their age is < 2secs
-//                if ((time(NULL)-2) <= historyIt->recvTime)
-//                    continue;
-
-//                QString name;
-//                if (chatId.isLobbyId() || chatId.isDistantChatId())
-//                {
-//                    RsIdentityDetails details;
-//                    if (rsIdentity->getIdDetails(RsGxsId(historyIt->peerName), details))
-//                        name = QString::fromUtf8(details.mNickname.c_str());
-//                    else
-//                        name = QString::fromUtf8(historyIt->nickInGroupchat.c_str());
-//                } else {
-//                    name = QString::fromUtf8(historyIt->nickInGroupchat.c_str());
-//                }
-
-//                addChatMsg(historyIt->incoming, name, RsGxsId(historyIt->peerName.c_str()), QDateTime::fromTime_t(historyIt->sendTime), QDateTime::fromTime_t(historyIt->recvTime), QString::fromUtf8(historyIt->message.c_str()), MSGTYPE_HISTORY);
-//            }
         }
     }
 
@@ -596,7 +574,7 @@ ChatWidget::ChatType ChatWidget::chatType()
     if(chatId.isLobbyId())
         return CHATTYPE_LOBBY;
 
-    if (chatId.isNotSet())
+    if (chatId.isNotSet() || !mGxsChatId.toGxsGroupId().isNull())
     {
         if(gxsChatType == RsGxsChatGroup::GROUPCHAT)
             return CHATTYPE_GXSGROUPCHAT;
@@ -605,6 +583,7 @@ ChatWidget::ChatType ChatWidget::chatType()
         else if (gxsChatType == RsGxsChatGroup::CHANNEL)
             return CHATTYPE_GXSCHANNEL;
     }
+
 
     return CHATTYPE_UNKNOWN;
 }
@@ -1734,11 +1713,12 @@ void ChatWidget::sendChat()
 
     uint32_t token;
     RsGxsChatMsg post;
-    if (this->chatType() == CHATTYPE_PRIVATE || this->chatType() == CHATTYPE_LOBBY  )
+    ChatWidget::ChatType _chatType = this->chatType();
+    if (_chatType == CHATTYPE_PRIVATE || _chatType == CHATTYPE_LOBBY  )
     {
         rsMsgs->sendChat(chatId, msg);
     }
-    else if (this->chatType() == CHATTYPE_GXSGROUPCHAT || this->chatType() == CHATTYPE_GXSONE2ONE || this->chatType() == CHATTYPE_GXSCHANNEL)
+    else if (_chatType == CHATTYPE_GXSGROUPCHAT || _chatType == CHATTYPE_GXSONE2ONE || _chatType == CHATTYPE_GXSCHANNEL)
     {       
         if (rsGxsChats)
         {
@@ -1789,20 +1769,13 @@ void ChatWidget::sendChat()
 	chatWidget->setCurrentCharFormat(QTextCharFormat ());
 
     /* meiyousixin - update recent time when user send msg, need to sort the contact list by recent time */
-    if (this->chatType() == CHATTYPE_PRIVATE || this->chatType() == CHATTYPE_LOBBY )
+    if (_chatType == CHATTYPE_PRIVATE || _chatType == CHATTYPE_LOBBY )
     {
         //unsigned int current_time = QDateTime::currentDateTime().toTime_t();
         long long current_time = QDateTime::currentSecsSinceEpoch();
         std::string nickInGroupChat = "You";
         emit NotifyQt::getInstance()->alreadySendChat(this->getChatId(), nickInGroupChat, current_time, textToSignal, true);        
     }
-    // this for gxs chat recent time, sort the gxschat conversation list
-//    else if (this->chatType() == CHATTYPE_GXSGROUPCHAT || this->chatType() == CHATTYPE_GXSONE2ONE || this->chatType() == CHATTYPE_GXSCHANNEL)
-//    {
-//        long long current_time = QDateTime::currentSecsSinceEpoch();
-//        std::string nickInGroupChat = "You";
-//        //emit NotifyQt::getInstance()->alreadySendChat(this->getGxsChatId(), post, nickInGroupChat, current_time, textToSignal, true);
-//    }
 
     // This is common, for all cases of chat,
     //we can check the scroll position here, if it is not at the end, so update it to the end

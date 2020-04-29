@@ -261,5 +261,7 @@ public:
 
     //unseenp2p - gxs notify
     virtual void receiveGxsChatTyping(const RsGxsGroupId, const std::string, const RsPeerId, const RsGxsId ){}
+    virtual void NotifyCreateNewGroup(const RsGxsGroupId ) {}
+
 };
 #endif

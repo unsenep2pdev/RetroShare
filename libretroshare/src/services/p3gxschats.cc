@@ -44,7 +44,7 @@
 #include "retroshare/rspeers.h"
 #include "rsitems/rsnxsitems.h"
 
-//#define GXSCHATS_DEBUG 1
+#define GXSCHATS_DEBUG 1
 
 
 
@@ -1250,6 +1250,7 @@ void p3GxsChats::notifyChanges(std::vector<RsGxsNotify *> &changes)
                                     //auto subscribe chat conversation when it's first received.
                                     uint32_t token;
                                     subscribeToGroup(token, *git, subscribe);
+                                    RsServer::notify()->NotifyCreateNewGroup(*git);
                                 }
                                 else
                                     std::cerr << "(II) Not notifying already known chat " << *git << std::endl;

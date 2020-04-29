@@ -68,6 +68,8 @@
 #define TOKEN_TYPE_STATISTICS       4
 #define TOKEN_TYPE_LAST_MSG_OF_GROUP   5
 
+#define GXSGROUP_NEWGROUPID_2         6
+
 #define MAX_COMMENT_TITLE 32
 
 /*
@@ -107,6 +109,8 @@ UnseenGxsGroupFrameDialog::UnseenGxsGroupFrameDialog(RsGxsIfaceHelper *ifaceImpl
     QObject::connect( ui->createGxsGroupChatButton, SIGNAL(clicked()), this, SLOT(newGroup()));
 
     //QObject::connect(NotifyQt::getInstance(), SIGNAL(notifyReceiveGxsChatTyping(const RsGxsGroupId&, const QString, const RsPeerId&, const RsGxsId&)), this, SLOT(updateGxsMsgTyping(const RsGxsGroupId&, const QString, const RsPeerId&, const RsGxsId&)));
+
+    QObject::connect(NotifyQt::getInstance(), SIGNAL(notifyCreateNewGxsGroup(const QString)), this, SLOT(receiveNotifyCreateNewGxsGroup(const QString)));
 
     /* add filter actions */
     ui->filterLineEdit->setPlaceholderText("Search ");
@@ -1523,6 +1527,9 @@ void UnseenGxsGroupFrameDialog::loadRequest(const TokenQueue *queue, const Token
         case TOKEN_TYPE_LAST_MSG_OF_GROUP:
             loadPosts(req.mToken);
             break;
+        case GXSGROUP_NEWGROUPID_2:
+            std::cerr << "UnseenGxsGroupFrameDialog::createGroup ok!!! () UserType: " << req.mUserType;
+            break;
 
 		default:
             std::cerr << "UnseenGxsGroupFrameDialog::loadRequest() ERROR: INVALID TYPE";
@@ -2158,4 +2165,44 @@ void UnseenGxsGroupFrameDialog::removeGxsChatGroup(RsGxsGroupId groupId)
        }
     }
 
+}
+
+void UnseenGxsGroupFrameDialog::receiveNotifyCreateNewGxsGroup(const QString groupId)
+{
+    RsGxsGroupId groupGxsId = RsGxsGroupId(groupId.toStdString());
+
+    RsGxsChatGroup gxsChatGroup = getGxsChatGroup(groupGxsId);
+
+    gxsChatId gxs_ChatId(groupGxsId);
+    gxs_ChatId.gxsChatType = gxsChatGroup.type;
+    //only open the gxsgroup chat when this user is admin! (open when this user create the group):
+    if(IS_GROUP_ADMIN(gxsChatGroup.mMeta.mSubscribeFlags))
+    {
+        ChatDialog::chatFriend(gxsChatId(groupGxsId), true);
+        //showGxsGroupChatMVC(gxsChatId(groupGxsId));
+    }
+
+//        ChatDialog::chatFriend(gxsChatId(groupGxsId), true);
+
+//    //unseenp2p
+//    if (UnseenGxsChatLobbyDialog *cld = dynamic_cast<UnseenGxsChatLobbyDialog*>(ChatDialog::getExistingChat(gxsChatId(groupGxsId)))) {
+//        cld->updateParticipantsList();
+//    }
+
+}
+
+RsGxsChatGroup UnseenGxsGroupFrameDialog::getGxsChatGroup(RsGxsGroupId groupId)
+{
+    std::list<RsGxsGroupId> groupIdList;
+    groupIdList.push_back(groupId);
+    std::vector<RsGxsChatGroup> chatInfos;
+
+    if (rsGxsChats->getChatsInfo(groupIdList, chatInfos))
+    {
+        if(chatInfos.size() > 0)
+        {
+            return chatInfos[0];
+        }
+    }
+    return RsGxsChatGroup();
 }

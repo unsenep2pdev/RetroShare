@@ -113,6 +113,7 @@ public:
     RsGxsChatGroup gxsGroupItemIdAt(QPoint &point);
     RsGxsChatGroup gxsGroupItemIdAt(RsGxsGroupId groupId);
     RsGxsChatGroup gxsGroupFromList(RsGxsGroupId groupId);
+    RsGxsChatGroup getGxsChatGroup(RsGxsGroupId groupId);
 
     void sortGxsConversationListByRecentTime();
 
@@ -186,6 +187,9 @@ private slots:
 
     void filterGxsItems(const QString &text);
     void filterColumnChanged(int);
+
+    void receiveNotifyCreateNewGxsGroup(const QString groupId);
+
 private:
 	virtual QString text(TextType type) = 0;
 	virtual QString icon(IconType type) = 0;

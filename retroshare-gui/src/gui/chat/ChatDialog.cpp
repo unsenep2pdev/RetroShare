@@ -89,6 +89,9 @@ void ChatDialog::init(const ChatId &id, const QString &title)
 void ChatDialog::init(const gxsChatId &id, const QString &title)
 {
     mGxsChatId = id;
+    mGxsChatId.gxsChatType = id.gxsChatType;
+    std::cerr << "In ChatDialog: here we need to set the gxsChatType: " << id.gxsChatType << std::endl;
+
     ChatWidget *cw = getChatWidget();
     if (cw) {
         cw->init(id, title);
@@ -183,6 +186,7 @@ ChatDialog* ChatDialog::getExistingChat(gxsChatId id)
         if (chatflags & RS_CHAT_OPEN) {
 
                 UnseenGxsChatLobbyDialog* cld = new UnseenGxsChatLobbyDialog(id.toGxsGroupId());
+                std::cerr << "The id of the UnseenGxsChatLobbyDialod when calling cld->init(id,...) : " << id.toGxsGroupId().toStdString() << ", chatType: " << id.gxsChatType << std::endl;
                 cld->init(id, "");
                 cd = cld;
             }

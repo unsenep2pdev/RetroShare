@@ -131,6 +131,7 @@ class p3Notify: public RsNotify
 
         //unseenp2p - gxschat notify
         void receiveGxsChatTyping(const RsGxsGroupId, const std::string, const RsPeerId, const RsGxsId );
+        void NotifyCreateNewGroup(const RsGxsGroupId );
 
 	private:
 

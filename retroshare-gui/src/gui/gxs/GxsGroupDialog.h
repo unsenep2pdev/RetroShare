@@ -264,7 +264,7 @@ private:
 	// loading existing Groups.
 	void requestGroup(const RsGxsGroupId &groupId);
 	void loadGroup(uint32_t token);
-	void updateFromExistingMeta(const QString &description);
+    void updateFromExistingMeta(const QString &description);
 
 	bool prepareGroupMetaData(RsGroupMetaData &meta);
 

@@ -474,46 +474,50 @@ gxsChatId UnseenGxsChatLobbyDialog::getGxsChatId()
     return  gxsChat_Id;
 }
 
+bool UnseenGxsChatLobbyDialog::getGxsChatGroup(RsGxsGroupId groupId, RsGxsChatGroup& gxsChatGroup)
+{
+    std::list<RsGxsGroupId> groupIdList;
+    groupIdList.push_back(groupId);
+    std::vector<RsGxsChatGroup> chatInfos;
+
+    if (rsGxsChats->getChatsInfo(groupIdList, chatInfos))
+    {
+        if(chatInfos.size() > 0)
+        {
+            gxsChatGroup = chatInfos[0];
+            return true;
+        }
+    }
+    return false;
+}
+
 void UnseenGxsChatLobbyDialog::init(const gxsChatId &id, const QString &/*title*/)
 {
     ChatLobbyInfo linfo ;
 
-    QString title;
-
     gxsChat_Id = id;
-
-    //TODO:  use id (gxsChatId) to get the gxsGroupChat Info: replace this by gxs groupchat function
-
-//    if(rsMsgs->getChatLobbyInfo(lobbyId,linfo))
-//    {
-//        title = QString::fromUtf8(linfo.lobby_name.c_str());
-
-//        QString msg = tr("Welcome to group chat: %1").arg(RsHtml::plainText(linfo.lobby_name));
-//        _lobby_name = QString::fromUtf8(linfo.lobby_name.c_str()) ;
-//        if (!linfo.lobby_topic.empty()) {
-//            msg += "\n" + tr("Topic: %1").arg(RsHtml::plainText(linfo.lobby_topic));
-//        }
-//        ui.chatWidget->setWelcomeMessage(msg);
-//    }
-
-    //TODO: need to check, if we can use the chatId here for the gxs chat?
-    //
-    ChatDialog::init(id, title);
-
-//    RsGxsId gxs_id;
-//    rsMsgs->getIdentityForChatLobby(lobbyId, gxs_id);
-
-    RsIdentityDetails details ;
 
     // This lets the backend some time to load our own identity in cache.
     // It will only loop for at most 1 second the first time.
 
-//    for(int i=0;i<3;++i)
-//        if(rsIdentity->getIdDetails(gxs_id,details))
-//            break ;
-//        else
-//            rstime::rs_usleep(1000*300) ;
+    RsGxsChatGroup gxsChatGroup;
+    for(int i=0;i<3;++i)
+        if(getGxsChatGroup(gxsChat_Id.toGxsGroupId(),gxsChatGroup))
+            break ;
+        else
+            rstime::rs_usleep(1000*300) ;
 
+    if(gxsChatGroup.mMeta.mGroupName.length() == 0)
+    {
+        return;
+    }
+    QString title = QString::fromStdString(gxsChatGroup.mMeta.mGroupName);
+    gxsChat_Id.gxsChatType = gxsChatGroup.type;
+    std::cerr << "The id in UnseenGxsChatLobbyDialog::init() when calling ChatDialog::init(id, title) : " << gxsChat_Id.toGxsGroupId().toStdString() << ", chatType: " << gxsChat_Id.gxsChatType << std::endl;
+
+    ChatDialog::init(gxsChat_Id, title);
+
+    RsIdentityDetails details ;
     if(rsIdentity->getIdDetails((RsGxsId)id.toGxsGroupId(),details))
         ui.chatWidget->setName(QString::fromUtf8(details.mNickname.c_str()));
     //ui.chatWidget->addToolsAction(ui.actionChangeNickname);
@@ -531,11 +535,11 @@ void UnseenGxsChatLobbyDialog::init(const gxsChatId &id, const QString &/*title*
     /** List of muted Participants */
     mutedParticipants.clear() ;
 
-
-    RsGxsChatGroup gxsChatGroup;
     if (unseenGxsChatLobbyPage)
     {
-        gxsChatGroup = unseenGxsChatLobbyPage->gxsGroupFromList(gxsChat_Id.toGxsGroupId());
+        //gxsChatGroup = unseenGxsChatLobbyPage->gxsGroupFromList(gxsChat_Id.toGxsGroupId());
+        //gxsChatGroup = unseenGxsChatLobbyPage->getGxsChatGroup(gxsChat_Id.toGxsGroupId());
+
         if(gxsChat_Id.gxsChatType == RsGxsChatGroup::ONE2ONE)
         {
             inviteFriendsButton->hide();

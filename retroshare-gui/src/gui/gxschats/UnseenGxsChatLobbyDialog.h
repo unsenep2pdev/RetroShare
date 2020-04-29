@@ -84,6 +84,7 @@ public:
 
     void updateTitle(QString title);
     void showChatTextInbox(bool iShow);
+    bool getGxsChatGroup(RsGxsGroupId groupId, RsGxsChatGroup& gxsChatGroup);
 public slots:
     //unseenp2p - gxschat typing slot
     void updateReceiveGxsChatTyping3( const QString nickname, const RsPeerId sslId, const RsGxsId gxsId) ;
