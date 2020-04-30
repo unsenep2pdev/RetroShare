@@ -288,6 +288,8 @@ UnseenGxsChatLobbyDialog::UnseenGxsChatLobbyDialog( const RsGxsGroupId& id, QWid
     connect(mBase, SIGNAL(fillDisplay(bool)), this, SLOT(fillDisplay(bool)));
     mInterfaceHelper = rsGxsChats;
 
+    setUpdateWhenInvisible(true);
+
     //GxsMessageFramePostsWidget constructor
     mSubscribeFlags = 0;
     mFillThread = NULL;

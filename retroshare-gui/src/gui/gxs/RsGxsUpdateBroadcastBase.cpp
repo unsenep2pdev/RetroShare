@@ -9,7 +9,7 @@
 RsGxsUpdateBroadcastBase::RsGxsUpdateBroadcastBase(RsGxsIfaceHelper *ifaceImpl, QWidget *parent)
 	: QObject(parent)
 {
-	mUpdateWhenInvisible = false;
+    mUpdateWhenInvisible = true; //change from false to true to update immediately
 	mFillComplete = true;
 
 	mUpdateBroadcast = RsGxsUpdateBroadcast::get(ifaceImpl);
