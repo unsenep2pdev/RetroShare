@@ -1401,7 +1401,8 @@ void ChatWidget::addChatMsg(bool incoming, const QString &name, const RsGxsChatM
 
     resetStatusBar();
 
-    if (incoming && chatType == MSGTYPE_NORMAL)
+    //if (incoming && chatType == MSGTYPE_NORMAL)
+    if (chatType == MSGTYPE_NORMAL) //all messages are receiving from backend, even this user receives it
     {
         emit newMessage(this);
 
@@ -1411,15 +1412,8 @@ void ChatWidget::addChatMsg(bool incoming, const QString &name, const RsGxsChatM
 
         emit infoChanged(this);
 
-        /* meiyousixin - update recent time when user send msg, need to sort the contact list by recent time */
-        if (this->chatType() == CHATTYPE_PRIVATE || this->chatType() == CHATTYPE_LOBBY )
-        {
-            std::string nickInGroupChat = "You";
-            long long current_time = QDateTime::currentSecsSinceEpoch();
-            emit NotifyQt::getInstance()->newChatMessageReceive(this->chatId, name.toStdString(), current_time, message.toStdString(), false);
-        }
         // this for gxs chat recent time, sort the gxschat conversation list
-        else if (this->chatType() == CHATTYPE_GXSGROUPCHAT || this->chatType() == CHATTYPE_GXSONE2ONE || this->chatType() == CHATTYPE_GXSCHANNEL )
+        if (this->chatType() == CHATTYPE_GXSGROUPCHAT || this->chatType() == CHATTYPE_GXSONE2ONE || this->chatType() == CHATTYPE_GXSCHANNEL )
         {
             long long current_time = QDateTime::currentSecsSinceEpoch();
             std::string nickInGroupChat = "You";
@@ -1428,17 +1422,12 @@ void ChatWidget::addChatMsg(bool incoming, const QString &name, const RsGxsChatM
         /* meiyousixin - need to update the recent time and sort the chat list */
 
     }
-    if(!incoming && chatType == MSGTYPE_NORMAL)
-    {
-        long long current_time = QDateTime::currentSecsSinceEpoch();
-        emit NotifyQt::getInstance()->alreadySendChat(this->getGxsChatId(), gxsChatMsg, name.toStdString(), current_time, message.toStdString(), true);
-    }
-//    else if(chatType == MSGTYPE_HISTORY && this->chatType() == CHATTYPE_GXSGROUPCHAT)
+//    if(!incoming && chatType == MSGTYPE_NORMAL)
 //    {
-//        //with the history msg, we just show without any checking incomming or not
-//        //go here, the msg already added to browser, but we can update the last msg on the left list?
-
+//        long long current_time = QDateTime::currentSecsSinceEpoch();
+//        emit NotifyQt::getInstance()->alreadySendChat(this->getGxsChatId(), gxsChatMsg, name.toStdString(), current_time, message.toStdString(), true);
 //    }
+
 }
 
 bool ChatWidget::isActive()

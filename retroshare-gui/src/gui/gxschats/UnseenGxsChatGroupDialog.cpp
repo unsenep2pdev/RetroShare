@@ -121,7 +121,15 @@ void UnseenGxsChatGroupDialog::prepareGxsChatGroup(RsGxsChatGroup &group, const 
 
     //unseenp2p a- meiyousixin: try to get all member list from the Create Conversation Dialog
     std::set<GxsChatMember> selectedList;
-    this->getShareFriends(selectedList);
+    if(group.type == RsGxsChatGroup::GROUPCHAT || group.type == RsGxsChatGroup::CHANNEL)
+    {
+        if(group.mMeta.mCircleType == GXS_CIRCLE_TYPE_PUBLIC)
+            this->getAllFriends(selectedList);
+        else
+            this->getShareFriends(selectedList);
+    }
+    else
+        this->getShareFriends(selectedList);
     members = selectedList;
 
     //End of get member list

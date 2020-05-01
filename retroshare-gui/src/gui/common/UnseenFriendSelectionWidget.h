@@ -140,6 +140,7 @@ public:
     //úneenp2p
     void setSelectedContacts(const std::set<GxsChatMember> list);
     void getSelectedContacts(std::set<GxsChatMember> &list);
+    void getAllContacts(std::set<GxsChatMember> &list);
     void setGxsGroupId(const RsGxsGroupId _groupChatId);
     void setModeOfFriendList(ShowFriendListMode showMode);
 

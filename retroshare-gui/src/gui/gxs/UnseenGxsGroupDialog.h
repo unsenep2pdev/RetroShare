@@ -138,6 +138,7 @@ public:
 	virtual void loadRequest(const TokenQueue *queue, const TokenRequest &req);
 
     void getShareFriends(std::set<GxsChatMember> &selectedList);
+    void getAllFriends(std::set<GxsChatMember> &selectedList);
     RsGxsChatGroup::ChatType getChatType();
 
 private:

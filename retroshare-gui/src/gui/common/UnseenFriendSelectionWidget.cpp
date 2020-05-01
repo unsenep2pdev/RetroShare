@@ -1083,6 +1083,42 @@ void UnseenFriendSelectionWidget::getSelectedContacts(std::set<GxsChatMember> &l
     //list = selectedList;
 }
 
+void UnseenFriendSelectionWidget::getAllContacts(std::set<GxsChatMember> &list)
+{
+    list.clear();
+    for(std::vector<RsGxsGroupId>::iterator it = gxsIds.begin(); it != gxsIds.end(); ++it)
+    {
+        RsIdentityDetails detail;
+        if (rsIdentity->getIdDetails(RsGxsId(*it), detail))
+        {
+            RsPeerDetails details;
+            RsPeerId sslId;
+            if (rsPeers->getGPGDetails(detail.mPgpId, details))
+            {
+                std::list<RsPeerId> sslIds;
+                rsPeers->getAssociatedSSLIds(detail.mPgpId, sslIds);
+                if (sslIds.size() >= 1) {
+                     sslId = sslIds.front();
+                }
+            }
+            RsGxsMyContact::STATUS status;
+            if (!sslId.isNull())
+            {
+                status = RsGxsMyContact::TRUSTED;
+            }
+            else status = RsGxsMyContact::UNKNOWN;
+
+            GxsChatMember contact;
+            contact.chatGxsId = detail.mId;
+            contact.chatPeerId= sslId;
+            contact.nickname = detail.mNickname;
+            contact.status = status;
+            list.insert(contact);
+        }
+
+    }
+}
+
 void UnseenFriendSelectionWidget::setGxsGroupId(const RsGxsGroupId _groupChatId)
 {
     groupChatId = _groupChatId;

@@ -537,15 +537,6 @@ bool UnseenGxsGroupDialog::prepareGroupMetaData(RsGroupMetaData &meta)
     std::cerr << "UnseenGxsGroupDialog::prepareGroupMetaData()";
 	std::cerr << std::endl;
 
-//    QString name;
-//    if(chatType!= RsGxsChatGroup::ONE2ONE)
-//    {
-//        name = getName();
-//    }
-
-//    // Fill in the MetaData as best we can.
-//    meta.mGroupName = std::string(name.toUtf8());
-
     if(chatType!= RsGxsChatGroup::ONE2ONE && meta.mGroupName.length() == 0) {
         std::cerr << "UnseenGxsGroupDialog::prepareGroupMetaData()";
 		std::cerr << " Invalid GroupName";
@@ -677,6 +668,41 @@ void UnseenGxsGroupDialog::createGroup()
         }
     }
 
+    RsGroupMetaData meta;
+
+    uint32_t flags;
+
+    if (ui.typeOne2One->isChecked())
+    {
+        flags = GXS_SERV::FLAG_PRIVACY_PUBLIC;
+        meta.mCircleType = GXS_CIRCLE_TYPE_YOUR_FRIENDS_ONLY;
+    }
+    else if (ui.typeGroup->isChecked())
+    {
+        flags = GXS_SERV::FLAG_PRIVACY_PUBLIC;
+         if (ui.groupTypeComboBox->currentIndex() == 0)
+         {
+             meta.mCircleType = GXS_CIRCLE_TYPE_YOUR_FRIENDS_ONLY;
+         }
+         else if (ui.groupTypeComboBox->currentIndex() == 1)
+         {
+             meta.mCircleType = GXS_CIRCLE_TYPE_PUBLIC;
+         }
+    }
+    else if (ui.typeChannel->isChecked())
+    {
+        flags = GXS_SERV::FLAG_PRIVACY_RESTRICTED;
+         if (ui.channelType->currentIndex() == 0)
+         {
+             meta.mCircleType = GXS_CIRCLE_TYPE_YOUR_FRIENDS_ONLY;
+         }
+         else if (ui.channelType->currentIndex() == 1)
+         {
+             meta.mCircleType = GXS_CIRCLE_TYPE_PUBLIC;
+         }
+    }
+
+
     RsGroupInfo groupInfo;
     groupInfo.id.clear(); // RS will generate an ID
      if (!ui.typeOne2One->isChecked())
@@ -705,40 +731,7 @@ void UnseenGxsGroupDialog::createGroup()
     }
 
 	uint32_t token;
-	RsGroupMetaData meta;
 
-    uint32_t flags;
-
-    if (ui.typeOne2One->isChecked())
-    {
-        flags = GXS_SERV::FLAG_PRIVACY_PUBLIC;
-        meta.mCircleType = GXS_CIRCLE_TYPE_YOUR_FRIENDS_ONLY;
-        ui.keyShareList->show();
-    }
-    else if (ui.typeGroup->isChecked())
-    {
-        flags = GXS_SERV::FLAG_PRIVACY_PUBLIC;
-         if (ui.groupTypeComboBox->currentIndex() == 0)
-         {
-             meta.mCircleType = GXS_CIRCLE_TYPE_YOUR_FRIENDS_ONLY;
-         }
-         else if (ui.groupTypeComboBox->currentIndex() == 1)
-         {
-             meta.mCircleType = GXS_CIRCLE_TYPE_PUBLIC;
-         }
-    }
-    else if (ui.typeChannel->isChecked())
-    {
-        flags = GXS_SERV::FLAG_PRIVACY_RESTRICTED;
-         if (ui.channelType->currentIndex() == 0)
-         {
-             meta.mCircleType = GXS_CIRCLE_TYPE_YOUR_FRIENDS_ONLY;
-         }
-         else if (ui.channelType->currentIndex() == 1)
-         {
-             meta.mCircleType = GXS_CIRCLE_TYPE_PUBLIC;
-         }
-    }
 
     meta.mInternalCircle = RsGxsCircleId(groupInfo.id);
     meta.mGroupFlags = flags;
@@ -1097,6 +1090,14 @@ void UnseenGxsGroupDialog::loadRequest(const TokenQueue *queue, const TokenReque
 void UnseenGxsGroupDialog::getShareFriends(std::set<GxsChatMember> &selectedList)
 {
     selectedList = mSelectedList;
+
+}
+
+void UnseenGxsGroupDialog::getAllFriends(std::set<GxsChatMember> &selectedList)
+{
+    std::set<GxsChatMember> selectedList2;
+    ui.keyShareList->getAllContacts(selectedList2);
+    selectedList = selectedList2;
 
 }
 
