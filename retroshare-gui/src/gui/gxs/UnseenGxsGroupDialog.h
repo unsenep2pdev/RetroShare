@@ -230,6 +230,10 @@ private slots:
 	void setAdminsList();
     void setDefaultOptions();
 
+    // unseenp2p - change GUI when user choose the public or private group/channel
+    void clickedOnGroupType(int index);
+    void clickedOnChannelType(int index);
+
 private:
 	bool setCircleParameters(RsGroupMetaData &meta);
 

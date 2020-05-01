@@ -96,6 +96,9 @@ void UnseenGxsGroupDialog::init(UnseenFriendSelectionWidget::ShowFriendListMode 
 	connect(ui.buttonBox, SIGNAL(accepted()), this, SLOT(submitGroup()));
 	connect(ui.buttonBox, SIGNAL(rejected()), this, SLOT(cancelDialog()));
 
+    connect(ui.groupTypeComboBox,SIGNAL(activated(int)),this,SLOT(clickedOnGroupType(int)));
+    connect(ui.channelType,SIGNAL(activated(int)),this,SLOT(clickedOnChannelType(int)));
+
     if(_showMode == UnseenFriendSelectionWidget::MODE_EDIT_GROUP)
     {
         switch (chatType) {
@@ -135,6 +138,21 @@ void UnseenGxsGroupDialog::init(UnseenFriendSelectionWidget::ShowFriendListMode 
     ui.keyShareList->setFocus();
 
 	Settings->loadWidgetInformation(this);
+}
+
+void UnseenGxsGroupDialog::clickedOnGroupType(int index)
+{
+    //if (ui.channelType->currentIndex() == index == 0)
+    if (index == 0)
+        ui.keyShareList->show();
+    else ui.keyShareList->hide();
+}
+
+void UnseenGxsGroupDialog::clickedOnChannelType(int index)
+{
+    if (index == 0)
+        ui.keyShareList->show();
+    else ui.keyShareList->hide();
 }
 
 QIcon UnseenGxsGroupDialog::serviceWindowIcon()
@@ -615,10 +633,13 @@ void UnseenGxsGroupDialog::createGroup()
 		return; //Don't add  a empty name!!
 	}
 
-    if (gpgIds.empty())
+    if (gpgIds.empty() )
     {
-        QMessageBox::warning(this, "UnseenP2P", tr("Please choose a contact for chat"), QMessageBox::Ok, QMessageBox::Ok);
-        return;
+        if((ui.typeGroup->isChecked()  && ui.groupTypeComboBox->currentIndex() == 0) || (ui.typeChannel->isChecked() && ui.channelType->currentIndex() == 0))
+        {
+            QMessageBox::warning(this, "UnseenP2P", tr("Please choose a contact for chat"), QMessageBox::Ok, QMessageBox::Ok);
+            return;
+        }
     }
     if (ui.typeOne2One->isChecked())
     {
@@ -692,6 +713,7 @@ void UnseenGxsGroupDialog::createGroup()
     {
         flags = GXS_SERV::FLAG_PRIVACY_PUBLIC;
         meta.mCircleType = GXS_CIRCLE_TYPE_YOUR_FRIENDS_ONLY;
+        ui.keyShareList->show();
     }
     else if (ui.typeGroup->isChecked())
     {
@@ -803,7 +825,9 @@ void UnseenGxsGroupDialog::setDefaultOptions()
     else if (ui.typeGroup->isChecked())
     {
         // Need to create gxs group chat, hide comment elements
+        ui.groupTypeComboBox->setVisible(true);
         ui.groupTypeComboBox->setCurrentIndex(0);
+
         ui.label_2->setText("Select the friends with which you want to group chat: ");
         ui.label->setVisible(true);
         ui.groupName->setVisible(true);
