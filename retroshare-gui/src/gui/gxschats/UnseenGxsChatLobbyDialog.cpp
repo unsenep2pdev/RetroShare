@@ -1502,7 +1502,6 @@ void UnseenGxsChatLobbyDialog::insertGxsChatPosts(std::vector<RsGxsChatMsg> &pos
 
 
         //uneenp2p - need to check if these are files sharing, need to show "Download" link
-        //ui.chatWidget->addChatMsg(incomming, nickname, gxs_id, sendTime, recvTime, mmsg, ChatWidget::MSGTYPE_NORMAL);
         //Need to separate the HISTORY MSG and CURRENT MSG HERE: using timestamp:
         // to separate 2 msg type ChatWidget::MSGTYPE_HISTORY and ChatWidget::MSGTYPE_NORMAL
         // need to save the timestamp of the latest history msg,
@@ -1511,7 +1510,7 @@ void UnseenGxsChatLobbyDialog::insertGxsChatPosts(std::vector<RsGxsChatMsg> &pos
         // if the sendTime (posts[i].mMeta.mPublishTs) < latestHistoryMsgTimetamp then it will be HISTORY msg
         // else it will be the current (NORMAL) msg
         ChatWidget::MsgType msgType;
-        if (posts[i].mMeta.mPublishTs <= mLatestHistoryMsgTimestamp)
+        if (posts[i].mMeta.mPublishTs < mLatestHistoryMsgTimestamp)
         {
             msgType = ChatWidget::MSGTYPE_HISTORY;
             recvTime = QDateTime::fromSecsSinceEpoch(posts[i].mMeta.mPublishTs);
