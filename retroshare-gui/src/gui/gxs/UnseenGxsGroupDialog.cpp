@@ -537,14 +537,14 @@ bool UnseenGxsGroupDialog::prepareGroupMetaData(RsGroupMetaData &meta)
     std::cerr << "UnseenGxsGroupDialog::prepareGroupMetaData()";
 	std::cerr << std::endl;
 
-    QString name;
-    if(chatType!= RsGxsChatGroup::ONE2ONE)
-    {
-        name = getName();
-    }
+//    QString name;
+//    if(chatType!= RsGxsChatGroup::ONE2ONE)
+//    {
+//        name = getName();
+//    }
 
-    // Fill in the MetaData as best we can.
-    meta.mGroupName = std::string(name.toUtf8());
+//    // Fill in the MetaData as best we can.
+//    meta.mGroupName = std::string(name.toUtf8());
 
     if(chatType!= RsGxsChatGroup::ONE2ONE && meta.mGroupName.length() == 0) {
         std::cerr << "UnseenGxsGroupDialog::prepareGroupMetaData()";
@@ -695,7 +695,7 @@ void UnseenGxsGroupDialog::createGroup()
 
     if(!rsPeers->addGroup(groupInfo, true))
     {
-        QMessageBox::warning(this, "UnseenP2P", tr("Can not create group because the app can not create local group circle "), QMessageBox::Ok, QMessageBox::Ok);
+        QMessageBox::warning(this, "UnseenP2P", tr("Can not create group because the app can not create local group node "), QMessageBox::Ok, QMessageBox::Ok);
         return;
     }
 

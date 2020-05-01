@@ -2028,7 +2028,7 @@ bool p3GxsChats::createGroup(uint32_t &token, RsGxsChatGroup &group)
 
     if(grpItem->members.empty() && ownChatId !=NULL ){
         GxsChatMember myself =*ownChatId;
-        grpItem->type = RsGxsChatGroup::GROUPCHAT;
+        grpItem->type = group.type; // RsGxsChatGroup::GROUPCHAT;
         grpItem->members.insert(myself);
     }
 
