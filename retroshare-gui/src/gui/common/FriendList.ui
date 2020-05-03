@@ -90,7 +90,7 @@
      </attribute>
      <column>
       <property name="text">
-       <string>Trusted nodes</string>
+       <string>Contacts</string>
       </property>
       <property name="textAlignment">
        <set>AlignCenter</set>
