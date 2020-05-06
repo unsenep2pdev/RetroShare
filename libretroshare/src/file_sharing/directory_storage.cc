@@ -30,7 +30,8 @@
 #include "dir_hierarchy.h"
 #include "filelist_io.h"
 
-//#define DEBUG_REMOTE_DIRECTORY_STORAGE 1
+#define DEBUG_REMOTE_DIRECTORY_STORAGE 1
+#define DEBUG_LOCAL_DIRECTORY_STORAGE 1
 
 /******************************************************************************************************************/
 /*                                                      Iterators                                                 */
@@ -712,8 +713,8 @@ bool LocalDirectoryStorage::serialiseDirEntry(const EntryIndex& indx,RsTlvBinary
 #endif
         }
 #ifdef DEBUG_LOCAL_DIRECTORY_STORAGE
-        else
-            std::cerr << "  not pushing subdir " << hash << ", array position=" << i << " indx=" << dir->subdirs[i] << ": permission denied for this peer." << std::endl;
+//        else
+//            std::cerr << "  not pushing subdir " << hash << ", array position=" << i << " indx=" << dir->subdirs[i] << ": permission denied for this peer." << std::endl;
 #endif
 
     // now count the files that do not have a null hash (meaning the hash has indeed been computed)
@@ -790,7 +791,7 @@ bool LocalDirectoryStorage::serialiseDirEntry(const EntryIndex& indx,RsTlvBinary
         if(!FileListIO::writeField(section_data,section_size,section_offset,FILE_LIST_IO_TAG_REMOTE_FILE_ENTRY,file_section_data,file_section_offset)) { free(section_data); free(file_section_data);return false ;}
 
 #ifdef DEBUG_LOCAL_DIRECTORY_STORAGE
-        std::cerr << "  pushing subfile " << file->hash << ", array position=" << i << " indx=" << dir->subfiles[i] << std::endl;
+        //std::cerr << "  pushing subfile " << file->hash << ", array position=" << i << " indx=" << dir->subfiles[i] << std::endl;
 #endif
     }
 	free(file_section_data) ;
@@ -804,7 +805,6 @@ bool LocalDirectoryStorage::serialiseDirEntry(const EntryIndex& indx,RsTlvBinary
 
     return true ;
 }
-
 
 /******************************************************************************************************************/
 /*                                           Remote Directory Storage                                              */

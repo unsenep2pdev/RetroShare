@@ -2181,7 +2181,7 @@ bool FriendList::getOrCreateGroup(const std::string &name, const uint &flag, RsN
     grp.name = name;
     grp.flag = flag;
 
-    if(!rsPeers->addGroup(grp))
+    if(!rsPeers->addGroup(grp, false))
         return false;
 
     // try again

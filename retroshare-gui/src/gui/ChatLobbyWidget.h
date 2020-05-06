@@ -74,7 +74,7 @@ public:
 	~ChatLobbyWidget();
 
 	virtual QIcon iconPixmap() const { return QIcon(IMAGE_CHATLOBBY) ; } //MainPage
-	virtual QString pageName() const { return tr("Chats") ; } //MainPage
+    virtual QString pageName() const { return tr("Old Chats") ; } //MainPage
 	virtual QString helpText() const { return ""; } //MainPage
 
 	virtual UserNotify *getUserNotify(QObject *parent); //MainPage

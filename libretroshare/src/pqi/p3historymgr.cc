@@ -48,6 +48,8 @@ p3HistoryMgr::p3HistoryMgr()
 	mPublicEnable = false;
 	mPrivateEnable = true;
 	mLobbyEnable = true;
+    // default for Gxs history
+    mGxsGroupChatEnable = true;
 
 	mPublicSaveCount  = 0;
 	mLobbySaveCount   = 0;
@@ -615,9 +617,11 @@ bool p3HistoryMgr::getEnable(uint32_t chat_type)
 		case RS_HISTORY_TYPE_PUBLIC : return mPublicEnable ;
 		case RS_HISTORY_TYPE_LOBBY  : return mLobbyEnable ;
 		case RS_HISTORY_TYPE_PRIVATE: return mPrivateEnable ;
+        //unseenp2p - for gxs groupchat
+        case RS_HISTORY_TYPE_GXSGROUPCHAT: return mGxsGroupChatEnable;
 		default:
-											  std::cerr << "Unexpected value " << chat_type<< " in p3HistoryMgr::getEnable(): this is a bug." << std::endl;
-											  return 0 ;
+        std::cerr << "Unexpected value " << chat_type<< " in p3HistoryMgr::getEnable(): this is a bug." << std::endl;
+        return 0 ;
 	}
 }
 

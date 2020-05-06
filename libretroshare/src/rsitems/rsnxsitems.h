@@ -47,6 +47,11 @@ const uint8_t RS_PKT_SUBTYPE_NXS_MSG_ITEM             = 0x20;
 const uint8_t RS_PKT_SUBTYPE_NXS_TRANSAC_ITEM         = 0x40;
 const uint8_t RS_PKT_SUBTYPE_NXS_GRP_PUBLISH_KEY_ITEM = 0x80;
 
+const uint8_t RS_PKT_SUBTYPE_NXS_CHAT_MSG_ITEM             = 0x90;
+const uint8_t RS_PKT_SUBTYPE_NXS_CHAT_GRP_ITEM             = 0x91;
+const uint8_t RS_PKT_SUBTYPE_NXS_CHAT_GRP_PUBLISH_KEY_ITEM = 0x92;
+
+
 // possibility create second service to deal with this functionality
 
 const uint8_t RS_PKT_SUBTYPE_EXT_SEARCH_GRP   = 0x0001;
@@ -361,6 +366,25 @@ public:
 
 };
 
+struct RsNxsNotifyChat : RsNxsItem
+{
+    explicit RsNxsNotifyChat(uint16_t servtype)
+        : RsNxsItem(servtype, RS_PKT_SUBTYPE_NXS_CHAT_MSG_ITEM)
+    {clear();}
+    virtual ~RsNxsNotifyChat(){}
+    virtual void serial_process( RsGenericSerializer::SerializeJob j,
+                                     RsGenericSerializer::SerializeContext& ctx );
+
+    virtual void clear();
+    virtual std::ostream &print(std::ostream& out, uint16_t indent);
+
+    RsGxsGroupId grpId; /// group id, forms part of version id
+    uint32_t msgId; /// msg id for unique message
+    std::pair<std::string, std::string> command;  //signal messages: typing, calling ice signal, etc....
+    //typingstatus:typing, audio_call:audio_p2p_ICE, etc.
+    //it will save store these online signal messages.
+    RsGxsContactPerson  sendFrom; //sending from this person (RsPeerId, GxsId, and Person's Name).
+};
 
 /*!
  * Used to respond to a RsGrpMsgsReq

@@ -199,6 +199,7 @@ static const RsNodeGroupId RS_GROUP_ID_FAVORITES ("00000000000000000000000000000
 #define RS_GROUP_DEFAULT_NAME_FAVORITES  "Favorites"
 
 const uint32_t RS_GROUP_FLAG_STANDARD = 0x0001;
+const uint32_t RS_GROUP_FLAG_HIDE     = 0x0002;
 
 //unseenp2p - add friend options
 static const std::string ADDFRIEND_PQISSLLISTENNER = "ADDFRIEND_PQISSLLISTENNER";
@@ -399,13 +400,16 @@ struct RsPeerCryptoParams
 struct RsGroupInfo : RsSerializable
 {
     RsGroupInfo();
+    RsGroupInfo(const RsGroupInfo &info);
+    enum GroupType { ONE2ONE, GROUPCHAT, CHANNEL, DEFAULTS } ;
+    GroupType  type;  //one2one,groupchat, and channel
 
     RsNodeGroupId   id;
     std::string     name;
     uint32_t        flag;
 
     std::set<RsPgpId> peerIds;
-
+    std::set<RsGxsId> gxsIds;
 	/// @see RsSerializable
 	void serial_process(
 	        RsGenericSerializer::SerializeJob j,
@@ -415,7 +419,30 @@ struct RsGroupInfo : RsSerializable
 		RS_SERIAL_PROCESS(name);
 		RS_SERIAL_PROCESS(flag);
 		RS_SERIAL_PROCESS(peerIds);
+        RS_SERIAL_PROCESS(type);
+        RS_SERIAL_PROCESS(gxsIds);
 	}
+
+//    RsGroupInfo operator=(const RsGroupInfo info){
+//        type = info.type;  //one2one,groupchat, and channel
+//        id = info.id;
+//        name = info.name;
+//        flag=info.flag;
+//        peerIds=info.peerIds;
+//        gxsIds=info.gxsIds;
+//    }
+//    RsGroupInfo operator()(const RsGroupInfo info){
+//        type = info.type;  //one2one,groupchat, and channel
+//        id = info.id;
+//        name = info.name;
+//        flag=info.flag;
+//        peerIds=info.peerIds;
+//        gxsIds=info.gxsIds;
+//    }
+//    bool operator<(const RsGroupInfo info ) const{
+//        return id < info.id;
+//    }
+
 };
 
 std::ostream &operator<<(std::ostream &out, const RsPeerDetails &detail);
@@ -664,7 +691,9 @@ public:
 	 * @param[in] groupInfo
 	 * @return
 	 */
-    virtual bool addGroup(RsGroupInfo& groupInfo) = 0;
+    virtual bool addGroup(RsGroupInfo& groupInfo, bool hide) = 0;
+
+    virtual bool addGroupWithId(RsGroupInfo &groupInfo, bool hide) = 0;
 
 	/**
 	 * @brief editGroup edit an existing group
@@ -709,6 +738,15 @@ public:
 	 */
     virtual bool getGroupInfoList(std::list<RsGroupInfo>& groupInfoList) = 0;
 
+    /**
+     * @brief checkExistingOne2OneChat add a peer to a group
+     * @jsonapi{development}
+     * @param[in] pgpId
+     * @return
+     */
+    virtual bool    checkExistingOne2OneChat(const RsPgpId& pgpId) = 0;
+
+
 	// groupId == "" && assign == false -> remove from all groups
 	/**
 	 * @brief assignPeerToGroup add a peer to a group
@@ -718,6 +756,7 @@ public:
 	 * @param[in] assign true to assign a peer, false to remove a peer
 	 * @return
 	 */
+
     virtual bool assignPeerToGroup(const RsNodeGroupId& groupId, const RsPgpId& peerId, bool assign) = 0;
 
 	/**

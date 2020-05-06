@@ -26,6 +26,9 @@
  * #define RS_DATA_SERVICE_DEBUG_CACHE 1
  ****/
 
+//#define RS_DATA_SERVICE_DEBUG  1
+//#define RS_DATA_SERVICE_DEBUG_CACHE 1
+
 #include <fstream>
 #include <util/rsdir.h>
 #include <algorithm>
@@ -744,8 +747,9 @@ RsNxsMsg* RsDataService::locked_getMessage(RetroCursor &c)
             ok &= msg->msg.GetTlv(data, data_len, &offset);
     }
 
-    if(ok)
+    if(ok){
         return msg;
+    }
     else
         delete msg;
 
@@ -830,8 +834,8 @@ int RsDataService::storeMessage(const std::list<RsNxsMsg*>& msg)
             std::cerr << std::endl;
             std::cerr << "\t & MessageId: " << msgMetaPtr->mMsgId.toStdString();
             std::cerr << std::endl;
-        }
 
+        }
         // This is needed so that mLastPost is correctly updated in the group meta when it is re-loaded.
 
         locked_clearGrpMetaCache(msgMetaPtr->mGroupId);
@@ -870,14 +874,14 @@ int RsDataService::storeGroup(const std::list<RsNxsGrp*>& grp)
 		if(!validSize(grpPtr)) continue;
 
 #ifdef RS_DATA_SERVICE_DEBUG
-		std::cerr << "RsDataService::storeGroup() GrpId: " << grpPtr->grpId.toStdString();
+        std::cerr << "RsDataService::storeGroup() GrpId: " << grpPtr->grpId.toStdString();
 		std::cerr << " CircleType: " << (uint32_t) grpMetaPtr->mCircleType;
 		std::cerr << " CircleId: " << grpMetaPtr->mCircleId.toStdString();
 		std::cerr << std::endl;
 #endif
 
 		/*!
-		 * STORE data, data len,
+         * STORE data, data len,
 		 * grpId, flags, publish time stamp, identity,
 		 * id signature, admin signatue, key set, last posting ts
 		 * and meta data
@@ -930,7 +934,7 @@ int RsDataService::storeGroup(const std::list<RsNxsGrp*>& grp)
 
 		if (!mDb->sqlInsert(GRP_TABLE_NAME, "", cv))
 		{
-			std::cerr << "RsDataService::storeGroup() sqlInsert Failed";
+            std::cerr << "RsDataService::storeGroup() sqlInsert Failed";
 			std::cerr << std::endl;
 			std::cerr << "\t For GroupId: " << grpMetaPtr->mGroupId.toStdString();
 			std::cerr << std::endl;
@@ -1009,6 +1013,8 @@ int RsDataService::updateGroup(const std::list<RsNxsGrp *> &grp)
         // if data is larger than max item size do not add
         if(!validSize(grpPtr)) continue;
 
+        //locked_clearGrpMetaCache(grpPtr->grpId);  //force to clear cache (unseen-dev team)
+
         /*!
          * STORE data, data len,
          * grpId, flags, publish time stamp, identity,
@@ -1070,6 +1076,8 @@ int RsDataService::updateGroupKeys(const RsGxsGroupId& grpId,const RsTlvSecurity
 {
     RsStackMutex stack(mDbMutex);
 
+    locked_clearGrpMetaCache(grpId); //force to reload new info after commit.
+
     // begin transaction
     mDb->beginTransaction();
 
@@ -1089,7 +1097,8 @@ int RsDataService::updateGroupKeys(const RsGxsGroupId& grpId,const RsTlvSecurity
     mDb->sqlUpdate(GRP_TABLE_NAME, "grpId='" + grpId.toStdString() + "'", cv);
 
     // finish transaction
-    return  mDb->commitTransaction();
+    return mDb->commitTransaction();
+
 }
 
 bool RsDataService::validSize(RsNxsGrp* grp) const
@@ -1198,7 +1207,7 @@ void RsDataService::locked_retrieveGroups(RetroCursor* c, std::vector<RsNxsGrp*>
     }
 }
 
-int RsDataService::retrieveNxsMsgs(const GxsMsgReq &reqIds, GxsMsgResult &msg, bool /* cache */, bool withMeta)
+int RsDataService::retrieveNxsMsgs(const GxsMsgReq &reqIds, GxsMsgResult &msg, bool /* cache */, bool withMeta, int page)
 {
 #ifdef RS_DATA_SERVICE_DEBUG_TIME
     rstime::RsScopeTimer timer("");
@@ -1220,13 +1229,18 @@ int RsDataService::retrieveNxsMsgs(const GxsMsgReq &reqIds, GxsMsgResult &msg, b
 
             RsStackMutex stack(mDbMutex);
 
-            RetroCursor* c = mDb->sqlQuery(MSG_TABLE_NAME, withMeta ? mMsgColumnsWithMeta : mMsgColumns, KEY_GRP_ID+ "='" + grpId.toStdString() + "'", "");
+            std::string orderby = "";
+            if(page>0){
+                orderby = " timeStamp DESC ";
+            }
+
+            RetroCursor* c = mDb->sqlQuery(MSG_TABLE_NAME, withMeta ? mMsgColumnsWithMeta : mMsgColumns, KEY_GRP_ID+ "='" + grpId.toStdString() + "'", orderby, page);
 
             if(c)
             {
                 locked_retrieveMessages(c, msgSet, withMeta ? mColMsg_WithMetaOffset : 0);
-            }
 
+            }
             delete c;
         }else{
 
@@ -1284,7 +1298,7 @@ void RsDataService::locked_retrieveMessages(RetroCursor *c, std::vector<RsNxsMsg
     return;
 }
 
-int RsDataService::retrieveGxsMsgMetaData(const GxsMsgReq& reqIds, GxsMsgMetaResult &msgMeta)
+int RsDataService::retrieveGxsMsgMetaData(const GxsMsgReq& reqIds, GxsMsgMetaResult &msgMeta, int page)
 {
     RsStackMutex stack(mDbMutex);
 
@@ -1292,6 +1306,7 @@ int RsDataService::retrieveGxsMsgMetaData(const GxsMsgReq& reqIds, GxsMsgMetaRes
     rstime::RsScopeTimer timer("");
     int resultCount = 0;
 #endif
+
 
     GxsMsgReq::const_iterator mit = reqIds.begin();
 
@@ -1305,14 +1320,25 @@ int RsDataService::retrieveGxsMsgMetaData(const GxsMsgReq& reqIds, GxsMsgMetaRes
         std::vector<RsGxsMsgMetaData*> metaSet;
 
         if(msgIdV.empty()){
-            RetroCursor* c = mDb->sqlQuery(MSG_TABLE_NAME, mMsgMetaColumns, KEY_GRP_ID+ "='" + grpId.toStdString() + "'", "");
+            std::string orderby = "";  //pagination if page is greater than 0
+            if(page>0)
+                orderby = " timeStamp DESC ";
+
+            RetroCursor* c = mDb->sqlQuery(MSG_TABLE_NAME, mMsgMetaColumns, KEY_GRP_ID+ "='" + grpId.toStdString() + "'", orderby, page);
 
             if (c)
             {
                 locked_retrieveMsgMeta(c, metaSet);
 #ifdef RS_DATA_SERVICE_DEBUG_CACHE
               std::cerr << "Retrieving (all) Msg metadata grpId=" << grpId << ", " << std::dec << metaSet.size() << " messages" << std::endl;
+              if(page >0){
+                  std::cerr <<"Pagination Request[24-0] Page="<<page <<std::endl;
+                  for(auto it = metaSet.begin(); it !=metaSet.end(); it++){
+                      std::cerr <<"groupId: "<<(*it)->mGroupId<<" and  msgId: "<<(*it)->mMsgId <<" and PublishTS: "<<(*it)->mPublishTs<<std::endl;
+                  }
+              }
 #endif
+
             }
         }else{
 

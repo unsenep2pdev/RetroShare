@@ -95,9 +95,14 @@
           </property>
           <item>
            <property name="text">
-            <string>Unseen Network (RS + TOR)</string>
+            <string>UnseenP2P NET</string>
            </property>
           </item>
+          <item>
+             <property name="text">
+               <string>Develop NET </string>
+             </property>
+           </item>
          </widget>
         </item>
         <item>

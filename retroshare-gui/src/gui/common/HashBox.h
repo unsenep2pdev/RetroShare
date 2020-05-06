@@ -32,6 +32,7 @@ namespace Ui {
 
 class AttachFileItem;
 class QVBoxLayout;
+class SubFileItem; //unseenp2p - use gxs file in the chatWidget file sharing
 
 class HashedFile
 {
@@ -63,6 +64,10 @@ public:
 	void setAutoHide(bool autoHide);
 	void addAttachments(const QStringList& files,TransferRequestFlags tfl, HashedFile::Flags flag = HashedFile::NoFlag);
 
+    //unseenp2p: add gxsfile
+    void addGxsFileAttachments(const QStringList& files,TransferRequestFlags tfl, HashedFile::Flags flag = HashedFile::NoFlag);
+    //void addAttachmentGxsFilePath(const std::string &path);
+
 	void setDropWidget(QWidget* widget);
 	void setDefaultTransferRequestFlags(TransferRequestFlags flags) { mDefaultTransferFlags = flags ; }
 
@@ -72,10 +77,15 @@ protected:
 private slots:
 	void fileFinished(AttachFileItem* file);
 	void checkAttachmentReady();
+    void checkGxsFileAttachmentReady();
 
+    void gxsFileFinished(SubFileItem* file);
 signals:
 	void fileHashingStarted();
 	void fileHashingFinished(QList<HashedFile> hashedFiles);
+    //void gxsfileHashingFinishedForGUI(QList<HashedFile> hashedFiles, std::list<SubFileItem *> mFiles);
+    void gxsfileHashingFinishedForGUI(QList<HashedFile> hashedFiles);
+//    void gxsfileHashingFinished(std::list<SubFileItem *> mFiles);
 
 private:
 	class HashingInfo
@@ -85,7 +95,19 @@ private:
 		HashedFile::Flags flag;
 	};
 
+    class GxsFileHashingInfo
+    {
+    public:
+        SubFileItem* item;
+        HashedFile::Flags flag;
+    };
+
 	QList<HashingInfo> mHashingInfos;
+    QList<GxsFileHashingInfo> mGxsFileHashingInfos; //unseenp2p - using for gxs file sharing in ChatWidget
+
+    //std::list<SubFileItem *> mAttachments; //unseenp2p
+    QList<SubFileItem *> mAttachments; //unseenp2p
+
 	bool mAutoHide;
 	QWidget* dropWidget;
 	Ui::HashBox *ui;

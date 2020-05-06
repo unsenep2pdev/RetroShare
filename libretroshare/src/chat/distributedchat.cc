@@ -71,10 +71,12 @@ DistributedChatService::DistributedChatService(uint32_t serv_type,p3ServiceContr
 
 void DistributedChatService::flush()
 {
-	static rstime_t last_clean_time_lobby = 0 ;
-	static rstime_t last_req_chat_lobby_list = 0 ;
 
-	rstime_t now = time(NULL) ;
+
+    static rstime_t last_clean_time_lobby = 0 ;
+    static rstime_t last_req_chat_lobby_list = 0 ;
+
+    rstime_t now= time(NULL) ;
 
 	if(last_clean_time_lobby + LOBBY_CACHE_CLEANING_PERIOD < now)
 	{
@@ -98,7 +100,7 @@ void DistributedChatService::flush()
 	if(last_req_chat_lobby_list + LOBBY_LIST_AUTO_UPDATE_TIME < now)
 	{
 		std::vector<VisibleChatLobbyRecord> visible_lobbies_tmp ;
-		getListOfNearbyChatLobbies(visible_lobbies_tmp) ;
+        getListOfNearbyChatLobbies(visible_lobbies_tmp) ;
 
 		if (visible_lobbies_tmp.empty()){
 			last_req_chat_lobby_list = now-LOBBY_LIST_AUTO_UPDATE_TIME+MIN_DELAY_BETWEEN_PUBLIC_LOBBY_REQ;
@@ -838,7 +840,7 @@ void DistributedChatService::getListOfNearbyChatLobbies(std::vector<VisibleChatL
 			RsChatLobbyListRequestItem *item = new RsChatLobbyListRequestItem ;
 			item->PeerId(*it) ;
 
-			sendChatItem(item);
+            sendChatItem(item);
 		}
 		last_visible_lobby_info_request_time = now ;
 		_should_reset_lobby_counts = true ;

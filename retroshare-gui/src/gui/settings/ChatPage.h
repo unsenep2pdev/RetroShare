@@ -40,7 +40,7 @@ class ChatPage : public ConfigPage
       virtual void load();
 
         virtual QPixmap iconPixmap() const { return QPixmap(":/home/img/Setting/comment-black-oval-bubble-shape_x.png") ; }
-		virtual QString pageName() const { return tr("Chats") ; }
+        virtual QString pageName() const { return tr("Old Chats") ; }
 		virtual QString helpText() const { return ""; }
 
   private slots:

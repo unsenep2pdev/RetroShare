@@ -44,7 +44,7 @@
       <enum>QFrame::Raised</enum>
      </property>
      <property name="currentIndex">
-      <number>1</number>
+      <number>0</number>
      </property>
      <widget class="QWidget" name="createmode">
       <layout class="QGridLayout" name="gridLayout_8">
@@ -817,6 +817,11 @@
  </widget>
  <customwidgets>
   <customwidget>
+   <class>MimeTextEdit</class>
+   <extends>QTextEdit</extends>
+   <header location="global">gui/common/MimeTextEdit.h</header>
+  </customwidget>
+  <customwidget>
    <class>FriendSelectionWidget</class>
    <extends>QWidget</extends>
    <header>gui/common/FriendSelectionWidget.h</header>
@@ -832,11 +837,6 @@
    <extends>QFrame</extends>
    <header>gui/common/HeaderFrame.h</header>
    <container>1</container>
-  </customwidget>
-  <customwidget>
-   <class>MimeTextEdit</class>
-   <extends>QTextEdit</extends>
-   <header location="global">gui/common/MimeTextEdit.h</header>
   </customwidget>
   <customwidget>
    <class>GxsIdChooser</class>

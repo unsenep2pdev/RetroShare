@@ -96,7 +96,7 @@ rs_autologin:CONFIG -= no_rs_autologin
 
 # To have only hidden node generation append the following assignation
 # to qmake command line "CONFIG+=rs_onlyhiddennode"
-CONFIG *= rs_onlyhiddennode
+CONFIG *= no_rs_onlyhiddennode
 rs_onlyhiddennode:CONFIG -= no_rs_onlyhiddennode
 
 # To disable GXS (General eXchange System) append the following
@@ -376,7 +376,7 @@ rs_autologin {
 }
 
 rs_onlyhiddennode {
-#    DEFINES *= RS_ONLYHIDDENNODE
+    DEFINES *= RS_ONLYHIDDENNODE
 #   CONFIG -= bitdht
 #   CONFIG *= no_bitdht
     message("QMAKE: You have enabled only hidden node.")
@@ -594,41 +594,19 @@ macx-* {
 	message(***retroshare.pri:MacOSX)
 
         ##DEFINES *=BUNDLED_TOR_PATH=\\\"{RS_DATA_DIR}\\\"
-
         ## 11 Sep 2018 - meiyousixin - use config in one MacOS comp
 	BIN_DIR += "/Applications/Xcode.app/Contents/Developer/usr/bin"
 	INC_DIR += "/usr/local/Cellar/miniupnpc/2.1/include"
 	INC_DIR += "/usr/local/Cellar/libmicrohttpd/0.9.63/include"
-	INC_DIR += "/usr/local/Cellar/sqlcipher/4.1.0/include"
-
-#	INC_DIR += "/usr/local/Cellar/speex/1.2.0/include"
-#	INC_DIR += "/usr/local/Cellar/speexdsp/1.2rc3/include"
-#	INC_DIR += "/usr/local/Cellar/ffmpeg/4.1.4_1/include"
-#	INC_DIR += "/usr/local/Cellar/opencv/4.1.0_2/include"
+        INC_DIR += "/usr/local/Cellar/sqlcipher/4.1.0/include"
 
 	LIB_DIR += "/usr/local/opt/openssl/lib/"
         LIB_DIR += "/usr/local/Cellar/libmicrohttpd/0.9.59/lib"
         LIB_DIR += "/usr/local/Cellar/sqlcipher/4.0.1/lib"
-	LIB_DIR += "/usr/local/Cellar/miniupnpc/2.1/lib"
-
-#	LIB_DIR += "/usr/local/Cellar/speex/1.2.0/lib"
-#	LIB_DIR += "/usr/local/Cellar/speexdsp/1.2rc3/lib"
-#	LIB_DIR += "/usr/local/Cellar/ffmpeg/4.1.4_1/lib"
-#	LIB_DIR += "/usr/local/Cellar/opencv/4.1.0_2/lib"
+        LIB_DIR += "/usr/local/Cellar/miniupnpc/2.1/lib"
 
         CONFIG += c++11
-
-#        INCLUDEPATH += "/usr/local/Cellar/openssl/1.0.2s/include/"
-#        INCLUDEPATH += "/usr/include"
-#        INCLUDEPATH += "/usr/local/include"
-#        INCLUDEPATH += "/opt/local/include"
-#        INCLUDEPATH += "/usr/local/opt/openssl/include"
-#        INCLUDEPATH += "/usr/local/Cellar/miniupnpc/2.1/include"
-#        INCLUDEPATH += "/usr/local/Cellar/libmicrohttpd/0.9.59/include"
-#        INCLUDEPATH += "/usr/local/Cellar/sqlcipher/3.4.2/include"
-
-#        LIB_DIR += "/usr/local/Cellar/openssl/1.0.2s/lib/"
-
+        INCLUDEPATH += "/usr/local/include"
         RS_UPNP_LIB = miniupnpc
         QT += macextras
 }

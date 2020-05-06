@@ -361,7 +361,8 @@ void NotifyQt::notifyDownloadComplete(const std::string& fileHash)
 	std::cerr << "Notifyqt::notifyDownloadComplete notified that a download is completed" << std::endl;
 #endif
 
-	emit downloadComplete(QString::fromStdString(fileHash));
+    std::cerr << "Notifyqt::notifyDownloadComplete notified that a download is completed" << std::endl;
+    emit downloadComplete(QString::fromStdString(fileHash));
 }
 
 void NotifyQt::notifyDownloadCompleteCount(uint32_t count)
@@ -420,6 +421,23 @@ void NotifyQt::notifyPeerStatusChangedSummary()
 #endif
 
 	emit peerStatusChangedSummary();
+}
+
+void NotifyQt::notifyGxsContactStatusChanged(const std::string&  gxs_id,   uint32_t  status){
+    {
+        QMutexLocker m(&_mutex) ;
+        if(!_enabled)
+            return ;
+    }
+
+#ifdef NOTIFY_DEBUG
+    std::cerr << "Notifyqt:: notified that peer " << peer_id << " has changed the state to " << state << std::endl;
+#endif
+
+
+    emit gxsContactStatusChanged(QString::fromStdString(gxs_id), status);
+    std::cerr<<"NotifyQt::notifyGxsContactStatusChanged(gxsId):"<<gxs_id<<std::endl;
+
 }
 
 void NotifyQt::notifyGxsChange(const RsGxsChanges& changes)
@@ -1300,3 +1318,31 @@ void NotifyQt::runningTick()
 	}
 }
 
+void NotifyQt::receiveGxsChatTyping(const RsGxsGroupId groupId, const std::string nickname, const RsPeerId sslId, const RsGxsId gxsId)
+{
+    {
+        QMutexLocker m(&_mutex) ;
+        if(!_enabled)
+            return ;
+    }
+
+    //Here if we try to emit something related to groupId (RsGxsGroupId), even we try to convert to std::string
+    // It can emit, but the slot function can not be called, so need to convert to QString and then emit
+    QString gxsGroupId = QString::fromStdString(groupId.toStdString());
+    emit notifyReceiveGxsChatTyping(gxsGroupId, QString::fromStdString(nickname),  sslId,gxsId);
+
+}
+
+void NotifyQt::NotifyCreateNewGroup(const RsGxsGroupId groupId)
+{
+    {
+        QMutexLocker m(&_mutex) ;
+        if(!_enabled)
+            return ;
+    }
+
+    //Here if we try to emit something related to groupId (RsGxsGroupId), even we try to convert to std::string
+    // It can emit, but the slot function can not be called, so need to convert to QString and then emit
+    QString gxsGroupId = QString::fromStdString(groupId.toStdString());
+    emit notifyCreateNewGxsGroup(gxsGroupId);
+}

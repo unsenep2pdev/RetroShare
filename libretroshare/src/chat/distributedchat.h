@@ -159,6 +159,8 @@ protected:
 		float _time_shift_average ;
 		rstime_t last_lobby_challenge_time ; 					// prevents bruteforce attack
 		rstime_t last_visible_lobby_info_request_time ;	// allows to ask for updates
+
+
 		bool _should_reset_lobby_counts ;
 		RsGxsId _default_identity;
 		std::map<ChatLobbyId,RsGxsId> _lobby_default_identity;

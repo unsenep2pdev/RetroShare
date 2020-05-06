@@ -85,7 +85,6 @@ struct RsGxsChannelPost : RsSerializable
 	{
 		RS_SERIAL_PROCESS(mMeta);
 		RS_SERIAL_PROCESS(mOlderVersions);
-
 		RS_SERIAL_PROCESS(mMsg);
 		RS_SERIAL_PROCESS(mFiles);
 		RS_SERIAL_PROCESS(mCount);

@@ -30,6 +30,7 @@
 #include "connect/PGPKeyDialog.h"
 #include "FileTransfer/SearchDialog.h"
 #include "gxschannels/GxsChannelDialog.h"
+#include "gxschats/GxsChatDialog.h"
 #include "gxsforums/GxsForumsDialog.h"
 #include "msgs/MessageComposer.h"
 #include "Posted/PostedDialog.h"
@@ -58,12 +59,13 @@
 #include <iostream>
 #include <time.h>
 
-//#define DEBUG_RSLINK 1
+#define DEBUG_RSLINK 1
 
 #define HOST_FILE        "file"
 #define HOST_PERSON      "person"
 #define HOST_FORUM       "forum"
 #define HOST_CHANNEL     "channel"
+#define HOST_CHATS       "gxschat"
 #define HOST_SEARCH      "search"
 #define HOST_MESSAGE     "message"
 #define HOST_CERTIFICATE "certificate"
@@ -74,7 +76,7 @@
 #define HOST_IDENTITY    "identity"
 #define HOST_FILE_TREE   "collection"
 #define HOST_CHAT_ROOM   "chat_room"
-#define HOST_REGEXP      "file|person|forum|channel|search|message|certificate|extra|private_chat|public_msg|posted|identity|collection|chat_room"
+#define HOST_REGEXP      "file|person|forum|channel|gxschat|search|message|certificate|extra|private_chat|public_msg|posted|identity|collection|chat_room"
 
 #define FILE_NAME       "name"
 #define FILE_SIZE       "size"
@@ -91,6 +93,10 @@
 #define CHANNEL_NAME    "name"
 #define CHANNEL_ID      "id"
 #define CHANNEL_MSGID   "msgid"
+
+#define CHATS_NAME      "name"
+#define CHATS_ID        "id"
+#define CHATS_MSGID     "msgid"
 
 #define SEARCH_KEYWORDS "keywords"
 
@@ -288,6 +294,18 @@ void RetroShareLink::fromUrl(const QUrl& url)
 		check();
 		return;
 	}
+    if (url.host() == HOST_CHATS) {
+        _type = TYPE_CHATS;
+        _name = decodedQueryItemValue(urlQuery, CHATS_NAME);
+        _hash = urlQuery.queryItemValue(CHATS_ID);
+        _msgId = urlQuery.queryItemValue(CHATS_MSGID);
+
+#ifdef DEBUG_RSLINK
+        std::cerr << "Got a chats link!!" << std::endl;
+#endif
+        check();
+        return;
+    }
 
 	if (url.host() == HOST_SEARCH) {
 		_type = TYPE_SEARCH;
@@ -381,12 +399,13 @@ void RetroShareLink::fromUrl(const QUrl& url)
 
 		RsGxsId id(gxsid.toStdString()) ;
 
-		if(!id.isNull())
+        if(!id.isNull()){
 			*this = createIdentity(id,name,radix) ;
 #ifdef DEBUG_RSLINK
 		std::cerr << "Got an identity link!!" << std::endl;
 #endif
-		else
+        }
+        else
 			std::cerr << "(EE) identity link is not valid." << std::endl;
 		return ;
 	}
@@ -468,7 +487,7 @@ RetroShareLink RetroShareLink::createPerson(const RsPgpId& id)
 	return link;
 }
 
-//For Forum, Channel & Posted
+//For Forum, Channel, chats & Posted
 RetroShareLink RetroShareLink::createGxsGroupLink(const RetroShareLink::enumType &linkType, const RsGxsGroupId &groupId, const QString &groupName)
 {
 	RetroShareLink link;
@@ -499,7 +518,6 @@ RetroShareLink RetroShareLink::createGxsMessageLink(const RetroShareLink::enumTy
 	}
 
 	link.check();
-
 	return link;
 }
 
@@ -776,6 +794,21 @@ void RetroShareLink::check()
 				_valid = false;
 		break;
 
+        case TYPE_CHATS:{
+            if(_size != 0){
+                std::cerr <<"Size = 0"<<std::endl;
+                _valid = false;
+            }
+            if(_name.isEmpty()){
+                std::cerr <<"Name is empty"<<std::endl;
+                _valid = false;
+            }
+            if(_hash.isEmpty()){
+                std::cerr <<"Hash is empty"<<std::endl;
+                _valid = false;
+            }
+            break;
+        }
 		case TYPE_SEARCH:
 			if(_size != 0)
 				_valid = false;
@@ -869,6 +902,8 @@ QString RetroShareLink::title() const
 			return QString("Forum id: %1").arg(hash());
 		case TYPE_CHANNEL:
 			return QString("Channel id: %1").arg(hash());
+        case TYPE_CHATS:
+            return QString("Chats id: %1").arg(hash());
 		case TYPE_SEARCH:
 			return QString("Search files");
 
@@ -971,6 +1006,16 @@ QString RetroShareLink::toString() const
 			if (!_msgId.isEmpty()) {
 				urlQuery.addQueryItem(CHANNEL_MSGID, _msgId);
 			}
+        break;
+
+        case TYPE_CHATS:
+            url.setScheme(RSLINK_SCHEME);
+            url.setHost(HOST_CHATS);
+            urlQuery.addQueryItem(CHATS_NAME, encodeItem(_name));
+            urlQuery.addQueryItem(CHATS_ID, _hash);
+            if (!_msgId.isEmpty()) {
+                urlQuery.addQueryItem(CHATS_MSGID, _msgId);
+            }
 
 		break;
 
@@ -1261,7 +1306,7 @@ static void processList(const QStringList &list, const QString &textSingular, co
 	flag &= ~RSLINK_PROCESS_NOTIFY_BAD_CHARS ;	// this will be set below when needed
 
 	/* filter dublicate links */
-	QList<RetroShareLink> links;
+        QList<RetroShareLink> links;
 	for (linkIt = linksIn.begin(); linkIt != linksIn.end(); ++linkIt) {
 		if (links.contains(*linkIt)) {
 			continue;
@@ -1288,6 +1333,7 @@ static void processList(const QStringList &list, const QString &textSingular, co
 				case TYPE_FILE:
 				case TYPE_FORUM:
 				case TYPE_CHANNEL:
+                case TYPE_CHATS:
 				case TYPE_SEARCH:
 				case TYPE_MESSAGE:
 				case TYPE_CERTIFICATE:
@@ -1336,6 +1382,11 @@ static void processList(const QStringList &list, const QString &textSingular, co
 	QStringList channelUnknown;
 	QStringList channelMsgUnknown;
 
+    // chatsl
+    QStringList chatsFound;
+    QStringList chatsMsgFound;
+    QStringList chatsUnknown;
+    QStringList chatsMsgUnknown;
 	// search
 	QStringList searchStarted;
 
@@ -1362,8 +1413,8 @@ static void processList(const QStringList &list, const QString &textSingular, co
 	QList<QStringList*> processedList;
 	QList<QStringList*> errorList;
 
-	processedList << &fileAdded << &personAdded << &forumFound << &channelFound << &searchStarted << &messageStarted << &postedFound << &chatroomFound;
-	errorList << &fileExist << &personExist << &personFailed << &personNotFound << &forumUnknown << &forumMsgUnknown << &channelUnknown << &channelMsgUnknown << &messageReceipientNotAccepted << &messageReceipientUnknown << &postedUnknown << &postedMsgUnknown << &chatroomUnknown;
+    processedList << &fileAdded << &personAdded << &forumFound << &channelFound <<&chatsFound << &searchStarted << &messageStarted << &postedFound << &chatroomFound;
+    errorList << &fileExist << &personExist << &personFailed << &personNotFound << &forumUnknown << &forumMsgUnknown << &channelUnknown << &channelMsgUnknown <<&forumMsgUnknown << &chatsUnknown << &chatsMsgUnknown <<&messageReceipientNotAccepted << &messageReceipientUnknown << &postedUnknown << &postedMsgUnknown << &chatroomUnknown;
 	// not needed: forumFound, channelFound, messageStarted
 
 	// we want to merge all single file links into one collection
@@ -1456,6 +1507,33 @@ static void processList(const QStringList &list, const QString &textSingular, co
 			}
 			break;
 
+            case TYPE_CHATS:
+            {
+#ifdef DEBUG_RSLINK
+            std::cerr << " RetroShareLink::process ChatsRequest : name : " << link.name().toStdString() << ". id : " << link.hash().toStdString() << ". msgId : " << link.msgId().toStdString() << std::endl;
+#endif
+
+            MainWindow::showWindow(MainWindow::GxsChats);
+            GxsChatDialog *chatDialog = dynamic_cast<GxsChatDialog*>(MainWindow::getPage(MainWindow::GxsChats));
+            if (!chatDialog) {
+                return false;
+            }
+
+            if (chatDialog->navigate(RsGxsGroupId(link.id().toStdString()), RsGxsMessageId(link.msgId().toStdString()))) {
+                if (link.msgId().isEmpty()) {
+                    chatsFound.append(link.name());
+                } else {
+                    chatsMsgFound.append(link.name());
+                }
+            } else {
+                if (link.msgId().isEmpty()) {
+                    chatsUnknown.append(link.name());
+                } else {
+                    chatsMsgUnknown.append(link.name());
+                }
+            }
+        }
+        break;
 			case TYPE_SEARCH:
 			{
 #ifdef DEBUG_RSLINK
@@ -1543,9 +1621,37 @@ static void processList(const QStringList &list, const QString &textSingular, co
 			case TYPE_FILE:
 			{
 				FileInfo fi1;
-				if(links.size()==1 && rsFiles->alreadyHaveFile(RsFileHash(link.hash().toStdString()), fi1)
-					&& !link.name().endsWith(RsCollection::ExtensionString))
+                if(links.size()==1 && rsFiles->alreadyHaveFile(RsFileHash(link.hash().toStdString()), fi1))
+                    //&& !link.name().endsWith(RsCollection::ExtensionString))
+                //if(links.size()==1 && rsFiles->checkAlreadyHaveFile(RsFileHash(link.hash().toStdString()), fi1))
 				{
+                    //FileInfo fi;
+
+                    /* make path for downloaded file */
+                    std::string path;
+                    path = fi1.path;//Shared files has path with filename included
+
+
+                    QFileInfo qinfo;
+                    qinfo.setFile(QString::fromUtf8(path.c_str()));
+                    //if (qinfo.exists() && qinfo.isFile() && !dontOpenNextFile) {
+                    if (qinfo.exists() && qinfo.isDir()) {
+                        if (!RsUrlHandler::openUrl(QUrl::fromLocalFile(qinfo.absoluteFilePath()))) {
+                            std::cerr << "dlOpenFolder(): can't open folder " << path << std::endl;
+                        }
+                    }
+//                    if (qinfo.exists() && qinfo.isFile())
+//                    {
+
+//                        ++countFileOpened;
+//                        /* open file with a suitable application */
+//                        if (!RsUrlHandler::openUrl(QUrl::fromLocalFile(qinfo.absoluteFilePath())))
+//                        {
+//                            std::cerr << "RetroShareLink::process(): can't open file " << path << std::endl;
+//                            needNotifySuccess = false;
+//                        }
+//                    }
+
 					/* fallthrough */
 				}
 				else
@@ -1601,7 +1707,8 @@ static void processList(const QStringList &list, const QString &textSingular, co
 
 				bool bFileOpened = false;
 				FileInfo fi;
-				if (rsFiles->alreadyHaveFile(RsFileHash(link.hash().toStdString()), fi)) {
+                if (rsFiles->alreadyHaveFile(RsFileHash(link.hash().toStdString()), fi))
+                {
 					/* make path for downloaded file */
 					std::string path;
 					path = fi.path;//Shared files has path with filename included
@@ -1612,26 +1719,39 @@ static void processList(const QStringList &list, const QString &textSingular, co
 
 					QFileInfo qinfo;
 					qinfo.setFile(QString::fromUtf8(path.c_str()));
-					if (qinfo.exists() && qinfo.isFile() && !dontOpenNextFile) {
-						QString question = "<html><body>";
-                        question += QObject::tr("Warning: UnseenP2P is about to ask your system to open this file. ");
-						question += QObject::tr("Before you do so, please make sure that this file does not contain malicious executable code.");
-						question += "<br><br>" + cleanname + "</body></html>";
+                    //if (qinfo.exists() && qinfo.isFile() && !dontOpenNextFile) {
+                    if (qinfo.exists() && qinfo.isFile())
+                    {
+//						QString question = "<html><body>";
+//                      question += QObject::tr("Warning: UnseenP2P is about to ask your system to open this file. ");
+//						question += QObject::tr("Before you do so, please make sure that this file does not contain malicious executable code.");
+//						question += "<br><br>" + cleanname + "</body></html>";
 
-						QMessageBox mb(QObject::tr("Confirmation"), question, QMessageBox::Warning, QMessageBox::Yes, QMessageBox::No, links.size()>1 ? QMessageBox::NoToAll : 0, 0);
-						int ret = mb.exec();
-						if(ret == QMessageBox::Yes) {
+//						QMessageBox mb(QObject::tr("Confirmation"), question, QMessageBox::Warning, QMessageBox::Yes, QMessageBox::No, links.size()>1 ? QMessageBox::NoToAll : 0, 0);
+//						int ret = mb.exec();
+//						if(ret == QMessageBox::Yes) {
 							++countFileOpened;
 							bFileOpened = true;
 							/* open file with a suitable application */
-							if (!RsUrlHandler::openUrl(QUrl::fromLocalFile(qinfo.absoluteFilePath()))) {
+                            if (!RsUrlHandler::openUrl(QUrl::fromLocalFile(qinfo.absoluteFilePath())))
+                            {
 								std::cerr << "RetroShareLink::process(): can't open file " << path << std::endl;
-							}
-						} else if (ret == QMessageBox::NoToAll) {
-							dontOpenNextFile = true;
-						}
+                            }
+//						} else if (ret == QMessageBox::NoToAll)
+//                        {
+//							dontOpenNextFile = true;
+//						}
 						needNotifySuccess = false;
 					}
+                    else
+                    {
+                        QString question = "<html><body>";
+                        question += QObject::tr("The file still not downloaded complete. Please wait... ");
+                        question += "</body></html>";
+
+                        QMessageBox mb(QMessageBox::Information, QObject::tr("Warning"), question);
+                        int ret = mb.exec();
+                    }
 				}
 
 				if (rsFiles->FileRequest(cleanname.toUtf8().constData(), RsFileHash(link.hash().toStdString()), link.size(), "", RS_FILE_REQ_ANONYMOUS_ROUTING, srcIds)) {
@@ -1835,6 +1955,15 @@ static void processList(const QStringList &list, const QString &textSingular, co
 		}
 	}
 
+    // chats
+    if (flag & RSLINK_PROCESS_NOTIFY_ERROR) {
+        if (!chatsUnknown.isEmpty()) {
+            processList(chatsUnknown, QObject::tr("Chats not found"), QObject::tr("Chats not found"), result);
+        }
+        if (!chatsMsgUnknown.isEmpty()) {
+            processList(chatsMsgUnknown, QObject::tr("Chats message not found"), QObject::tr("Chats messages not found"), result);
+        }
+    }
 	// message
 	if (flag & RSLINK_PROCESS_NOTIFY_ERROR) {
 		if (!messageReceipientNotAccepted.isEmpty()) {

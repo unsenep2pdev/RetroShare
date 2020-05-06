@@ -194,7 +194,7 @@ bool RetroDb::execSQL(const std::string &query){
 }
 
 RetroCursor* RetroDb::sqlQuery(const std::string& tableName, const std::list<std::string>& columns,
-                               const std::string& selection, const std::string& orderBy){
+                               const std::string& selection, const std::string& orderBy, int page){
 
     if(tableName.empty() || columns.empty()){
         std::cerr << "RetroDb::sqlQuery(): No table or columns given" << std::endl;
@@ -223,11 +223,25 @@ RetroCursor* RetroDb::sqlQuery(const std::string& tableName, const std::list<std
         sqlQuery += " WHERE " + selection;
 
 
-    // add 'order by' clause if present
     if(!orderBy.empty())
-        sqlQuery += " ORDER BY " + orderBy + ";";
-    else
-        sqlQuery += ";";
+        sqlQuery += " ORDER BY " + orderBy + " ";
+
+    if(page > 0){
+        std::string offset("-1");
+        std::string limit(" LIMIT 99 OFFSET ");
+
+        if(page > 1){
+            offset = std::to_string((page - 1)*100 );
+        }
+        /*  page =1 (offset=1,   limit 99) -> (1,99)
+         *  page =2 (offset=100, limit 99) -> (100,199)
+         *  page =3 (offset=200, limit 99) -> (200,299)
+         */
+        sqlQuery += limit + offset ;
+    }
+
+    sqlQuery += " ;";
+
 
 #ifdef RETRODB_DEBUG
     std::cerr << "RetroDb::sqlQuery(): " << sqlQuery << std::endl;

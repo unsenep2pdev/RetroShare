@@ -39,7 +39,7 @@
 ChatLobbyUserNotify::ChatLobbyUserNotify(QObject *parent) :
     UserNotify(parent)
 {
-	_name = tr("Chats");
+    _name = tr("Old Chats");
 	_group = "ChatLobby";
 
 	_bCheckForNickName = Settings->valueFromGroup(_group, "CheckForNickName", true).toBool();

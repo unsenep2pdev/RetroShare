@@ -62,6 +62,9 @@
 
 #include <retroshare/rsturtle.h>
 
+//unseenp2p
+#include "gui/notifyqt.h"
+
 /* Images for context menu icons */
 #define IMAGE_INFO                 ":/images/fileinfo.png"
 #define IMAGE_CANCEL               ":/home/img/delete.png"
@@ -2816,3 +2819,4 @@ void TransfersDialog::filterChanged(const QString& /*text*/)
 	DLLFilterModel->setFilterKeyColumn(filterColumn);
 	DLLFilterModel->setFilterRegExp(text);
 }
+

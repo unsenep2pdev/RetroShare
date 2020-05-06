@@ -133,20 +133,23 @@ public:
 	virtual bool removeFriend(const RsPeerId &ssl_id, bool removePgpId) = 0;
 	virtual bool isFriend(const RsPeerId& ssl_id) = 0;
 
-virtual bool 	getAssociatedPeers(const RsPgpId &gpg_id, std::list<RsPeerId> &ids) = 0;
-virtual bool 	removeAllFriendLocations(const RsPgpId &gpgid) = 0;
+    virtual bool 	getAssociatedPeers(const RsPgpId &gpg_id, std::list<RsPeerId> &ids) = 0;
+    virtual bool 	removeAllFriendLocations(const RsPgpId &gpgid) = 0;
 
 
 	/******************** Groups **********************/
 	/* This is solely used by p3peers - makes sense   */
 
-virtual bool    addGroup(RsGroupInfo &groupInfo) = 0;
-virtual bool    editGroup(const RsNodeGroupId &groupId, RsGroupInfo &groupInfo) = 0;
-virtual bool    removeGroup(const RsNodeGroupId &groupId) = 0;
-virtual bool    getGroupInfo(const RsNodeGroupId &groupId, RsGroupInfo &groupInfo) = 0;
-virtual bool    getGroupInfoByName(const std::string& groupName, RsGroupInfo &groupInfo) = 0;
-virtual bool    getGroupInfoList(std::list<RsGroupInfo> &groupInfoList) = 0;
-virtual bool    assignPeersToGroup(const RsNodeGroupId &groupId, const std::list<RsPgpId> &peerIds, bool assign) = 0;
+    virtual bool    addGroup(RsGroupInfo &groupInfo,bool hide) = 0;
+    virtual bool    editGroup(const RsNodeGroupId &groupId, RsGroupInfo &groupInfo) = 0;
+    virtual bool    removeGroup(const RsNodeGroupId &groupId) = 0;
+    virtual bool    getGroupInfo(const RsNodeGroupId &groupId, RsGroupInfo &groupInfo) = 0;
+    virtual bool    getGroupInfoByName(const std::string& groupName, RsGroupInfo &groupInfo) = 0;
+    virtual bool    getGroupInfoList(std::list<RsGroupInfo> &groupInfoList) = 0;
+    virtual bool    assignPeersToGroup(const RsNodeGroupId &groupId, const std::list<RsPgpId> &peerIds, bool assign) = 0;
+    virtual bool    checkExistingOne2OneChat(const RsPgpId& pgpId) = 0; //unseenp2p - for checking gxs one2one chat existing?
+    virtual bool    addGroupWithId(RsGroupInfo &groupInfo, bool hide) = 0;
+
 
 	virtual bool resetOwnExternalAddressList() = 0 ;
 	virtual ServicePermissionFlags servicePermissionFlags(const RsPgpId& gpg_id) =0;
@@ -271,13 +274,15 @@ public:
     /******************** Groups **********************/
     /* This is solely used by p3peers - makes sense   */
 
-    virtual bool    addGroup(RsGroupInfo &groupInfo);
+    virtual bool    addGroup(RsGroupInfo &groupInfo, bool hide);
     virtual bool    editGroup(const RsNodeGroupId &groupId, RsGroupInfo &groupInfo);
     virtual bool    removeGroup(const RsNodeGroupId &groupId);
     virtual bool    getGroupInfo(const RsNodeGroupId &groupId, RsGroupInfo &groupInfo);
     virtual bool    getGroupInfoByName(const std::string& groupName, RsGroupInfo &groupInfo) ;
     virtual bool    getGroupInfoList(std::list<RsGroupInfo> &groupInfoList);
     virtual bool    assignPeersToGroup(const RsNodeGroupId &groupId, const std::list<RsPgpId> &peerIds, bool assign);
+    virtual bool    checkExistingOne2OneChat(const RsPgpId& pgpId);
+    virtual bool    addGroupWithId(RsGroupInfo &groupInfo, bool hide);
 
     virtual ServicePermissionFlags servicePermissionFlags(const RsPgpId& gpg_id) ;
     virtual ServicePermissionFlags servicePermissionFlags(const RsPeerId& ssl_id) ;
@@ -433,7 +438,7 @@ private:
 
     //unseenp2p
     std::map<RsPgpId, std::string> mCertList;
-    std::list<std::string> mSupernodeCertList;  //save at least 3 supernode certificates
+    std::list<std::string> mSupernodeCertList;  //save at least 3 supernode certificates, should use std::set to keep unique record of supernodes.
     std::string mAddFriendOption; //
     std::map<RsPgpId, UnseenNetworkContactsItem> mNetworkContacts;
 

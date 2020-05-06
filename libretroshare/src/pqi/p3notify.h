@@ -109,6 +109,7 @@ class p3Notify: public RsNotify
 		void notifyOwnStatusMessageChanged    () ;
 		void notifyDiskFull                   (uint32_t           /* location  */, uint32_t                         /* size limit in MB */) ;
 		void notifyPeerStatusChanged          (const std::string& /* peer_id   */, uint32_t                         /* status           */) ;
+        void notifyGxsContactStatusChanged    (const std::string&  /* peer_id   */, uint32_t  /* status           */) ;
         void notifyGxsChange                  (const RsGxsChanges& /* changes  */);
 		void notifyConnectionWithoutCert      ();
 
@@ -116,7 +117,7 @@ class p3Notify: public RsNotify
 		void notifyDiscInfoChanged            () ;
 
 		bool askForDeferredSelfSignature      (const void *       /* data      */, const uint32_t     /* len   */, unsigned char * /* sign */, unsigned int * /* signlen */, int& signature_result , std::string reason = "") ;
-		void notifyDownloadComplete           (const std::string& /* fileHash  */) ;
+        void notifyDownloadComplete           (const std::string& /* fileHash  */) ;
 		void notifyDownloadCompleteCount      (uint32_t           /* count     */) ;
 		void notifyHistoryChanged             (uint32_t           /* msgId     */, int /* type */) ;
 
@@ -127,6 +128,10 @@ class p3Notify: public RsNotify
 		virtual bool clearPgpPassphrase       () ;
 
 		virtual bool setDisableAskPassword    (const bool /*bValue*/) ;
+
+        //unseenp2p - gxschat notify
+        void receiveGxsChatTyping(const RsGxsGroupId, const std::string, const RsPeerId, const RsGxsId );
+        void NotifyCreateNewGroup(const RsGxsGroupId );
 
 	private:
 

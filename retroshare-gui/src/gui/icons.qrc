@@ -243,5 +243,12 @@
         <file>icons/yandex.png</file>
         <file>icons/png/markdown-mark.png</file>
         <file>../rsMacIcon.icns</file>
+        <file>icons/png/memberslist.png</file>
+        <file>icons/png/memberslist2.png</file>
+        <file>icons/png/posted_tr.png</file>
+        <file>icons/png/posted-notify_v.png</file>
+        <file>icons/png/posted_x.png</file>
+        <file>icons/png/closememberslist.png</file>
+        <file>icons/png/showmemberslist.png</file>
     </qresource>
 </RCC>

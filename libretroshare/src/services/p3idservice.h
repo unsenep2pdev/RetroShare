@@ -41,7 +41,89 @@
 
 #include "rsitems/rsgxsrecognitems.h"
 
+#include "chat/rschatitems.h"
+#include <retroshare/rsmsgs.h>
+#include <retroshare/rsgxstunnel.h>
+
+class RsGixs ;
 class PgpAuxUtils;
+
+//static const uint32_t DISTANT_CHAT_AES_KEY_SIZE = 16 ;
+
+class DistantService: public RsGxsTunnelService::RsGxsTunnelClientService
+{
+public:
+    // So, public interface only uses DistandChatPeerId, but internally, this is converted into a RsGxsTunnelService::RsGxsTunnelId
+
+
+    DistantService() ;
+
+    virtual void triggerConfigSave()=0 ;
+    bool processLoadListItem(const RsItem *item) ;
+    void addToSaveList(std::list<RsItem*>& list) const;
+
+    /**
+     * Creates the invite if the public key of the distant peer is available.
+     * On success, stores the invite in the map above, so that we can respond
+     * to tunnel requests. */
+    bool initiateDistantServiceConnexion( const RsGxsId& to_gxs_id,
+                                       const RsGxsId &from_gxs_id,
+                                       DistantChatPeerId& dcpid,
+                                       uint32_t &error_code,
+                                       bool notify = true );
+    bool closeDistantServiceConnexion(const DistantChatPeerId &tunnel_id) ;
+
+    // Sets flags to only allow connexion from some people.
+
+    uint32_t getDistantChatPermissionFlags() ;
+    bool setDistantChatPermissionFlags(uint32_t flags) ;
+
+    // Returns the status of a distant chat contact. The contact is defined by the tunnel id (turned into a DistantChatPeerId) because
+    // each pair of talking GXS id needs to be treated separately
+
+    virtual bool getDistantServiceStatus(const DistantChatPeerId &tunnel_id, DistantChatPeerInfo& cinfo) ;
+
+    // derived in p3ChatService, so as to pass down some info
+    virtual void handleIncomingItem(RsItem *) =0;
+    virtual bool handleRecvChatMsgItem(RsChatMsgItem *& ci)=0;
+    virtual void notifyStatusConnenxion(DistantChatPeerId distantPeerId,  uint32_t status ) =0;
+
+    bool handleOutgoingItem(RsChatItem *) ;
+    bool handleRecvItem(RsChatItem *) ;
+    void handleRecvChatStatusItem(RsChatStatusItem *cs) ;
+
+private:
+    struct DistantChatContact
+    {
+        RsGxsId from_id ;
+        RsGxsId to_id ;
+    };
+    // This maps contains the current peers to talk to with distant chat.
+    //
+    std::map<DistantChatPeerId, DistantChatContact> 	mDistantChatContacts ;		// current peers we can talk to
+
+    // Permission handling
+
+    uint32_t mDistantChatPermissions ;
+
+    // Overloaded from RsGxsTunnelClientService
+
+public:
+    virtual void connectToGxsTunnelService(RsGxsTunnelService *tunnel_service) ;
+
+private:
+    virtual bool acceptDataFromPeer(const RsGxsId& gxs_id, const RsGxsTunnelService::RsGxsTunnelId& tunnel_id, bool is_client_side) ;
+    virtual void notifyTunnelStatus(const RsGxsTunnelService::RsGxsTunnelId& tunnel_id,uint32_t tunnel_status) ;
+    virtual void receiveData(const RsGxsTunnelService::RsGxsTunnelId& id,unsigned char *data,uint32_t data_size) ;
+
+    // Utility functions.
+
+    void markDistantChatAsClosed(const DistantChatPeerId& dcpid) ;
+
+    RsGxsTunnelService *mGxsTunnels ;
+    RsMutex mDistantChatMtx ;
+};
+
 
 /* 
  * Identity Service
@@ -208,6 +290,7 @@ private:
     void init(const RsGxsIdGroupItem *item, const RsTlvPublicRSAKey& in_pub_key, const RsTlvPrivateRSAKey& in_priv_key,const std::list<RsRecognTag> &tagList);
 };
 
+
 struct SerialisedIdentityStruct
 {
     unsigned char *mMem ;
@@ -218,7 +301,7 @@ struct SerialisedIdentityStruct
 // Not sure exactly what should be inherited here?
 // Chris - please correct as necessary.
 
-class p3IdService: public RsGxsIdExchange, public RsIdentity,  public GxsTokenQueue, public RsTickEvent, public p3Config
+class p3IdService: public RsGxsIdExchange, public RsIdentity,   public DistantService, public GxsTokenQueue, public RsTickEvent, public p3Config
 {
 public:
 	p3IdService(RsGeneralDataService* gds, RsNetworkExchangeService* nes, PgpAuxUtils *pgpUtils);
@@ -281,6 +364,28 @@ public:
 
 	virtual bool setAsRegularContact(const RsGxsId& id,bool is_a_contact) ;
 	virtual bool isARegularContact(const RsGxsId& id) ;
+
+    //unseen my contacts design & architect data structure
+    virtual bool setMyContact(const RsGxsMyContact & contact);
+    virtual bool isMyContact(const RsGxsMyContact& contact) ;
+    virtual bool updateMyContact(const RsGxsMyContact & contact);
+    virtual void getMyContacts(std::set<RsGxsMyContact>& contactList) ;
+    virtual bool removeMyContact(const RsGxsMyContact& contact);
+
+    //unseen distant chat service for extend real-time invite/requestfriend/approved/acknowledgement.
+    // derived in DistantChatService, so as to pass down some info
+    void handleIncomingItem(RsItem *);
+    bool handleRecvChatMsgItem(RsChatMsgItem *& ci);
+    void triggerConfigSave();
+    void notifyStatusConnenxion(DistantChatPeerId distantPeerId,  uint32_t status );
+
+    virtual bool validContact(const RsGxsId &id) ;
+    virtual bool inviteContact(RsGxsId &id);
+    virtual bool approveContact(RsGxsId &id, bool denied=false);
+    virtual bool approveContact(RsGxsMyContact &contact, bool denied=false);
+    virtual void processContactPendingRequest();
+
+
 	virtual uint32_t nbRegularContacts() ;
 	virtual rstime_t getLastUsageTS(const RsGxsId &id) ;
 
@@ -583,7 +688,8 @@ private:
     std::map<RsGxsId,SerialisedIdentityStruct> mSerialisedIdentities ;
 
 	// keep a list of regular contacts. This is useful to sort IDs, and allow some services to priviledged ids only.
-	std::set<RsGxsId> mContacts;
+    std::set<RsGxsMyContact> mContacts;
+    std::map<RsGxsId,RsGxsIdLocalInfoItem> localContacts;
 	RsNetworkExchangeService* mNes;
 
 	/**************************
@@ -598,6 +704,20 @@ private:
 
 	bool mOwnIdsLoaded ;
     uint32_t mMaxKeepKeysBanned ;
+
+    /***************Unseen Add Friend Service*********
+     * DistantChatService ***
+     * Processing all pending request friends.**
+     * Processing all pending approval friends.  **
+     * Publishing Invite/Add friend through distant chat friend. **
+     */
+    typedef std::map<RsGxsMyContact, std::pair<DistantChatPeerInfo,RsChatMsgItem*> > ContactInfo;
+    std::map<RsGxsMyContact, DistantChatPeerId> distantPendingConn;
+    std::set<RsGxsMyContact> contactRequestPending; //invite or adding contact
+
+    RsMutex mRsGxsMyChatMtx ;
+
+
 };
 
 #endif // P3_IDENTITY_SERVICE_HEADER

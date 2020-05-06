@@ -233,15 +233,20 @@ void p3Notify::notifyOwnAvatarChanged       ()                                  
 void p3Notify::notifyOwnStatusMessageChanged()                                                                                  { FOR_ALL_NOTIFY_CLIENTS (*it)->notifyOwnStatusMessageChanged() ; } 
 void p3Notify::notifyDiskFull               (uint32_t           location  , uint32_t                         size_limit_in_MB ) { FOR_ALL_NOTIFY_CLIENTS (*it)->notifyDiskFull          (location,size_limit_in_MB) ; }
 void p3Notify::notifyPeerStatusChanged      (const std::string& peer_id   , uint32_t                         status           ) { FOR_ALL_NOTIFY_CLIENTS (*it)->notifyPeerStatusChanged (peer_id,status) ; }
+void p3Notify::notifyGxsContactStatusChanged (const std::string&   gxs_id  , uint32_t  status )                                 { FOR_ALL_NOTIFY_CLIENTS (*it)->notifyGxsContactStatusChanged (gxs_id,status) ; }
 void p3Notify::notifyGxsChange              (const RsGxsChanges& changes) {FOR_ALL_NOTIFY_CLIENTS (*it)->notifyGxsChange(changes) ;}
 void p3Notify::notifyConnectionWithoutCert  ()                                                                                  { FOR_ALL_NOTIFY_CLIENTS (*it)->notifyConnectionWithoutCert(); }
 
 void p3Notify::notifyPeerStatusChangedSummary   ()                                                                              { FOR_ALL_NOTIFY_CLIENTS (*it)->notifyPeerStatusChangedSummary() ; }
 void p3Notify::notifyDiscInfoChanged            ()                                                                              { FOR_ALL_NOTIFY_CLIENTS (*it)->notifyDiscInfoChanged         () ; } 
 
-void p3Notify::notifyDownloadComplete           (const std::string& fileHash )                                                  { FOR_ALL_NOTIFY_CLIENTS (*it)->notifyDownloadComplete           (fileHash) ; }
+void p3Notify::notifyDownloadComplete           (const std::string& fileHash)                                                   { FOR_ALL_NOTIFY_CLIENTS (*it)->notifyDownloadComplete           (fileHash) ; }
 void p3Notify::notifyDownloadCompleteCount      (uint32_t           count    )                                                  { FOR_ALL_NOTIFY_CLIENTS (*it)->notifyDownloadCompleteCount      (count) ; }
 void p3Notify::notifyHistoryChanged             (uint32_t           msgId    , int type)                                        { FOR_ALL_NOTIFY_CLIENTS (*it)->notifyHistoryChanged             (msgId,type) ; }
+
+//unseenp2p - gxs notify
+void p3Notify::receiveGxsChatTyping(const RsGxsGroupId groupId, const std::string nickname, const RsPeerId sslId, const RsGxsId gxsId) { FOR_ALL_NOTIFY_CLIENTS (*it)->receiveGxsChatTyping(groupId, nickname, sslId, gxsId); }
+void p3Notify::NotifyCreateNewGroup(const RsGxsGroupId groupId)                                                                         { FOR_ALL_NOTIFY_CLIENTS (*it)->NotifyCreateNewGroup(groupId );}
 
 bool p3Notify::cachePgpPassphrase(const std::string& s)
 {

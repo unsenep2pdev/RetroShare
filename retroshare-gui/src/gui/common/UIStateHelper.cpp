@@ -557,10 +557,10 @@ void UIStateHelper::clear(int index)
 
 bool UIStateHelper::isLoading(int index)
 {
-	UIStateHelperData *data = findData(index, false);
-	if (data) {
-		return data->mLoading;
-	}
+//	UIStateHelperData *data = findData(index, false);
+//	if (data) {
+//		return data->mLoading;
+//	}
 
 	return false;
 }

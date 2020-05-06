@@ -26,9 +26,9 @@
 #include "util/rsmemory.h"
 //#include "retroshare/rspeers.h"
 
-/****
- * #define GXS_SECURITY_DEBUG 	1
- ***/
+
+//#define GXS_SECURITY_DEBUG 	1
+
 
 static const uint32_t MULTI_ENCRYPTION_FORMAT_v001_HEADER              = 0xFACE;
 static const uint32_t MULTI_ENCRYPTION_FORMAT_v001_HEADER_SIZE         = 2 ;

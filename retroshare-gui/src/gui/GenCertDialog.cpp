@@ -190,10 +190,10 @@ GenCertDialog::GenCertDialog(bool onlyGenerateIdentity, QWidget *parent)
 	 * mark last one as default.
 	 */
 	 
-	//QMenu *menu = new QMenu(tr("Advanced options"));
-	//menu->addAction(ui.adv_checkbox);
-	//menu->addAction(ui.reuse_existing_node_CB);
- //   ui.optionsButton->setMenu(menu);
+//    QMenu *menu = new QMenu(tr("Advanced options"));
+//    menu->addAction(ui.adv_checkbox);
+//    menu->addAction(ui.reuse_existing_node_CB);
+//    ui.optionsButton->setMenu(menu);
 
     mAllFieldsOk = false ;
     mEntropyOk = false ;

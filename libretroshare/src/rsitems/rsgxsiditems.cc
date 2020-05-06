@@ -27,8 +27,6 @@
 #include "serialiser/rstlvstring.h"
 #include "util/rsstring.h"
 
-#include "serialiser/rstypeserializer.h"
-
 //#define GXSID_DEBUG	1
 
 RsItem *RsGxsIdSerialiser::create_item(uint16_t service_id,uint8_t item_subtype) const
@@ -44,6 +42,57 @@ RsItem *RsGxsIdSerialiser::create_item(uint16_t service_id,uint8_t item_subtype)
         return NULL ;
     }
 }
+
+RsItem *RsGxsIdSerialiser::deserialise(void *data, uint32_t *size)
+{
+    //doing a default deserialise first, it is failed. Try to deserialize as backward compatibility.
+    RsItem *item = RsServiceSerializer::deserialise(data, size);
+
+    if(item){
+        return item;
+    }
+
+
+    if(mFlags & SERIALIZATION_FLAG_SKIP_HEADER)
+    {
+        std::cerr << "(EE) Cannot deserialise item with flags SERIALIZATION_FLAG_SKIP_HEADER. Check your code!" << std::endl;
+        return NULL ;
+    }
+
+    uint32_t rstype = getRsItemId(const_cast<void*>((const void*)data)) ;
+
+    item = create_item(getRsItemService(rstype),getRsItemSubType(rstype)) ;
+
+    if(!item)
+    {
+        std::cerr << "(EE) " << typeid(*this).name() << ": cannot deserialise unknown item subtype " << std::hex << (int)getRsItemSubType(rstype) << std::dec << std::endl;
+        std::cerr << "(EE) Data is: " << RsUtil::BinToHex(static_cast<uint8_t*>(data),std::min(50u,*size)) << ((*size>50)?"...":"") << std::endl;
+        return NULL ;
+    }
+
+    SerializeContext ctx(const_cast<uint8_t*>(static_cast<uint8_t*>(data)),*size,mFormat,mFlags);
+    ctx.mOffset = 8 ;
+
+    //if we have multiple backward compatible version, then we need to loop through to test with version is the actual data.
+    RsGxsIdGroupItem *item2 = dynamic_cast<RsGxsIdGroupItem*>(item);
+    item2->version = V70;
+
+    item2->serial_process(RsGenericSerializer::DESERIALIZE, ctx) ;
+
+    if(ctx.mSize < ctx.mOffset)
+    {
+        std::cerr << "RsSerializer::deserialise(): ERROR. offset does not match expected size!" << std::endl;
+        delete item ;
+        return NULL ;
+    }
+    *size = ctx.mOffset ;
+
+    if(ctx.mOk)
+        return item ;
+
+    delete item ;
+    return NULL ;
+}
 void RsGxsIdLocalInfoItem::clear()
 {
     mTimeStamps.clear() ;
@@ -55,6 +104,7 @@ void RsGxsIdGroupItem::clear()
 
     mRecognTags.clear();
     mImage.TlvClear();
+    profileInfo.clear();
 }
 void RsGxsIdLocalInfoItem::serial_process(RsGenericSerializer::SerializeJob j,RsGenericSerializer::SerializeContext& ctx)
 {
@@ -62,6 +112,19 @@ void RsGxsIdLocalInfoItem::serial_process(RsGenericSerializer::SerializeJob j,Rs
     RsTypeSerializer::serial_process(j,ctx,mContacts,"mContacts") ;
 }
 
+void RsGxsMyContact::clear()
+{
+    mContactInfo.clear() ;
+}
+void RsGxsMyContact::serial_process(RsGenericSerializer::SerializeJob j,RsGenericSerializer::SerializeContext& ctx){
+
+    RsTypeSerializer::serial_process(j,ctx,name,"name") ;
+    RsTypeSerializer::serial_process(j,ctx,gxsId,"gsxId") ;
+    RsTypeSerializer::serial_process(j,ctx,mPgpId,"mPgpId") ;
+    RsTypeSerializer::serial_process(j,ctx,peerId,"sslId") ;
+    RsTypeSerializer::serial_process(j,ctx,status,"status") ;
+    RsTypeSerializer::serial_process<std::string,std::string>(j,ctx,mContactInfo,"mContactInfo");
+}
 void RsGxsIdGroupItem::serial_process(RsGenericSerializer::SerializeJob j,RsGenericSerializer::SerializeContext& ctx)
 {
     RsTypeSerializer::serial_process(j,ctx,mPgpIdHash,"mPgpIdHash") ;
@@ -77,6 +140,11 @@ void RsGxsIdGroupItem::serial_process(RsGenericSerializer::SerializeJob j,RsGene
         return ;
 
     RsTypeSerializer::serial_process<RsTlvItem>(j,ctx,mImage,"mImage") ;
+
+    //backward compatiable support if Unseen version v0.7.0 then we add this into serailization.
+    if(current_version==V70){
+        RsTypeSerializer::serial_process<std::string,std::string>(j,ctx,profileInfo,"profileInfo") ;
+    }
 }
 
 bool RsGxsIdGroupItem::fromGxsIdGroup(RsGxsIdGroup &group, bool moveImage)
@@ -86,6 +154,10 @@ bool RsGxsIdGroupItem::fromGxsIdGroup(RsGxsIdGroup &group, bool moveImage)
         mPgpIdHash = group.mPgpIdHash;
         mPgpIdSign = group.mPgpIdSign;
         mRecognTags = group.mRecognTags;
+        version = group.version;
+
+        if (version==V70)
+            profileInfo = group.profileInfo;
 
         if (moveImage)
         {
@@ -105,6 +177,10 @@ bool RsGxsIdGroupItem::toGxsIdGroup(RsGxsIdGroup &group, bool moveImage)
         group.mPgpIdHash = mPgpIdHash;
         group.mPgpIdSign = mPgpIdSign;
         group.mRecognTags = mRecognTags;
+        group.version = version;
+
+        if (version==V70)
+            group.profileInfo = profileInfo;
 
         if (moveImage)
         {

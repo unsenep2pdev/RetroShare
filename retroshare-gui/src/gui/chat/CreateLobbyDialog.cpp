@@ -167,7 +167,5 @@ void CreateLobbyDialog::createLobby()
     rsMsgs->setLobbyAutoSubscribe(ChatId(id).toLobbyId(), true );
     rsMsgs->joinVisibleChatLobby(ChatId(id).toLobbyId(), gxs_id);
 
-    //unseenp2p - try to send this one for update the member list in all sides
-    rsMsgs->sendStatusString(ChatId(id), "is typing...");
     close();
 }

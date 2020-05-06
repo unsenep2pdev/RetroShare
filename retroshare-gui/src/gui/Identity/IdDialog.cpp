@@ -180,7 +180,7 @@ IdDialog::IdDialog(QWidget *parent) :
 	ownItem->setData(RSID_COL_VOTES, Qt::DecorationRole,0xff);	// this is in order to prevent displaying a reputaiton icon next to these items.
 
 	allItem = new QTreeWidgetItem();
-	allItem->setText(0, tr("All"));
+    allItem->setText(0, tr("Network Contacts"));
 	allItem->setData(RSID_COL_VOTES, Qt::DecorationRole,0xff);
 
 	contactsItem = new QTreeWidgetItem();
@@ -261,7 +261,10 @@ IdDialog::IdDialog(QWidget *parent) :
 	connect(ui->addContactButton, SIGNAL(clicked()), this, SLOT(openAddContactPage()));
 
 	//28 sep 2018 - meiyousixin - check the peer status change to change status of peer on contact list
-	connect(NotifyQt::getInstance(), SIGNAL(peerStatusChanged(const QString&,int)), this, SLOT(peerStatusChanged(const QString&,int)));
+    connect(NotifyQt::getInstance(), SIGNAL(peerStatusChanged(const QString&,int)), this, SLOT(peerStatusChanged(const QString&,int)));
+
+    //unseenp2pdev - adding status update for gxscontact
+    connect(NotifyQt::getInstance(), SIGNAL(gxsContactStatusChanged(const QString&,int)), this, SLOT(gxsContactStatusChanged(const QString&,int)));
 
 	ui->avlabel_Circles->setPixmap(QPixmap(":/icons/png/circles.png"));
 
@@ -278,7 +281,7 @@ IdDialog::IdDialog(QWidget *parent) :
 	ui->idTreeWidget->addContextMenuMenu(idTWHMenu);
 
 	QActionGroup *idTWHActionGroup = new QActionGroup(this);
-	QAction *idTWHAction = new QAction(QIcon(),tr("All"), this);
+    QAction *idTWHAction = new QAction(QIcon(),tr("Network Contacts"), this);
 	idTWHAction->setActionGroup(idTWHActionGroup);
 	idTWHAction->setCheckable(true);
 	idTWHAction->setChecked(true);
@@ -1471,7 +1474,6 @@ bool IdDialog::fillIdListItem(const RsGxsIdGroup& data, QTreeWidgetItem *&item, 
 	bool isLinkedToOwnNode = (data.mPgpKnown && (data.mPgpId == ownPgpId)) ;
 	bool isOwnId = (data.mMeta.mSubscribeFlags & GXS_SERV::GROUP_SUBSCRIBE_ADMIN);
 	RsIdentityDetails idd ;
-	std::cerr << "fillIdListItem: data.mMeta.mGroupId: " <<  data.mMeta.mGroupId; std::cerr << std::endl;
 	rsIdentity->getIdDetails(RsGxsId(data.mMeta.mGroupId),idd) ;
 
 	bool isBanned = idd.mReputation.mOverallReputationLevel == RsReputations::REPUTATION_LOCALLY_NEGATIVE;
@@ -1659,12 +1661,11 @@ void IdDialog::insertIdList(uint32_t token)
 		return;
 	}
     
-    	// turn that vector into a std::set, to avoid a linear search
-    
-    	std::map<RsGxsGroupId,RsGxsIdGroup> ids_set ;
-        
-        for(uint32_t i=0;i<datavector.size();++i)
-            ids_set[datavector[i].mMeta.mGroupId] = datavector[i] ;
+    // turn that vector into a std::set, to avoid a linear search
+    std::map<RsGxsGroupId,RsGxsIdGroup> ids_set ;
+
+    for(uint32_t i=0;i<datavector.size();++i)
+        ids_set[datavector[i].mMeta.mGroupId] = datavector[i] ;
 
 	mStateHelper->setActive(IDDIALOG_IDLIST, true);
 
@@ -1681,23 +1682,23 @@ void IdDialog::insertIdList(uint32_t token)
 		++itemIterator;
 		std::map<RsGxsGroupId,RsGxsIdGroup>::iterator it = ids_set.find(RsGxsGroupId(item->text(RSID_COL_KEYID).toStdString())) ;
 
-		if(it == ids_set.end())
-		{
-			if(item != allItem && item != contactsItem && item != ownItem)
-				delete(item);
-                        
-                        continue ;
-		} 
-                
-        	QTreeWidgetItem *parent_item = item->parent() ;
-                    
-                if(    (parent_item == allItem && it->second.mIsAContact) || (parent_item == contactsItem && !it->second.mIsAContact))
-                {
-                    delete item ;	// do not remove from the list, so that it is added again in the correct place.
-                    continue ;
-                }
-                
-		if (!fillIdListItem(it->second, item, ownPgpId, accept))
+        if(it == ids_set.end())
+        {
+            if(item != allItem && item != contactsItem && item != ownItem)
+                delete(item);
+
+            continue ;
+        }
+
+        QTreeWidgetItem *parent_item = item->parent() ;
+
+        if( (parent_item == allItem && it->second.mIsAContact) || (parent_item == contactsItem && !it->second.mIsAContact))
+        {
+            delete item ;	// do not remove from the list, so that it is added again in the correct place.
+            continue ;
+        }
+
+        if (!fillIdListItem(it->second, item, ownPgpId, accept))
 			delete(item);
             
 		ids_set.erase(it);	// erase, so it is not considered to be a new item
@@ -1710,7 +1711,7 @@ void IdDialog::insertIdList(uint32_t token)
 
 	    item = NULL;
 	    //meiyousixin - remove our own items - no need at this time.
-	    //ui->idTreeWidget->insertTopLevelItem(0, ownItem);
+        ui->idTreeWidget->insertTopLevelItem(0, ownItem);
 	    ui->idTreeWidget->insertTopLevelItem(0, allItem);
 	    ui->idTreeWidget->insertTopLevelItem(0, contactsItem );  
 
@@ -1725,20 +1726,30 @@ void IdDialog::insertIdList(uint32_t token)
 		{
 			if(data.mMeta.mSubscribeFlags & GXS_SERV::GROUP_SUBSCRIBE_ADMIN)
 				ownItem->addChild(item);
-			else if(data.mIsAContact)
-				{
-				    // contactsItem->addChild(item);
-				}
-			else
-				allItem->addChild(item);
-		}
 
-	}
+            if(data.mIsAContact)
+                contactsItem->addChild(item);
+
+            allItem->addChild(item);
+
+        }
+
+    }
+    //UnseenP2P ContactList approach.
+    std::set<RsGxsMyContact> contactList;
+    rsIdentity->getMyContacts(contactList);
+
+//    std::cerr <<"IdDialog::insertIdList()"<<std::endl;
+//    for(auto it = contactList.begin(); it != contactList.end(); it++){
+//         std::cerr <<"Name : "<< it->name << " and GxsId: " << it->gxsId << std::endl;
+//         std::cerr <<"Status: " << it->status << " and PgPId: "<< std::endl;
+//    }
 
 	//meiyousixin - show again the friend list here
-	showFriendList();
+    //showFriendList();
 	/* count items */
-	int itemCount = contactsItem->childCount() + allItem->childCount() + ownItem->childCount();
+    //int itemCount = contactsItem->childCount() + allItem->childCount() + ownItem->childCount();
+    int itemCount = contactsItem->childCount() ;
 	ui->label_count->setText( "(" + QString::number( itemCount ) + ")" );
 
 	navigate(RsGxsId(oldCurrentId));
@@ -1988,7 +1999,6 @@ void IdDialog::insertIdDetails(uint32_t token)
     // now fill in usage cases
 
 	RsIdentityDetails det ;
-	std::cerr << "inserIdDetails: data.mMeta.mGroupId: " <<  data.mMeta.mGroupId; std::cerr << std::endl;
 	rsIdentity->getIdDetails(RsGxsId(data.mMeta.mGroupId),det) ;
 
     QString usage_txt ;
@@ -2013,6 +2023,7 @@ QString IdDialog::createUsageString(const RsIdentityUsage& u) const
     switch(u.mServiceId)
     {
     case RS_SERVICE_GXS_TYPE_CHANNELS:  service_name = tr("Channels") ;service_type = RetroShareLink::TYPE_CHANNEL   ; break ;
+    case RS_SERVICE_GXS_TYPE_CHATS:     service_name = tr("Message") ; service_type = RetroShareLink::TYPE_CHATS     ; break ;
     case RS_SERVICE_GXS_TYPE_FORUMS:    service_name = tr("Forums") ;  service_type = RetroShareLink::TYPE_FORUM     ; break ;
     case RS_SERVICE_GXS_TYPE_POSTED:    service_name = tr("Posted") ;  service_type = RetroShareLink::TYPE_POSTED    ; break ;
     case RS_SERVICE_TYPE_CHAT:          service_name = tr("Chat")   ;  service_type = RetroShareLink::TYPE_CHAT_ROOM ; break ;
@@ -2345,7 +2356,7 @@ void IdDialog::loadRequest(const TokenQueue * queue, const TokenRequest &req)
 
 	    case IDDIALOG_REFRESH:
 		    // replaced by RsGxsUpdateBroadcastPage
-		    //			updateDisplay(true);
+            updateDisplay(true);
 		    break;
 	    default:
 		    std::cerr << "IdDialog::loadRequest() ERROR";
@@ -2424,7 +2435,6 @@ void IdDialog::IdListCustomPopupMenu( QPoint )
 		RsGxsId keyId((*it)->text(RSID_COL_KEYID).toStdString());
 
 		RsIdentityDetails det ;
-		std::cerr << "IdListCustomPopupMenu: keyId: " <<  keyId; std::cerr << std::endl;
 		rsIdentity->getIdDetails(keyId,det) ;
 
 		switch(det.mReputation.mOwnOpinion)
@@ -2782,20 +2792,20 @@ void IdDialog::showFriendList()
                    std::cerr << "Friend info: sslId: " << sslIds.front(); std::cerr << std::endl;
           }
           // don't accept anymore connection, remove from the view
-           std::cerr << "Friend info: gpgId: " << gpgId.toStdString(); std::cerr << std::endl;
-           std::cerr << "Friend info: peerId: " << peerId.toStdString(); std::cerr << std::endl;
+//           std::cerr << "Friend info: gpgId: " << gpgId.toStdString(); std::cerr << std::endl;
+//           std::cerr << "Friend info: peerId: " << peerId.toStdString(); std::cerr << std::endl;
 
-          std::cerr << "Friend info: RsPeerId: " << detail.id.toStdString() << " gpg_id: " << detail.gpg_id << " name: " << detail.name << " email: " << detail.email << " location: " << detail.location << " org: " << detail.org  ; std::cerr << std::endl;
-          std::cerr << "Friend info: issuer: " << detail.issuer << " fpr: " << detail.fpr << " authcode: " << detail.authcode ; std::cerr << std::endl;
-          std::cerr << "Friend info: ownsign: " << detail.ownsign << "hasSignedMe: " << detail.hasSignedMe << " accept_connection: " << detail.accept_connection ;std::cerr << std::endl;
-          std::cerr << "Friend info: service_perm_flags: " << detail.service_perm_flags << " state: " << detail.state << " actAsServer: " << detail.actAsServer ;std::cerr << std::endl;
-          std::cerr << "Friend info: connectAddr: " << detail.connectAddr << " connectPort: " << detail.connectPort << " isHiddenNode: " << detail.isHiddenNode ;std::cerr << std::endl;
-          std::cerr << "Friend info: hiddenNodeAddress: " << detail.hiddenNodeAddress << "hiddenNodePort: " << detail.hiddenNodePort << " hiddenType: " << detail.hiddenType ;std::cerr << std::endl;
+//          std::cerr << "Friend info: RsPeerId: " << detail.id.toStdString() << " gpg_id: " << detail.gpg_id << " name: " << detail.name << " email: " << detail.email << " location: " << detail.location << " org: " << detail.org  ; std::cerr << std::endl;
+//          std::cerr << "Friend info: issuer: " << detail.issuer << " fpr: " << detail.fpr << " authcode: " << detail.authcode ; std::cerr << std::endl;
+//          std::cerr << "Friend info: ownsign: " << detail.ownsign << "hasSignedMe: " << detail.hasSignedMe << " accept_connection: " << detail.accept_connection ;std::cerr << std::endl;
+//          std::cerr << "Friend info: service_perm_flags: " << detail.service_perm_flags << " state: " << detail.state << " actAsServer: " << detail.actAsServer ;std::cerr << std::endl;
+//          std::cerr << "Friend info: connectAddr: " << detail.connectAddr << " connectPort: " << detail.connectPort << " isHiddenNode: " << detail.isHiddenNode ;std::cerr << std::endl;
+//          std::cerr << "Friend info: hiddenNodeAddress: " << detail.hiddenNodeAddress << "hiddenNodePort: " << detail.hiddenNodePort << " hiddenType: " << detail.hiddenType ;std::cerr << std::endl;
 
-	  std::cerr << "Standard Node info: localAddr: " << detail.localAddr << " localPort: " << detail.localPort << " extAddr: " << detail.extAddr << " extPort: " << detail.extPort << "dyndns: " << detail.dyndns ; std::cerr << std::endl;
-	  std::cerr << "Friend info: netMode: " << detail.netMode << " vs_disc: " << detail.vs_disc << " vs_dht: " << detail.vs_dht ;std::cerr << std::endl;
-	  std::cerr << "Friend info: lastConnect: " << detail.lastConnect << " lastUsed: " << detail.lastUsed << " connectState: " << detail.connectState << " connectStateString:" << detail.connectStateString << " connectPeriod:" << detail.connectPeriod << " foundDHT: " << detail.foundDHT ;std::cerr << std::endl;
-	  std::cerr << "Friend info: wasDeniedConnection: " << detail.wasDeniedConnection << " deniedTS: " << detail.deniedTS << " linkType: " << detail.linkType ;std::cerr << std::endl;
+//	  std::cerr << "Standard Node info: localAddr: " << detail.localAddr << " localPort: " << detail.localPort << " extAddr: " << detail.extAddr << " extPort: " << detail.extPort << "dyndns: " << detail.dyndns ; std::cerr << std::endl;
+//	  std::cerr << "Friend info: netMode: " << detail.netMode << " vs_disc: " << detail.vs_disc << " vs_dht: " << detail.vs_dht ;std::cerr << std::endl;
+//	  std::cerr << "Friend info: lastConnect: " << detail.lastConnect << " lastUsed: " << detail.lastUsed << " connectState: " << detail.connectState << " connectStateString:" << detail.connectStateString << " connectPeriod:" << detail.connectPeriod << " foundDHT: " << detail.foundDHT ;std::cerr << std::endl;
+//	  std::cerr << "Friend info: wasDeniedConnection: " << detail.wasDeniedConnection << " deniedTS: " << detail.deniedTS << " linkType: " << detail.linkType ;std::cerr << std::endl;
 
 	  // create gpg item and add it to tree
 
@@ -2909,4 +2919,35 @@ void IdDialog::peerStatusChanged(const QString& peerId, int status)
 	}
 
    return;
+}
+
+void IdDialog::gxsContactStatusChanged(const QString &gxs_id, int status){
+
+    std::cerr <<"IdDialog::gxsContactStatusChanged(): notify rsGxsId:"<<gxs_id.toStdString()<<" and status: "<<status <<std::endl;
+
+    QTreeWidgetItemIterator itemIterator(ui->idTreeWidget);
+    QTreeWidgetItem *item = NULL;
+
+    while ((item = *itemIterator) != NULL)
+    {
+        ++itemIterator;
+        QTreeWidgetItem *parent_item = item->parent() ;
+
+        if  (parent_item == allItem )
+        {
+            continue;
+        }
+
+        std::string Id = item->text(RSID_COL_KEYID).toStdString();
+        if (gxs_id.toStdString() ==Id )
+        {
+            item->setIcon(RSID_COL_VOTES, QIcon(StatusDefs::imageStatus(status)));
+            //if (status == RS_STATUS_OFFLINE)
+            //item->setIcon(RSID_COL_VOTES, QIcon(IMAGE_UNKNOWN));
+            break;
+
+        }
+    }
+
+    return;
 }

@@ -84,6 +84,8 @@ private:
 	bool mLobbyEnable;
 	bool mPrivateEnable;
 
+    bool mGxsGroupChatEnable;
+
 	uint32_t mPublicSaveCount;
 	uint32_t mLobbySaveCount;
 	uint32_t mPrivateSaveCount;

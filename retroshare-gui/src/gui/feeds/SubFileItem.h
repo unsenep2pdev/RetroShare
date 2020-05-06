@@ -39,6 +39,8 @@ const uint32_t SFI_STATE_UPLOAD		= 0x0006;
 
 const uint32_t SFI_TYPE_CHANNEL		= 0x0010;
 const uint32_t SFI_TYPE_ATTACH		= 0x0020;
+const uint32_t SFI_TYPE_CHATS		= 0x0030;
+
 
 const uint32_t SFI_FLAG_CREATE		       = 0x1000;
 const uint32_t SFI_FLAG_ALLOW_DELETE       = 0x2000;
@@ -67,6 +69,7 @@ public:
 	uint64_t    FileSize() { return mFileSize; }
 	std::string FilePath() { return mPath; }
 
+    SubFileItem &operator=(const SubFileItem &a);
 	void updateItemStatic();
 
 	bool done();
@@ -77,6 +80,7 @@ public:
 	bool isPlayable(bool &startable);
 
 	void setChannelId(const std::string &channelId) { mChannelId = channelId; }
+    void setChatsId(const std::string &chatId) { mChatId = chatId; }
 
 public slots:
 	void download();
@@ -105,6 +109,7 @@ private:
 	uint64_t    mFileSize;
 	RsPeerId    mSrcId;
 	std::string mChannelId;
+    std::string mChatId;
 
 	uint32_t    mMode;
 	uint32_t    mType;

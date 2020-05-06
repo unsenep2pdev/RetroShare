@@ -28,9 +28,9 @@
 #include <iostream>
 #include <algorithm>
 
-/**
- * #define DEBUG_ITEM	1
- **/
+
+//#define DEBUG_ITEM	1
+
 
 GxsFeedItem::GxsFeedItem(FeedHolder *feedHolder, uint32_t feedId, const RsGxsGroupId &groupId, const RsGxsMessageId &messageId, bool isHome, RsGxsIfaceHelper *iface, bool autoUpdate) :
     GxsGroupFeedItem(feedHolder, feedId, groupId, isHome, iface, autoUpdate)
@@ -73,6 +73,7 @@ void GxsFeedItem::comments(const QString &title)
 
 void GxsFeedItem::copyMessageLink()
 {
+
 	if (groupId().isNull() || mMessageId.isNull()) {
 		return;
 	}
@@ -81,12 +82,31 @@ void GxsFeedItem::copyMessageLink()
 		return;
 	}
 
+#ifdef DEBUG_ITEM
+    std::cerr << "GxsFeedItem::copyMessageLink()"<<std::endl;
+    std::cerr <<"LinkType = "<<getLinkType() <<std::endl;
+    std::cerr<< "GroupId="<<groupId().toStdString()<<std::endl;
+    std::cerr << "MessageId="<<mMessageId.toStdString()<<std::endl;
+    std::cerr <<"MessageName ="<< messageName().toCFString() <<std::endl;
+#endif
 	RetroShareLink link = RetroShareLink::createGxsMessageLink(getLinkType(), groupId(), mMessageId, messageName());
 	if (link.valid()) {
 		QList<RetroShareLink> urls;
 		urls.push_back(link);
 		RSLinkClipboard::copyLinks(urls);
-	}
+#ifdef DEBUG_ITEM
+    std::cerr << "GxsFeedItem::copyMessageLink() Link:"<<std::endl;
+    std::cerr<< "Link="<<link.toUrl().toDisplayString().toCFString()<<std::endl;
+    QString res ;
+    for (int i = 0; i < urls.size(); ++i)
+        res += urls[i].toString() + "\n" ;
+
+    std::cerr << "GxsFeedItem::copyMessageLink() Link:="<< res.toCFString() << std::endl;
+
+#endif
+    }
+
+
 }
 
 void GxsFeedItem::fillDisplay(RsGxsUpdateBroadcastBase *updateBroadcastBase, bool complete)

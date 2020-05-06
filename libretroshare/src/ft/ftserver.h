@@ -65,7 +65,6 @@ class p3turtle;
 
 class p3PeerMgr;
 class p3ServiceControl;
-class p3FileDatabase;
 
 class ftServer: public p3Service, public RsFiles, public ftDataSend, public RsTurtleClientService, public RsServiceSerializer
 {

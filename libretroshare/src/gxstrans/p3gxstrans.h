@@ -317,7 +317,7 @@ private:
 
 	// Overloaded from RsGenExchange.
 
-	bool acceptNewMessage(const RsGxsMsgMetaData *msgMeta, uint32_t size) ;
+    bool acceptNewMessage(const RsNxsMsg *msgMeta, uint32_t size) ;
 
     GxsTransIntegrityCleanupThread *mCleanupThread ;
 

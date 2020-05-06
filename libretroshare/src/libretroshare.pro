@@ -161,7 +161,11 @@ PUBLIC_HEADERS =	retroshare/rsdisc.h \
 HEADERS += plugins/pluginmanager.h \
 		plugins/dlfcn_win32.h \
 		rsitems/rspluginitems.h \
-    util/rsinitedptr.h
+    util/rsinitedptr.h \
+    retroshare/rsgxschats.h \
+    rsitems/rsgxschatitems.h \
+    services/p3gxschats.h \
+    #chat/p3gxschatservice.h
 
 HEADERS += $$PUBLIC_HEADERS
 
@@ -525,7 +529,10 @@ SOURCES +=	ft/ftchunkmap.cc \
 			ft/ftfilesearch.cc \
 			ft/ftserver.cc \
 			ft/fttransfermodule.cc \
-            ft/ftturtlefiletransferitem.cc
+                        ft/ftturtlefiletransferitem.cc \
+                        rsitems/rsgxschatitems.cc \
+                        services/p3gxschats.cc \
+
 
 SOURCES += crypto/chacha20.cpp \
 			crypto/rsaes.cc \
@@ -536,7 +543,7 @@ SOURCES += crypto/chacha20.cpp \
 SOURCES += chat/distantchat.cc \
 			  chat/p3chatservice.cc \
 			  chat/distributedchat.cc \
-			  chat/rschatitems.cc
+                          chat/rschatitems.cc
 
 SOURCES +=	pqi/authgpg.cc \
 			pqi/authssl.cc \

@@ -30,6 +30,9 @@
 #include <iostream>
 
 #include "gui/feeds/AttachFileItem.h"
+#include "gui/feeds/SubFileItem.h"
+#include "util/rsdir.h"
+#include <retroshare/rsgxschats.h>
 
 #include "HashBox.h"
 #include "ui_HashBox.h"
@@ -152,6 +155,68 @@ bool HashBox::eventFilter(QObject* object, QEvent* event)
 	return QScrollArea::eventFilter(object, event);
 }
 
+void HashBox::addGxsFileAttachments(const QStringList& files,TransferRequestFlags tfl, HashedFile::Flags flag)
+{
+    /* add a AttachFileItem to the attachment section */
+    std::cerr << "HashBox::addExtraFile() hashing file." << std::endl;
+
+    if (files.isEmpty()) {
+        return;
+    }
+
+    if (mAutoHide) {
+        show();
+    }
+
+    QStringList::ConstIterator it;
+    for (it = files.constBegin(); it != files.constEnd(); ++it) {
+        /* add widget in for new destination */
+        std::string path = (*it).toUtf8().constData();
+        //addAttachmentGxsFilePath((*it).toUtf8().constData());
+
+
+        /* add widget in for new destination */
+        uint32_t flags =  SFI_TYPE_CHATS | SFI_STATE_EXTRA | SFI_FLAG_CREATE;
+        FileInfo fInfo;
+        std::string filename = RsDirUtil::getTopDir(path);
+        uint64_t size = 0;
+        RsFileHash hash ;
+        rsGxsChats->ExtraFileHash(path);
+
+        // Only path and filename are valid.
+        // Destroyed when fileFrame (this subfileitem) is destroyed
+        // Hash will be retrieved later when the file is finished hashing.
+        //
+        //SubFileItem *file = new SubFileItem(hash, filename, path, size, flags, mChannelId);
+        SubFileItem *file = new SubFileItem(hash, filename, path, size, flags, RsPeerId());
+
+        mAttachments.push_back(file);
+
+
+
+//        SubFileItem* file = new SubFileItem(*it,tfl);
+        QObject::connect(file, SIGNAL(fileFinished(SubFileItem*)), this, SLOT(gxsFileFinished(SubFileItem*)));
+
+        GxsFileHashingInfo hashingInfo;
+        hashingInfo.item = file;
+        hashingInfo.flag = flag;
+        mGxsFileHashingInfos.push_back(hashingInfo);
+        ui->verticalLayout->addWidget(file, 1, 0);
+    }
+    QApplication::processEvents();
+
+    // workaround for Qt bug, the size from the first call to QScrollArea::sizeHint() is stored in QWidgetItemV2 and
+    // QScrollArea::sizeHint() is never called again so that widgetResizable of QScrollArea doesn't work
+    // the next line clears the member QScrollArea::widgetSize for recalculation of the added children in QScrollArea::sizeHint()
+    setWidget(takeWidget());
+    // the next line set the cache to dirty
+    updateGeometry();
+
+    emit fileHashingStarted();
+
+    checkGxsFileAttachmentReady();
+}
+
 void HashBox::addAttachments(const QStringList& files,TransferRequestFlags tfl, HashedFile::Flags flag)
 {
 	/* add a AttachFileItem to the attachment section */
@@ -202,6 +267,19 @@ void HashBox::fileFinished(AttachFileItem* file)
 	}
 
 	checkAttachmentReady();
+}
+
+void HashBox::gxsFileFinished(SubFileItem* file)
+{
+    std::cerr << "HashBox::gxsfileHashingFinished() started." << std::endl;
+
+    //check that the file is ok
+    if (file->getState() == SFI_STATE_ERROR) {
+        std::cerr << "HashBox::fileHashingFinished error file is not hashed.";
+        return;
+    }
+
+    checkGxsFileAttachmentReady();
 }
 
 void HashBox::checkAttachmentReady()
@@ -258,4 +336,61 @@ void HashBox::checkAttachmentReady()
 	updateGeometry();
 
 	emit fileHashingFinished(hashedFiles);
+}
+
+void HashBox::checkGxsFileAttachmentReady()
+{
+    if (mGxsFileHashingInfos.isEmpty()) {
+        return;
+    }
+
+    QList<GxsFileHashingInfo>::iterator it;
+    for (it = mGxsFileHashingInfos.begin(); it != mGxsFileHashingInfos.end(); ++it) {
+        if (it->item->isHidden()) {
+            continue;
+        }
+        if (!it->item->done()) {
+            break;
+        }
+    }
+
+    if (it != mGxsFileHashingInfos.end()) {
+        /* repeat... */
+        QTimer::singleShot(500, this, SLOT(checkGxsFileAttachmentReady()));
+        return;
+    }
+
+    if (mAutoHide) {
+        hide();
+    }
+
+    QList<HashedFile> hashedFiles;
+    for (it = mGxsFileHashingInfos.begin(); it != mGxsFileHashingInfos.end(); ++it) {
+        GxsFileHashingInfo& hashingInfo = *it;
+        if (hashingInfo.item->done()) {
+            HashedFile hashedFile;
+            hashedFile.filename = QString::fromStdString(hashingInfo.item->FileName());
+            hashedFile.filepath = QString::fromStdString(hashingInfo.item->FilePath());
+            hashedFile.hash = hashingInfo.item->FileHash();
+            hashedFile.size = hashingInfo.item->FileSize();
+            hashedFile.flag = hashingInfo.flag;
+            hashedFiles.push_back(hashedFile);
+
+            ui->verticalLayout->removeWidget(hashingInfo.item);
+            hashingInfo.item->deleteLater();
+        }
+    }
+    mGxsFileHashingInfos.clear();
+
+    QApplication::processEvents();
+
+    // workaround for Qt bug, the size from the first call to QScrollArea::sizeHint() is stored in QWidgetItemV2 and
+    // QScrollArea::sizeHint() is never called again so that widgetResizable of QScrollArea doesn't work
+    // the next line clears the member QScrollArea::widgetSize for recalculation of the removed children in QScrollArea::sizeHint()
+    setWidget(takeWidget());
+    // the next line set the cache to dirty
+    updateGeometry();
+
+    emit gxsfileHashingFinishedForGUI(hashedFiles);
+ //   emit gxsfileHashingFinished(mAttachments);
 }

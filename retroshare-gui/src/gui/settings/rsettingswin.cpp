@@ -34,6 +34,7 @@
 #include "TransferPage.h"
 #include "ChatPage.h"
 #include "ChannelPage.h"
+#include "GxsChatPage.h"
 #include "PeoplePage.h"
 #include "MessagePage.h"
 #include "ForumPage.h"
@@ -160,6 +161,7 @@ SettingsPage::initStackedWidget()
     addPage(new MessagePage()); //MESSGE RENAME TO MAIL
     addPage(new TransferPage()); //FILE TRANSFER
     addPage(new ChannelPage()); // CHANNELS
+    addPage(new GxsChatPage()); // GxsCHATS
     addPage(new ForumPage()); // FORUMS
   //  addPage(new PostedPage()); // POSTED RENAME TO LINKS  //d: remove this
     addPage(new NotifyPage()); // NOTIFY

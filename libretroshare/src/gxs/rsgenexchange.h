@@ -100,7 +100,7 @@ class RsGenExchange : public RsNxsObserver, public RsTickingThread, public RsGxs
 public:
 
 	/// used by class derived for RsGenExchange to indicate if service create passed or not
-	enum ServiceCreate_Return { SERVICE_CREATE_SUCCESS, SERVICE_CREATE_FAIL, SERVICE_CREATE_FAIL_TRY_LATER } ;
+    enum ServiceCreate_Return { SERVICE_CREATE_SUCCESS, SERVICE_CREATE_FAIL, SERVICE_CREATE_FAIL_TRY_LATER, SERVICE_GXSCHATS_UPDATE_SUCCESS, SERVICE_GXSCHATS_DEFAULT } ;
 
     /*!
      * Constructs a RsGenExchange object, the owner ship of gds, ns, and serviceserialiser passes \n
@@ -123,6 +123,8 @@ public:
 
     void setNetworkExchangeService(RsNetworkExchangeService *ns) ;
 
+    RsNetworkExchangeService * getNetworkExchangeService();
+
     /** S: Observer implementation **/
 
     /*!
@@ -138,7 +140,7 @@ public:
     /*!
      * @param grpId group id
      */
-    virtual void notifyReceivePublishKey(const RsGxsGroupId &grpId);
+    virtual void notifyReceivePublishKey(const RsGxsGroupId &grpId,  const RsPeerId &peerId);
 
     /*!
      * \brief notifyReceiveDistantSearchResults
@@ -269,7 +271,11 @@ public:
      * \param grpMeta Group metadata to check
      * \return
      */
-	virtual bool acceptNewMessage(const RsGxsMsgMetaData *msgMeta, uint32_t size) ;
+    virtual bool acceptNewMessage(const RsNxsMsg* /*grpMeta*/,uint32_t /*size*/ );
+
+    virtual void receiveNewChatMesesages(std::vector<RsNxsMsg*>& messages) {}
+
+    virtual void receiveNotifyMessages(std::vector<RsNxsNotifyChat*>& notifyMessages){}
 
     bool subscribeToGroup(uint32_t& token, const RsGxsGroupId& grpId, bool subscribe);
 
@@ -360,7 +366,7 @@ public:
      * @param token token to be redeemed for message item retrieval
      * @param msgItems
      */
-	bool getMsgData(uint32_t token, GxsMsgDataMap& msgItems);
+    bool getMsgData(uint32_t token, GxsMsgDataMap& msgItems);
 
     template <class MsgType>
 	bool getMsgDataT( uint32_t token, std::map<RsGxsGroupId,
@@ -595,6 +601,12 @@ protected:
      * @return SERVICE_CREATE_SUCCESS, SERVICE_CREATE_FAIL, SERVICE_FAIL_TRY_LATER
      */
     virtual ServiceCreate_Return service_CreateGroup(RsGxsGrpItem* grpItem, RsTlvSecurityKeySet& keySet);
+    virtual ServiceCreate_Return service_PublishGroup(RsNxsGrp *grp, bool update=false); //group with complete keypairs
+    virtual ServiceCreate_Return service_UpateGroup(RsGxsGrpItem* grpItem, const RsTlvSecurityKeySet& keySet);
+
+    virtual ServiceCreate_Return service_CreateMessage(RsNxsMsg* msg);
+    virtual ServiceCreate_Return service_RecvBounceGroup(RsNxsGrp *grp, bool isNew);
+    virtual ServiceCreate_Return service_RecvBounceMessage(RsNxsMsg* msg, bool isNew);
 
 public:
 

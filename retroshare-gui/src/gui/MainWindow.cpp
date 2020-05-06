@@ -37,6 +37,7 @@
 #include "ui_MainWindow.h"
 #include "MessengerWindow.h"
 #include "HomePage.h"
+#include "BrowserPage.h"
 #include "NetworkDialog.h"
 #include "gui/FileTransfer/SearchDialog.h"
 #include "gui/FileTransfer/SharedFilesDialog.h"
@@ -93,11 +94,12 @@
 #include "retroshare/rsinit.h"
 
 #include "gui/gxschannels/GxsChannelDialog.h"
+#include "gui/gxschats/GxsChatDialog.h"
 #include "gui/gxsforums/GxsForumsDialog.h"
 #include "gui/Identity/IdDialog.h"
-//#ifdef RS_USE_CIRCLES
-//#include "gui/Circles/CirclesDialog.h"
-//#endif
+#ifdef RS_USE_CIRCLES
+#include "gui/Circles/CirclesDialog.h"
+#endif
 #ifdef RS_USE_WIKI
 #include "gui/WikiPoos/WikiDialog.h"
 #endif
@@ -148,6 +150,9 @@
 #define IMAGE_UNFINISHED        ":/images/underconstruction.png"
 #define IMAGE_MINIMIZE          ":/images/window_nofullscreen.png"
 #define IMAGE_MAXIMIZE          ":/images/window_fullscreen.png"
+
+#define IMAGE_COLLAPSE          ":/home/img/face_icon/collapse32.png"
+#define IMAGE_EXPAND            ":/home/img/face_icon/expand32.png"
 
 #define IMAGE_PLUGINS           ":/images/extension_32.png"
 #define IMAGE_BLOGS             ":/images/kblogger.png"
@@ -259,6 +264,25 @@ MainWindow::MainWindow(QWidget* parent, Qt::WindowFlags flags)
     if (!state.isEmpty()) ui->splitter->restoreState(state);
     state = Settings->valueFromGroup("MainWindow", "State", QByteArray()).toByteArray();
     if (!state.isEmpty()) restoreState(state);
+
+    /* Set tool bar */
+
+    ui->toolBarPage->setToolButtonStyle(Qt::ToolButtonIconOnly);
+    ui->toolBarPage->addAction(tr("Expand"), this, SLOT(expandToolBar()));
+//    ui->toolBarPage->addAction(QIcon(IMAGE_COLLAPSE), tr("Collapse"), this, SLOT(collapseToolBar()));
+    ui->toolBarPage->addAction(tr("Collapse"), this, SLOT(collapseToolBar()));
+
+
+    ui->toolBarPage->actions().at(15)->setVisible(false);
+    ui->toolBarPage->actions().at(14)->setIconText(tr("     >>>"));
+    ui->toolBarPage->actions().at(15)->setIconText(tr("                            <<<"));
+    QLayout* lay = ui->toolBarPage->layout();
+    lay->itemAt(14)->setAlignment(Qt::AlignRight);
+    lay->itemAt(15)->setAlignment(Qt::AlignRight);
+    /*Set button left align*/
+//    for(int i = 0; i < int(lay)-2; ++i)
+//        lay->itemAt(i)->setAlignment(Qt::AlignLeft);
+
 
     /** StatusBar section ********/
     statusBar()->setVisible(Settings->valueFromGroup("StatusBar", "ShowStatusBar", QVariant(true)).toBool());
@@ -416,10 +440,10 @@ void MainWindow::initStackedPage()
 
 
 
-//#ifdef RS_USE_CIRCLES
-//  CirclesDialog *circlesDialog = NULL;
-//  addPage(circlesDialog = new CirclesDialog(ui->stackPages), grp, &notify);
-//#endif
+#ifdef RS_USE_CIRCLES
+  CirclesDialog *circlesDialog = NULL;
+  addPage(circlesDialog = new CirclesDialog(ui->stackPages), grp, &notify);
+#endif
 
   //19 Sep 2018 - meiyousixin - change the order: Chat -> Contact -> Mail -> Files -> Channels -> Forums -> Profile
   addPage(chatLobbyDialog = new ChatLobbyWidget(ui->stackPages), grp, &notify);
@@ -429,22 +453,19 @@ void MainWindow::initStackedPage()
   addPage(transfersDialog = new TransfersDialog(ui->stackPages), grp, &notify);
 
   addPage(gxschannelDialog = new GxsChannelDialog(ui->stackPages), grp, &notify);
+  addPage(gxschatDialog = new GxsChatDialog(ui->stackPages), grp, &notify);
   addPage(gxsforumDialog = new GxsForumsDialog(ui->stackPages), grp, &notify);
   //meiyousixin - remove links
 
-  //addPage(postedDialog = new PostedDialog(ui->stackPages), grp, &notify);
+  addPage(postedDialog = new PostedDialog(ui->stackPages), grp, &notify);
 
   //meiyousixin - remove Identities dialogs for simplicity!!!
-#ifdef RS_USE_CIRCLES
-    //addPage(idDialog = new IdDialog(ui->stackPages), grp, &notify);
-#endif
+  addPage(idDialog = new IdDialog(ui->stackPages), grp, &notify);
 
-
-
-  #ifdef RS_USE_NEW_PEOPLE_DIALOG
+#ifdef RS_USE_NEW_PEOPLE_DIALOG
   PeopleDialog *peopleDialog = NULL;
   addPage(peopleDialog = new PeopleDialog(ui->stackPages), grp, &notify);
-  #endif
+#endif
   //meiyousixin - remove Logs tab for simplicity!!!
   addPage(newsFeed = new NewsFeed(ui->stackPages), grp, &notify);
 #ifdef RS_USE_WIKI
@@ -509,7 +530,7 @@ void MainWindow::initStackedPage()
   }
 
   addPage(settingsDialog = new SettingsPage(ui->stackPages),grp,&notify);
-
+  addPage(browserPage = new BrowserPage(ui->stackPages), grp, NULL);
   /* Create the toolbar */
   ui->toolBarPage->addActions(grp->actions());
   connect(grp, SIGNAL(triggered(QAction *)), ui->stackPages, SLOT(showPage(QAction *)));
@@ -1028,6 +1049,9 @@ void SetForegroundWindowInternal(HWND hWnd)
 		 case Channels:
                          _instance->ui->stackPages->setCurrentPage( _instance->gxschannelDialog );
 			 return true ;
+         case GxsChats:
+                     _instance->ui->stackPages->setCurrentPage( _instance->gxschatDialog );
+         return true ;
 		 case Forums:
                          _instance->ui->stackPages->setCurrentPage( _instance->gxsforumDialog );
                          return true ;
@@ -1112,6 +1136,8 @@ void SetForegroundWindowInternal(HWND hWnd)
 			return _instance->messagesDialog;
 		case Channels:
 			return _instance->gxschannelDialog;
+        case GxsChats:
+            return _instance->gxschatDialog;
 		case Forums:
 			return _instance->gxsforumDialog;
 		case Posted:
@@ -1495,41 +1521,51 @@ void MainWindow::statusChangedComboBox(int index)
 /*new setting*/
 void MainWindow::settingsChanged()
 {
-    ui->listWidget->setFixedWidth(128);      //d: set width for listWidget
-    ui->listWidget->setStyleSheet("QListWidget {background: rgb(43, 164, 220); color: rgb(255, 255, 255)}"
-                                  "QListWidget::item {background: rgb(20, 141, 196); color: rgb(255, 255, 255)}");  // d: Set color of list item
+    /*Hide listWidget*/
+//    ui->listWidget->setFixedWidth(128);      //d: set width for listWidget
+//    ui->listWidget->setStyleSheet("QListWidget {background: rgb(43, 164, 220); color: rgb(255, 255, 255)}"
+//                                  "QListWidget::item {background: rgb(20, 141, 196); color: rgb(255, 255, 255)}");  // d: Set color of list item
 
-    ui->toolBarPage->setStyleSheet("QToolBar {background: rgb(43, 164, 220); color: rgb(255, 255, 255)}"
-                                   "QToolButton {background-color: rgb(20, 141, 196); color: rgb(255, 255, 255)}"); // d: Set color of toolbar
+
+    /*Set style for toolBar*/
+//    ui->toolBarPage->setStyleSheet("QToolBar {background: rgb(43, 164, 220); color: rgb(255, 255, 255);}"
+//                                   "QToolButton {background-color: rgb(20, 141, 196); color: rgb(255, 255, 255);}");
+
+    ui->toolBarPage->setStyleSheet("QToolBar {background: rgb(43, 164, 220); color: rgb(255, 255, 255);}"
+                                   "QToolButton {background-color: rgb(43, 164, 220); color: rgb(255, 255, 255); height: 32px; width: 32px;}");    // d: Set color of toolbar
+
 //    ui->toolBarAction->setStyleSheet("QToolBar {background: rgb(43, 164, 220); color: rgb(255, 255, 255)}"        //d:hide quit button
 //                                     "QToolButton {background-color: rgb(20, 141, 196); color: rgb(255, 255, 255)}"); // d: Set color of toolbar
 
-    ui->listWidget->setVisible(!Settings->getPageButtonLoc() || !Settings->getActionButtonLoc());
-
-    ui->toolBarPage->setVisible(Settings->getPageButtonLoc());
+//    ui->listWidget->setVisible(!Settings->getPageButtonLoc() || !Settings->getActionButtonLoc());
+    ui->listWidget->setVisible(false);
+//    ui->toolBarPage->setVisible(Settings->getPageButtonLoc());
+    ui->toolBarPage->setVisible(true);
 	ui->toolBarAction->setVisible(Settings->getActionButtonLoc());
-	for(int i = 0; i < ui->listWidget->count(); ++i) {
-		if (ui->listWidget->item(i)->data(Qt::UserRole).toString() == "") {
-			ui->listWidget->item(i)->setHidden(Settings->getPageButtonLoc());
-            ui->listWidget->item(i)->setSizeHint(QSize(64,42));  //d: change size listWidget
 
-		} else {
-			ui->listWidget->item(i)->setHidden(Settings->getActionButtonLoc());
-            ui->listWidget->item(i)->setSizeHint(QSize(64,42));    //d: change size listWidget
-		}
-	}
+//	for(int i = 0; i < ui->listWidget->count(); ++i) {
+//		if (ui->listWidget->item(i)->data(Qt::UserRole).toString() == "") {
+//			ui->listWidget->item(i)->setHidden(Settings->getPageButtonLoc());
+//            ui->listWidget->item(i)->setSizeHint(QSize(64,42));  //d: change size listWidget
+
+//		} else {
+//			ui->listWidget->item(i)->setHidden(Settings->getActionButtonLoc());
+//            ui->listWidget->item(i)->setSizeHint(QSize(64,42));    //d: change size listWidget
+//		}
+//	}
      // int itemSize = Settings->getListItemIconSize();
      // ui->listWidget->setIconSize(QSize(itemSize,itemSize));
-     ui->listWidget->setIconSize(QSize(16,16)); //d: change size widget
-     ui->listWidget->setSpacing(8); //d: set item space
+//     ui->listWidget->setIconSize(QSize(16,16)); //d: change size widget
+//     ui->listWidget->setSpacing(8); //d: set item space
 
 
 
      int toolSize = Settings->getToolButtonSize();
 
-    ui->toolBarPage->setToolButtonStyle(Settings->getToolButtonStyle());
-    ui->toolBarPage->setIconSize(QSize(128,toolSize));      //ui->toolBarPage->setIconSize(QSize(toolSize,toolSize));
-//	ui->toolBarAction->setToolButtonStyle(Settings->getToolButtonStyle());                              //d:hide quit button
+    ui->toolBarPage->setToolButtonStyle(Qt::ToolButtonIconOnly);
+    ui->toolBarPage->setIconSize(QSize(32,32));
+//  ui->toolBarPage->setIconSize(QSize(toolSize,toolSize));
+//	ui->toolBarAction->setToolButtonStyle(Settings->getToolButtonStyle());      //d:hide quit button
 //  ui->toolBarAction->setIconSize(QSize(128,toolSize));        //ui->toolBarAction->setIconSize(QSize(toolSize,toolSize));       //d:hide quit button
 
 }
@@ -1740,4 +1776,24 @@ void MainWindow::setCompactStatusMode(bool compact)
 	hashingstatus->setCompactMode(compact);
 	ratesstatus->setCompactMode(compact);
 	//opModeStatus: TODO Show only ???
+}
+
+void MainWindow::expandToolBar()
+{
+    ui->toolBarPage->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+    ui->toolBarPage->setStyleSheet("QToolBar {background: rgb(43, 164, 220); color: rgb(255, 255, 255);}"
+                                   "QToolButton {background-color: rgb(43, 164, 220); color: rgb(255, 255, 255); height:32px; width: 150px;}");
+    ui->toolBarPage->actions().at(14)->setVisible(false);
+    ui->toolBarPage->actions().at(15)->setVisible(true);
+
+}
+
+void MainWindow::collapseToolBar()
+{
+    ui->toolBarPage->setStyleSheet("QToolBar {background: rgb(43, 164, 220); color: rgb(255, 255, 255);}"
+                                   "QToolButton {background-color: rgb(43, 164, 220); color: rgb(255, 255, 255); height:32px; width: 32px}");
+    ui->toolBarPage->setToolButtonStyle(Qt::ToolButtonIconOnly);
+    ui->toolBarPage->actions().at(15)->setVisible(false);
+    ui->toolBarPage->actions().at(14)->setVisible(true);
+
 }

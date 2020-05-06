@@ -40,9 +40,8 @@
 #include "util/rsrandom.h"
 #include "util/rsstring.h"
 
-/****
- * #define GXSCHANNEL_DEBUG 1
- ****/
+//#define GXSCHANNEL_DEBUG 1
+
 
 RsGxsChannels *rsGxsChannels = NULL;
 

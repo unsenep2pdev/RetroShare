@@ -42,7 +42,7 @@
       <item>
        <widget class="StyledLabel" name="lobbyInfoLabel">
         <property name="text">
-         <string>A chat room is a decentralized and anonymous chat group. All participants receive all messages. Once the room is created you can invite other friend nodes with invite button on top right.</string>
+         <string>A group chat is a decentralized and anonymous. All participants receive all messages. Once the group is created you can invite other friend nodes with invite button on top right.</string>
         </property>
         <property name="wordWrap">
          <bool>true</bool>
@@ -59,7 +59,7 @@
              <item row="0" column="0">
               <widget class="QLabel" name="lobbyName_Lb">
                <property name="text">
-                <string>Room name:</string>
+                <string>Group name:</string>
                </property>
                <property name="alignment">
                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -72,7 +72,7 @@
              <item row="1" column="0">
               <widget class="QLabel" name="lobbyTopic_Lb">
                <property name="text">
-                <string>Room topic:</string>
+                <string>Group topic:</string>
                </property>
                <property name="alignment">
                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>

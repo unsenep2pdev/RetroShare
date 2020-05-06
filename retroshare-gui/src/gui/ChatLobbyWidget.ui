@@ -236,6 +236,9 @@
            <height>16777215</height>
           </size>
          </property>
+         <property name="mouseTracking">
+          <bool>false</bool>
+         </property>
          <property name="autoFillBackground">
           <bool>true</bool>
          </property>
@@ -382,8 +385,8 @@
   </customwidget>
  </customwidgets>
  <resources>
-  <include location="icons.qrc"/>
   <include location="../Unseengui/unseengui.qrc"/>
+  <include location="icons.qrc"/>
  </resources>
  <connections/>
 </ui>

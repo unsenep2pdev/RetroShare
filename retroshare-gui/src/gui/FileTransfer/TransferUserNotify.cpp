@@ -23,6 +23,8 @@
 #include "gui/notifyqt.h"
 #include "gui/MainWindow.h"
 
+#include <retroshare/rsfiles.h>
+
 TransferUserNotify::TransferUserNotify(QObject *parent) :
 	UserNotify(parent)
 {
@@ -74,3 +76,4 @@ void TransferUserNotify::downloadCountChanged(int count)
 	newTransferCount = count;
 	updateIcon();
 }
+

@@ -71,7 +71,7 @@ typedef RsGxsTunnelService::RsGxsTunnelId RsGxsTunnelId;
 
 DistantChatService::DistantChatService()  : mDistantChatMtx("distant chat")
 {
-	mGxsTunnels = NULL ;
+    mGxsTunnels = mGxsTunnels ;
 	mDistantChatPermissions = RS_DISTANT_CHAT_CONTACT_PERMISSION_FLAG_FILTER_NONE ;	// default: accept everyone
 }
 
@@ -143,7 +143,7 @@ bool DistantChatService::acceptDataFromPeer(const RsGxsId& gxs_id,const RsGxsTun
         return true ;
     
     if(mDistantChatPermissions & RS_DISTANT_CHAT_CONTACT_PERMISSION_FLAG_FILTER_NON_CONTACTS)
-        res = (rsIdentity!=NULL) && rsIdentity->isARegularContact(gxs_id) ;
+        res = (rsIdentity!=NULL) && (rsIdentity->isARegularContact(gxs_id) || rsIdentity->validContact(gxs_id));
     
     if(mDistantChatPermissions & RS_DISTANT_CHAT_CONTACT_PERMISSION_FLAG_FILTER_EVERYBODY)
         res = false ;
@@ -240,7 +240,9 @@ void DistantChatService::receiveData(const RsGxsTunnelService::RsGxsTunnelId &tu
     {
 	    item->PeerId(RsPeerId(tunnel_id)) ;	// just in case, but normally this is already done.
 
-	    handleIncomingItem(item) ;
+        std::cerr << "DistantChatService::receiveData() Item:" << (void*)item <<std::endl;
+
+        handleIncomingItem(item) ;
 	    RsServer::notify()->notifyListChange(NOTIFY_LIST_PRIVATE_INCOMING_CHAT, NOTIFY_TYPE_ADD);
     }
     else
@@ -265,10 +267,12 @@ bool DistantChatService::initiateDistantChatConnexion(
 {
     RsGxsTunnelId tunnel_id ;
 
+
     if(!mGxsTunnels->requestSecuredTunnel(to_gxs_id,from_gxs_id,tunnel_id,DISTANT_CHAT_GXS_TUNNEL_SERVICE_ID,error_code))
 	    return false ;
 
     dcpid = DistantChatPeerId(tunnel_id) ;
+
 
     DistantChatContact& dc_contact(mDistantChatContacts[dcpid]) ;
 

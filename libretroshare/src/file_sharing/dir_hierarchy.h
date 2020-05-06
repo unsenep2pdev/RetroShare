@@ -150,7 +150,6 @@ public:
     // gets statistics about share files
 
     void getStatistics(SharedDirStats& stats) const ;
-
 private:
     void recursPrint(int depth,DirectoryStorage::EntryIndex node) const;
     static bool nodeAccessError(const std::string& s);

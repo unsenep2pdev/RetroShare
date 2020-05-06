@@ -244,7 +244,7 @@ RsPeerId    ChatId::toPeerId()  const
     }
 }
 
-DistantChatPeerId     ChatId::toDistantChatId()   const
+DistantChatPeerId ChatId::toDistantChatId()   const
 {
     if(type == TYPE_PRIVATE_DISTANT)
         return distant_chat_id;
@@ -264,6 +264,32 @@ ChatLobbyId ChatId::toLobbyId() const
         return 0;
     }
 }
+
+//unseenp2p - for gxsGroupId - for chatDialog of UnseenGxsChatLobbyDialog
+gxsChatId::gxsChatId()
+{
+}
+
+gxsChatId::gxsChatId(RsGxsGroupId groupid)
+{
+    groupId = groupid;
+}
+
+RsGxsGroupId gxsChatId::toGxsGroupId() const
+{
+    return groupId;
+}
+
+bool gxsChatId::operator <(const gxsChatId& other) const
+{
+    return groupId < other.groupId;
+}
+
+bool gxsChatId::isSameEndpoint(const gxsChatId &other) const
+{
+    return groupId == other.groupId;
+}
+
 
 bool p3Msgs::getMessageSummaries(std::list<MsgInfoSummary> &msgList)
 {

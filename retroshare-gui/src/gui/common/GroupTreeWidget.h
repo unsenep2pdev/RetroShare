@@ -60,6 +60,8 @@ public:
 	bool      adminKey;
     quint32  subscribeFlags;
     quint32  max_visible_posts ;
+    long long lastMsgDatetime;  //unseenp2p: for sorting: lastpost --> QDateTime::currentDateTime().toTime_t()
+    QString authorOfLastMsg;    //unseenp2p: for show on the gxs conversation list
 };
 
 //cppcheck-suppress noConstructor

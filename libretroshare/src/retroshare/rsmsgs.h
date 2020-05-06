@@ -30,6 +30,7 @@
 
 #include "rstypes.h"
 #include "rsgxsifacetypes.h"
+#include "retroshare/rsgxschats.h"
 
 /********************** For Messages and Channels *****************/
 
@@ -343,7 +344,7 @@ private:
 		TYPE_PRIVATE,            // private chat with directly connected friend, peer_id is valid
 		TYPE_PRIVATE_DISTANT,    // private chat with distant peer, gxs_id is valid
 		TYPE_LOBBY,              // chat lobby id, lobby_id is valid
-		TYPE_BROADCAST           // message to/from all connected peers
+        TYPE_BROADCAST           // message to/from all connected peers
 	};
 
     Type type;
@@ -362,6 +363,41 @@ public:
 	}
 };
 
+
+class gxsChatId : RsSerializable
+{
+public:
+    gxsChatId();
+    explicit gxsChatId(RsGxsGroupId  groupId);
+
+    enum RsGxsChatGroup::ChatType gxsChatType;
+    std::string toStdString() const;
+
+    RsGxsGroupId    toGxsGroupId()  const;
+    bool operator<(const gxsChatId& other) const;
+    bool isSameEndpoint(const gxsChatId& other) const;
+
+
+    bool operator==(const gxsChatId& other) const { return isSameEndpoint(other) ; }
+private:
+
+//    enum Type : uint8_t
+//    {	TYPE_NOT_SET,
+//        TYPE_GXSONE2ONE,
+//        TYPE_GXSGROUPCHAT,
+//        TYPE_GXSCHANNEL
+//    };
+
+//    Type type;
+    RsGxsGroupId  groupId;
+    // RsSerializable interface
+public:
+    void serial_process(RsGenericSerializer::SerializeJob j, RsGenericSerializer::SerializeContext &ctx) {
+        RS_SERIAL_PROCESS(groupId);
+        RS_SERIAL_PROCESS(gxsChatType);
+    }
+};
+
 class ChatMessage
 {
 public:
@@ -378,6 +414,8 @@ public:
     bool online; // for outgoing messages: was this message send?
     bool unread;
     //bool system_message;
+    //unseenp2p - for gxs chat
+    gxsChatId gxs_ChatId;
 };
 
 class ChatLobbyInvite : RsSerializable

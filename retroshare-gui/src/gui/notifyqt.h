@@ -10,6 +10,7 @@
 #include <QPoint>
 //#include <QMutex>
 
+#include <retroshare/rsgxschats.h>
 #include <string>
 
 class QTimer;
@@ -63,12 +64,14 @@ class NotifyQt: public QObject, public NotifyClient
 		/* one or more peers has changed the states */
 		virtual void notifyPeerStatusChangedSummary();
 
+        virtual void notifyGxsContactStatusChanged(const std::string& gxs_id,   uint32_t  status);
+
         virtual void notifyGxsChange(const RsGxsChanges& change);
 
 		virtual void notifyHistoryChanged(uint32_t msgId, int type);
 
 		virtual void notifyDiscInfoChanged() ;
-		virtual void notifyDownloadComplete(const std::string& fileHash);
+        virtual void notifyDownloadComplete(const std::string& fileHash);
 		virtual void notifyDownloadCompleteCount(uint32_t count);
 		virtual bool askForPassword(const std::string& title, const std::string& key_details, bool prev_is_bad, std::string& password, bool &cancelled);
 		virtual bool askForPluginConfirmation(const std::string& plugin_filename, const std::string& plugin_file_hash,bool first_time);
@@ -95,7 +98,11 @@ class NotifyQt: public QObject, public NotifyClient
 		void testToaster(ToasterNotify *toasterNotify, /*RshareSettings::enumToasterPosition*/ int position, QPoint margin);
 		void testToaster(QString tag, ToasterNotify *toasterNotify, /*RshareSettings::enumToasterPosition*/ int position, QPoint margin);
 
-		void notifySettingsChanged();
+        void notifySettingsChanged();
+
+        //unseenp2p: gxs bouncing signal: typing
+        virtual void receiveGxsChatTyping(const RsGxsGroupId, const std::string, const RsPeerId, const RsGxsId );
+        virtual void NotifyCreateNewGroup(const RsGxsGroupId );
 
 	signals:
 		// It's beneficial to send info to the GUI using signals, because signals are thread-safe
@@ -128,6 +135,8 @@ class NotifyQt: public QObject, public NotifyClient
 		void diskFull(int,int) const ;
 		void peerStatusChanged(const QString& /* peer_id */, int /* status */);
 		void peerStatusChangedSummary() const;
+        void gxsContactStatusChanged(const QString&  gxs_id,   uint32_t  status);
+
         void gxsChange(const RsGxsChanges& /* changes  */);
 #ifdef REMOVE
 		void publicChatChanged(int type) const ;
@@ -136,7 +145,7 @@ class NotifyQt: public QObject, public NotifyClient
         void chatMessageReceived(ChatMessage msg);
 		void groupsChanged(int type) const ;
 		void discInfoChanged() const ;
-		void downloadComplete(const QString& /* fileHash */);
+        void downloadComplete(const QString&);
 		void downloadCompleteCountChanged(int /* count */);
 #ifdef REMOVE
 		void forumMsgReadSatusChanged(const QString& forumId, const QString& msgId, int status);
@@ -157,8 +166,12 @@ class NotifyQt: public QObject, public NotifyClient
         /* meiyousixin - add more notification for sort by recent time */
         void alreadySendChat(const ChatId&, std::string nickInGroupChat, long long current_time, std::string textmsg, bool);
         void newChatMessageReceive(const ChatId&, std::string nickInGroupChat, long long current_time, std::string textmsg, bool);
-
-	public slots:
+        /* meiyousixin - add more notification for sort by recent time for gxsChat*/
+        void alreadySendChat(const gxsChatId&, const RsGxsChatMsg& gxsChatMsg, std::string nickInGroupChat, long long current_time, std::string textmsg, bool);
+        void newGxsChatMessageReceive(const gxsChatId&, const RsGxsChatMsg& gxsChatMsg, std::string nickInGroupChat, long long current_time, std::string textmsg, bool);
+        void notifyReceiveGxsChatTyping(const QString, const QString, const RsPeerId, const RsGxsId) ;
+        void notifyCreateNewGxsGroup(const QString);
+public slots:
 		void UpdateGUI(); /* called by timer */
 		void SetDisableAll(bool bValue);
 		void resetCachedPassphrases() ;

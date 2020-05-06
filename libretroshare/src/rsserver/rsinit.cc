@@ -800,6 +800,7 @@ RsGRouter *rsGRouter = NULL ;
 #include "services/p3photoservice.h"
 #include "services/p3gxsforums.h"
 #include "services/p3gxschannels.h"
+#include "services/p3gxschats.h"
 #include "services/p3wire.h"
 
 #endif // RS_ENABLE_GXS
@@ -1460,6 +1461,31 @@ int RsServer::StartupRetroShare()
 
     mGxsChannels->setNetworkExchangeService(gxschannels_ns) ;
 
+
+    /**** Chat GXS service ****/
+
+    RsGeneralDataService* gxschats_ds = new RsDataService(currGxsDir + "/", "gxschats_db",
+                                                        RS_SERVICE_GXS_TYPE_CHATS, NULL, rsInitConfig->gxs_passwd);
+
+    p3GxsChats *mGxsChats = new p3GxsChats(gxschats_ds, NULL, mGxsIdService);
+
+
+    chatSrv = new p3ChatService( serviceCtrl,mGxsIdService, mLinkMgr,
+                                 mHistoryMgr, mGxsChats /* , *mGxsTrans */ );
+
+    mGxsChats->setp3ChatService(chatSrv);
+
+    // create GXS photo service
+    RsGxsNetService* gxschats_ns = new RsGxsNetService(
+                RS_SERVICE_GXS_TYPE_CHATS, gxschats_ds, nxsMgr,
+                mGxsChats, mGxsChats->getServiceInfo(),
+                mReputations, mGxsCircles,mGxsIdService,
+                pgpAuxUtils,mGxsNetTunnel,true,true,true);
+
+    gxschats_ns->setSynchronizationInterval(20); //chat sync every 20 seconds
+    mGxsChats->setNetworkExchangeService(gxschats_ns) ;
+
+
 #if 0 // PHOTO IS DISABLED FOR THE MOMENT
         /**** Photo service ****/
         RsGeneralDataService* photo_ds = new RsDataService(currGxsDir + "/", "photoV2_db",
@@ -1500,6 +1526,8 @@ int RsServer::StartupRetroShare()
 #endif
         pqih->addService(gxsforums_ns, true);
         pqih->addService(gxschannels_ns, true);
+        pqih->addService(gxschats_ns, true);
+
         //pqih->addService(photo_ns, true);
 
 #	ifdef RS_GXS_TRANS
@@ -1527,8 +1555,11 @@ int RsServer::StartupRetroShare()
 	mDisc = new p3discovery2(mPeerMgr, mLinkMgr, mNetMgr, serviceCtrl,mGxsIdService);
 	mHeart = new p3heartbeat(serviceCtrl, pqih);
 	msgSrv = new p3MsgService( serviceCtrl, mGxsIdService, *mGxsTrans );
-	chatSrv = new p3ChatService( serviceCtrl,mGxsIdService, mLinkMgr,
-	                             mHistoryMgr, *mGxsTrans );
+
+//    chatSrv = new p3ChatService( serviceCtrl,mGxsIdService, mLinkMgr,
+//                                 mHistoryMgr, mGxsChats /* , *mGxsTrans */ );
+
+    //chatSrv  =  dynamic_cast<p3ChatService*>(mGxsChats);
 	mStatusSrv = new p3StatusService(serviceCtrl);
 
 #ifdef ENABLE_GROUTER
@@ -1558,6 +1589,7 @@ int RsServer::StartupRetroShare()
 	ftserver->connectToTurtleRouter(tr) ;
     ftserver->connectToFileDatabase(fdb) ;
     chatSrv->connectToGxsTunnelService(mGxsTunnels) ;
+    mGxsIdService->connectToGxsTunnelService(mGxsTunnels);
     gr->connectToTurtleRouter(tr) ;
 #ifdef ENABLE_GROUTER
 	msgSrv->connectToGlobalRouter(gr) ;
@@ -1567,7 +1599,7 @@ int RsServer::StartupRetroShare()
 	pqih -> addService(mHeart,true);
 	pqih -> addService(mDisc,true);
 	pqih -> addService(msgSrv,true);
-	pqih -> addService(chatSrv,true);
+    pqih -> addService(chatSrv,true);
 	pqih -> addService(mStatusSrv,true);
 	pqih -> addService(mGxsTunnels,true);
 	pqih -> addService(mReputations,true);
@@ -1597,7 +1629,8 @@ int RsServer::StartupRetroShare()
     interfaces.mPgpAuxUtils     = pgpAuxUtils;
     interfaces.mGxsForums       = mGxsForums;
     interfaces.mGxsChannels     = mGxsChannels;
-	interfaces.mGxsTunnels = mGxsTunnels;
+    interfaces.mGxsChats        = mGxsChats;
+    interfaces.mGxsTunnels = mGxsTunnels;
     interfaces.mReputations     = mReputations;
     
 	mPluginsManager->setInterfaces(interfaces);
@@ -1730,6 +1763,8 @@ int RsServer::StartupRetroShare()
 	mConfigMgr->addConfiguration("gxsforums_srv.cfg", mGxsForums);
 	mConfigMgr->addConfiguration("gxschannels.cfg" , gxschannels_ns);
 	mConfigMgr->addConfiguration("gxschannels_srv.cfg", mGxsChannels);
+    mConfigMgr->addConfiguration("gxschats.cfg" , gxschats_ns);
+    mConfigMgr->addConfiguration("gxschats_srv.cfg", mGxsChats);
 	mConfigMgr->addConfiguration("gxscircles.cfg"  , gxscircles_ns);
 	mConfigMgr->addConfiguration("posted.cfg"      , posted_ns);
 #ifdef RS_USE_WIKI
@@ -1896,6 +1931,7 @@ int RsServer::StartupRetroShare()
     rsPosted = mPosted;
     rsGxsForums = mGxsForums;
     rsGxsChannels = mGxsChannels;
+    rsGxsChats = mGxsChats;
     rsGxsTrans = mGxsTrans;
 
     //rsPhoto = mPhoto;
@@ -1912,6 +1948,7 @@ int RsServer::StartupRetroShare()
 #endif
 	startServiceThread(mGxsForums, "gxs forums");
 	startServiceThread(mGxsChannels, "gxs channels");
+    startServiceThread(mGxsChats, "gxs chats");
 
 	//createThread(*mPhoto);
 	//createThread(*mWire);
@@ -1925,6 +1962,7 @@ int RsServer::StartupRetroShare()
 #endif
 	startServiceThread(gxsforums_ns, "gxs forums ns");
 	startServiceThread(gxschannels_ns, "gxs channels ns");
+    startServiceThread(gxschats_ns, "gxs chats ns");
 
 	//createThread(*photo_ns);
 	//createThread(*wire_ns);

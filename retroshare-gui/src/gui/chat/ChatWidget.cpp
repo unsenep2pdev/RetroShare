@@ -62,6 +62,8 @@
 #include <retroshare/rsmsgs.h>
 #include <retroshare/rsplugin.h>
 
+#include "gui/feeds/SubFileItem.h"
+
 #include <time.h>
 
 #define FMM 2.5//fontMetricsMultiplicator
@@ -183,6 +185,10 @@ ChatWidget::ChatWidget(QWidget *parent)
 	ui->actionShow_Hidden_Images->setIcon(ui->textBrowser->getBlockedImage());
 
 	connect(ui->hashBox, SIGNAL(fileHashingFinished(QList<HashedFile>)), this, SLOT(fileHashingFinished(QList<HashedFile>)));
+    //unseenp2p - add for gxsfile - in gxsChat tab
+    //connect(ui->hashBox, SIGNAL(gxsfileHashingFinishedForGUI(QList<HashedFile>,std::list<SubFileItem *>)), this, SLOT(gxsfileHashingFinishedForGUI(QList<HashedFile>, std::list<SubFileItem *>)));
+    connect(ui->hashBox, SIGNAL(gxsfileHashingFinishedForGUI(QList<HashedFile>)), this, SLOT(gxsfileHashingFinishedForGUI(QList<HashedFile>)));
+    //connect(ui->hashBox, SIGNAL(gxsfileHashingFinished(std::list<SubFileItem *>)), this, SLOT(gxsfileHashingFinished(std::list<SubFileItem *>>)));
 
 	connect(NotifyQt::getInstance(), SIGNAL(peerStatusChanged(const QString&, int)), this, SLOT(updateStatus(const QString&, int)));
 	connect(NotifyQt::getInstance(), SIGNAL(peerHasNewCustomStateString(const QString&, const QString&)), this, SLOT(updatePeersCustomStateString(const QString&, const QString&)));
@@ -196,7 +202,7 @@ ChatWidget::ChatWidget(QWidget *parent)
 	connect(ui->chatTextEdit, SIGNAL(textChanged()), this, SLOT(updateLenOfChatTextEdit()));
 
 	ui->infoFrame->setVisible(false);
-	ui->statusMessageLabel->hide();
+//	ui->statusMessageLabel->hide();
 
 	setAcceptDrops(true);
 	ui->chatTextEdit->setAcceptDrops(false);
@@ -275,6 +281,24 @@ ChatWidget::~ChatWidget()
 	}
 
 	delete ui;
+}
+
+static QString getHumanReadableDuration(uint32_t seconds)
+{
+    if(seconds < 60)
+        return QString(QObject::tr("%1 seconds ago")).arg(seconds) ;
+    else if(seconds < 120)
+        return QString(QObject::tr("%1 minute ago")).arg(seconds/60) ;
+    else if(seconds < 3600)
+        return QString(QObject::tr("%1 minutes ago")).arg(seconds/60) ;
+    else if(seconds < 7200)
+        return QString(QObject::tr("%1 hour ago")).arg(seconds/3600) ;
+    else if(seconds < 24*3600)
+        return QString(QObject::tr("%1 hours ago")).arg(seconds/3600) ;
+    else if(seconds < 2*24*3600)
+        return QString(QObject::tr("%1 day ago")).arg(seconds/86400) ;
+    else
+        return QString(QObject::tr("%1 days ago")).arg(seconds/86400) ;
 }
 
 void ChatWidget::setDefaultExtraFileFlags(TransferRequestFlags fl)
@@ -431,9 +455,109 @@ void ChatWidget::init(const ChatId &chat_id, const QString &title)
 	processSettings(true);
 }
 
+void ChatWidget::showChatInbox(bool iShow)
+{
+    if (iShow)
+    {
+        ui->chatTextEdit->show();
+        ui->toolBarFrame->show();
+        ui->chatTextEditHSplitter->show();
+    }
+    else
+    {
+        ui->chatTextEdit->hide();
+        ui->toolBarFrame->hide();
+        ui->chatTextEditHSplitter->hide();
+    }
+}
+
+void ChatWidget::init(const gxsChatId &chat_id, const QString &title)
+{
+    this->mGxsChatId = chat_id;
+    this->mGxsChatId.gxsChatType = chat_id.gxsChatType;
+    this->title = title;
+
+    std::cerr << "In ChatWidget:: here we need to set the gxsChatType: " << chat_id.gxsChatType << std::endl;
+    this->setGxsChatType(chat_id.gxsChatType);
+
+    RsGxsChatGroup gxsChatGroup = getGxsChatGroup();
+
+    if(gxsChatGroup.type == RsGxsChatGroup::CHANNEL)
+    {
+        if (!IS_GROUP_ADMIN(gxsChatGroup.mMeta.mSubscribeFlags) && IS_GROUP_SUBSCRIBED(gxsChatGroup.mMeta.mSubscribeFlags))
+        {
+            showChatInbox(false);
+
+        }
+        else if (!IS_GROUP_ADMIN(gxsChatGroup.mMeta.mSubscribeFlags) && IS_GROUP_PUBLISHER(gxsChatGroup.mMeta.mSubscribeFlags))
+        {
+            //publisher can send the msg
+            showChatInbox(true);
+        }
+    }
+
+    ui->statusLabel->hide();
+    ui->titleLabel->setText(RsHtml::plainText(title));
+    ui->chatTextEdit->setMaxBytes(this->maxMessageSize() - 200);
+
+    RsPeerId ownId = rsPeers->getOwnId();
+    setName(QString::fromUtf8(rsPeers->getPeerName(ownId).c_str()));
+
+    chatStyle.setStyleFromSettings(ChatStyle::TYPE_PUBLIC);
+//    currentColor.setNamedColor(PeerSettings->getPrivateChatColor(chatId));
+//    currentFont.fromString(PeerSettings->getPrivateChatFont(chatId));
+
+    colorChanged();
+    setColorAndFont(true);
+
+    resetStatusStringInGroup();
+
+    // load style
+//    PeerSettings->getStyle(chatId, "ChatWidget", style);
+
+    /* Add plugin functions */
+    int pluginCount = rsPlugins->nbPlugins();
+    for (int i = 0; i < pluginCount; ++i) {
+        RsPlugin *plugin = rsPlugins->plugin(i);
+        if (plugin) {
+            ChatWidgetHolder *chatWidgetHolder = plugin->qt_get_chat_widget_holder(this);
+            if (chatWidgetHolder) {
+                mChatWidgetHolder.push_back(chatWidgetHolder);
+            }
+        }
+    }
+
+    uint32_t hist_chat_type = RS_HISTORY_TYPE_GXSGROUPCHAT; // a value larger than the biggest RS_HISTORY_TYPE_* value
+    int messageCount=0;
+
+    ChatWidget::ChatType _chatType = this->chatType();
+    if (_chatType == CHATTYPE_GXSGROUPCHAT || _chatType == CHATTYPE_GXSONE2ONE || _chatType == CHATTYPE_GXSCHANNEL)
+    {
+        messageCount=100;   //just for testing gxs groupchat
+    }
+
+    if (rsHistory->getEnable(hist_chat_type))
+    {
+        // get chat messages from history
+        std::list<HistoryMsg> historyMsgs;
+
+        if (messageCount > 0)
+        {
+            //TODO: need to replace this one by gxs groupchat function
+        }
+    }
+
+    processSettings(true);
+}
+
 ChatId ChatWidget::getChatId()
 {
     return chatId;
+}
+//unseenp2p - for gxs groupchat
+gxsChatId ChatWidget::getGxsChatId()
+{
+    return mGxsChatId;
 }
 
 ChatWidget::ChatType ChatWidget::chatType()
@@ -450,7 +574,28 @@ ChatWidget::ChatType ChatWidget::chatType()
     if(chatId.isLobbyId())
         return CHATTYPE_LOBBY;
 
+    if (chatId.isNotSet() || !mGxsChatId.toGxsGroupId().isNull())
+    {
+        if(gxsChatType == RsGxsChatGroup::GROUPCHAT)
+            return CHATTYPE_GXSGROUPCHAT;
+        else if (gxsChatType == RsGxsChatGroup::ONE2ONE)
+            return CHATTYPE_GXSONE2ONE;
+        else if (gxsChatType == RsGxsChatGroup::CHANNEL)
+            return CHATTYPE_GXSCHANNEL;
+    }
+
+
     return CHATTYPE_UNKNOWN;
+}
+
+RsGxsChatGroup::ChatType ChatWidget::getGxsChatType()
+{
+    return gxsChatType;
+}
+
+void ChatWidget::setGxsChatType(RsGxsChatGroup::ChatType chatType)
+{
+    gxsChatType = chatType;
 }
 
 void ChatWidget::blockSending(QString msg)
@@ -963,6 +1108,13 @@ void ChatWidget::setNotify(ChatLobbyUserNotify *clun)
 	if(clun) notify=clun;
 }
 
+//unseenp2p
+void ChatWidget::setGxsNotify(GxsChatUserNotify *gxsUn)
+{
+    if(gxsUn) gxsChatNotify=gxsUn;
+}
+
+
 void ChatWidget::on_notifyButton_clicked()
 {
 	if(!notify) return;
@@ -1098,6 +1250,8 @@ void ChatWidget::addChatMsg(bool incoming, const QString &name, const RsGxsId gx
 	textCursor.setBlockFormat(QTextBlockFormat ());
 	ui->textBrowser->append(formatMsg);
 
+    //ui->textBrowser->setText("just testing!!!");
+
 	if (ui->leSearch->isVisible()) {
 		QString qsTextToFind=ui->leSearch->text();
 		findText(qsTextToFind);
@@ -1114,10 +1268,166 @@ void ChatWidget::addChatMsg(bool incoming, const QString &name, const RsGxsId gx
 
 		emit infoChanged(this);
 
+        /* meiyousixin - update recent time when user send msg, need to sort the contact list by recent time */
+        if (this->chatType() == CHATTYPE_PRIVATE || this->chatType() == CHATTYPE_LOBBY )
+        {
+            std::string nickInGroupChat = "You";
+            long long current_time = QDateTime::currentSecsSinceEpoch();
+            emit NotifyQt::getInstance()->newChatMessageReceive(this->chatId, name.toStdString(), current_time, message.toStdString(), false);
+        }
+        // this for gxs chat recent time, sort the gxschat conversation list
+//        else if (this->chatType() == CHATTYPE_GXSGROUPCHAT)
+//        {
+//            long long current_time = QDateTime::currentSecsSinceEpoch();
+//            std::string nickInGroupChat = "You";
+//            emit NotifyQt::getInstance()->newGxsChatMessageReceive(this->getGxsChatId(), RsGxsChatMsg(), name.toStdString(), current_time, message.toStdString(), false);
+//        }
         /* meiyousixin - need to update the recent time and sort the chat list */
-        long long current_time = QDateTime::currentSecsSinceEpoch();
-        emit NotifyQt::getInstance()->newChatMessageReceive(this->chatId, name.toStdString(), current_time, message.toStdString(), false);
+
 	}
+}
+
+void ChatWidget::addChatMsg(bool incoming, const QString &name, const RsGxsChatMsg gxsChatMsg
+                            , const QDateTime &sendTime, const QDateTime &recvTime
+                            , const QString &message, MsgType chatType)
+{
+#ifdef CHAT_DEBUG
+    std::cout << "ChatWidget::addChatMsg message : " << message.toStdString() << std::endl;
+#endif
+
+    unsigned int formatTextFlag = RSHTML_FORMATTEXT_EMBED_LINKS | RSHTML_FORMATTEXT_OPTIMIZE;
+    unsigned int formatFlag = 0;
+
+    bool addDate = false;
+    if (QDate::currentDate()>lastMsgDate)
+     {
+         addDate=true;
+    }
+
+    // embed smileys ?
+    if (Settings->valueFromGroup(QString("Chat"), QString::fromUtf8("Emoteicons_PrivatChat"), true).toBool()) {
+        if (!message.contains("NoEmbed=\"true\""))
+            formatTextFlag |= RSHTML_FORMATTEXT_EMBED_SMILEYS;
+    }
+
+#ifdef USE_CMARK
+    //Use CommonMark
+    if (message.contains("CMark=\"true\"")) {
+        formatTextFlag |= RSHTML_FORMATTEXT_USE_CMARK;
+    }
+#endif
+
+    // Always fix colors
+    formatTextFlag |= RSHTML_FORMATTEXT_FIX_COLORS;
+    qreal desiredContrast = Settings->valueFromGroup("Chat", "MinimumContrast", 4.5).toDouble();
+    QColor backgroundColor = ui->textBrowser->palette().base().color();
+
+    // Remove font name, size, bold, italics?
+    if (!Settings->valueFromGroup("Chat", "EnableCustomFonts", true).toBool()) {
+        formatTextFlag |= RSHTML_FORMATTEXT_REMOVE_FONT_FAMILY;
+    }
+    if (!Settings->valueFromGroup("Chat", "EnableCustomFontSize", true).toBool()) {
+        formatTextFlag |= RSHTML_FORMATTEXT_REMOVE_FONT_SIZE;
+    }
+    int desiredMinimumFontSize = Settings->valueFromGroup("Chat", "MinimumFontSize", 10).toInt();
+    if (!Settings->valueFromGroup("Chat", "EnableBold", true).toBool()) {
+        formatTextFlag |= RSHTML_FORMATTEXT_REMOVE_FONT_WEIGHT;
+    }
+    if (!Settings->valueFromGroup("Chat", "EnableItalics", true).toBool()) {
+        formatTextFlag |= RSHTML_FORMATTEXT_REMOVE_FONT_STYLE;
+    }
+
+    ChatStyle::enumFormatMessage type;
+    if (chatType == MSGTYPE_OFFLINE) {
+        type = ChatStyle::FORMATMSG_OOUTGOING;
+    } else if (chatType == MSGTYPE_SYSTEM) {
+        type = ChatStyle::FORMATMSG_SYSTEM;
+    } else if (chatType == MSGTYPE_HISTORY || addDate) {
+        lastMsgDate=QDate::currentDate();
+        type = incoming ? ChatStyle::FORMATMSG_HINCOMING : ChatStyle::FORMATMSG_HOUTGOING;
+    } else {
+        type = incoming ? ChatStyle::FORMATMSG_INCOMING : ChatStyle::FORMATMSG_OUTGOING;
+    }
+
+    if (chatType == MSGTYPE_SYSTEM) {
+        formatFlag |= CHAT_FORMATMSG_SYSTEM;
+    }
+
+    QString formattedMessage = RsHtml().formatText(ui->textBrowser->document(), message, formatTextFlag, backgroundColor, desiredContrast, desiredMinimumFontSize);
+    QDateTime dtTimestamp=incoming ? sendTime : recvTime;
+    QString formatMsg = chatStyle.formatMessage(type, name, dtTimestamp, formattedMessage, formatFlag, backgroundColor);
+    QString timeStamp = dtTimestamp.toString(Qt::ISODate);
+
+    //replace Date and Time anchors
+    formatMsg.replace(QString("<a name=\"date\">"),QString("<a name=\"%1\">").arg(timeStamp));
+    formatMsg.replace(QString("<a name=\"time\">"),QString("<a name=\"%1\">").arg(timeStamp));
+    //replace Name anchors with GXS Id
+    RsGxsId gxsId = gxsChatMsg.mMeta.mAuthorId;
+    if (!gxsId.isNull()) {
+        RsIdentityDetails details;
+        QString strPreName = "";
+
+        QString strGxsId = QString::fromStdString(gxsId.toStdString());
+        rsIdentity->getIdDetails(gxsId, details);
+        bool isUnsigned = !(details.mFlags & RS_IDENTITY_FLAGS_PGP_LINKED);
+        if(isUnsigned && ui->textBrowser->getShowImages()) {
+            QIcon icon = QIcon(":/icons/anonymous_blue_128.png");
+            int height = ui->textBrowser->fontMetrics().height()*0.8;
+            QImage image(icon.pixmap(height,height).toImage());
+            QByteArray byteArray;
+            QBuffer buffer(&byteArray);
+            image.save(&buffer, "PNG"); // writes the image in PNG format inside the buffer
+            QString iconBase64 = QString::fromLatin1(byteArray.toBase64().data());
+            strPreName = QString("<img src=\"data:image/png;base64,%1\" alt=\"[unsigned]\" />").arg(iconBase64);
+        }
+
+        formatMsg.replace(QString("<a name=\"name\">")
+                          ,QString(strPreName).append("<a name=\"").append(PERSONID).append("%1 %2\">").arg(strGxsId, isUnsigned ? tr(" Unsigned"):""));
+    } else {
+        formatMsg.replace(QString("<a name=\"name\">"),"");
+    }
+
+    QTextCursor textCursor = QTextCursor(ui->textBrowser->textCursor());
+    textCursor.movePosition(QTextCursor::End);
+    textCursor.setBlockFormat(QTextBlockFormat ());
+    ui->textBrowser->append(formatMsg);
+
+    //ui->textBrowser->setText("just testing!!!");
+
+    if (ui->leSearch->isVisible()) {
+        QString qsTextToFind=ui->leSearch->text();
+        findText(qsTextToFind);
+    }
+
+    resetStatusBar();
+
+    //if (incoming && chatType == MSGTYPE_NORMAL)
+    if (chatType == MSGTYPE_NORMAL) //all messages are receiving from backend, even this user receives it
+    {
+        emit newMessage(this);
+
+        if (!isActive()) {
+            newMessages = true;
+        }
+
+        emit infoChanged(this);
+
+        // this for gxs chat recent time, sort the gxschat conversation list
+        if (this->chatType() == CHATTYPE_GXSGROUPCHAT || this->chatType() == CHATTYPE_GXSONE2ONE || this->chatType() == CHATTYPE_GXSCHANNEL )
+        {
+            long long current_time = QDateTime::currentSecsSinceEpoch();
+            std::string nickInGroupChat = "You";
+            emit NotifyQt::getInstance()->newGxsChatMessageReceive(this->getGxsChatId(), gxsChatMsg, name.toStdString(), current_time, message.toStdString(), false);
+        }
+        /* meiyousixin - need to update the recent time and sort the chat list */
+
+    }
+//    if(!incoming && chatType == MSGTYPE_NORMAL)
+//    {
+//        long long current_time = QDateTime::currentSecsSinceEpoch();
+//        emit NotifyQt::getInstance()->alreadySendChat(this->getGxsChatId(), gxsChatMsg, name.toStdString(), current_time, message.toStdString(), true);
+//    }
+
 }
 
 bool ChatWidget::isActive()
@@ -1207,12 +1517,88 @@ void ChatWidget::chatCharFormatChanged()
 
 void ChatWidget::resetStatusBar()
 {
-	ui->typingLabel->clear();
-	ui->typingPixmapLabel->clear();
+        ui->typingLabel->clear();
+        ui->typingPixmapLabel->clear();
 
 	typing = false;
 
 	emit infoChanged(this);
+}
+
+RsGxsChatGroup ChatWidget::getGxsChatGroup()
+{
+    std::list<RsGxsGroupId> groupIdList;
+    groupIdList.push_back(getGxsChatId().toGxsGroupId());
+    std::vector<RsGxsChatGroup> chatInfos;
+
+    if (rsGxsChats->getChatsInfo(groupIdList, chatInfos))
+    {
+        if(chatInfos.size() > 0)
+        {
+            return chatInfos[0];
+        }
+    }
+    return RsGxsChatGroup();
+}
+
+QString ChatWidget::getStatusForThisGroup()
+{
+
+    int memberNumber = 2;
+    int count = 0;
+    QString text;
+    RsGxsChatGroup gxsChatGroup = getGxsChatGroup();
+
+    if(gxsChatGroup.type == RsGxsChatGroup::ONE2ONE)
+    {
+        RsGxsId gxsId;
+        for(std::set<GxsChatMember>::iterator it = gxsChatGroup.members.begin(); it != gxsChatGroup.members.end(); ++it)
+        {
+            if((*it).chatPeerId != rsPeers->getOwnId())
+            {
+                gxsId = (*it).chatGxsId  ;
+                break;
+            }
+        }
+        RsIdentityDetails detail;
+        QString lastMsgStatus  = "last seen ";
+        if (!gxsId.isNull() && !rsIdentity->getIdDetails(gxsId, detail))
+        {
+            text = lastMsgStatus + "long time ago";
+        }
+        else
+        {
+            time_t now = time(NULL) ;
+            lastMsgStatus += getHumanReadableDuration(now - detail.mLastUsageTS) ;
+            text = lastMsgStatus;
+        }
+
+    }
+    else
+    {
+        memberNumber = (int) gxsChatGroup.members.size();
+        for(std::set<GxsChatMember>::iterator it = gxsChatGroup.members.begin(); it != gxsChatGroup.members.end(); ++it)
+        {
+            if((*it).chatPeerId != rsPeers->getOwnId() && rsPeers->isOnline( (*it).chatPeerId)) ++count;
+        }
+
+        text = QString("%1 members, %2 online").arg(memberNumber).arg(count+1);
+    }
+
+
+    return text;
+}
+
+void ChatWidget::resetStatusStringInGroup()
+{
+    QString status_text = getStatusForThisGroup();
+    ui->statusMessageLabel->setText(status_text);
+
+    ui->titleLabel->setAlignment ( Qt::AlignVCenter );
+    ui->statusLabel->setAlignment ( Qt::AlignVCenter );
+
+    typing = false;
+
 }
 
 void ChatWidget::updateStatusTyping()
@@ -1224,7 +1610,22 @@ void ChatWidget::updateStatusTyping()
 #ifdef ONLY_FOR_LINGUIST
 		tr("is typing...");
 #endif
-		rsMsgs->sendStatusString(chatId, "is typing...");
+        if(!chatId.isNotSet())
+        {
+            rsMsgs->sendStatusString(chatId, "is typing...");
+
+        }
+        else if (chatType() == CHATTYPE_GXSGROUPCHAT || this->chatType() == CHATTYPE_GXSONE2ONE || this->chatType() == CHATTYPE_GXSCHANNEL)
+        {
+            RsGxsGroupId groupId = mGxsChatId.toGxsGroupId();
+            std::pair<std::string, std::string> commandForTyping;
+            RsPeerId thisPeer = rsPeers->getOwnId();
+
+            commandForTyping = {thisPeer.toStdString(),"typing"};
+            if (rsGxsChats)
+                rsGxsChats->publishNotifyMessage(groupId,commandForTyping);
+        }
+
 		lastStatusSendTime = time(NULL) ;
 	}
 }
@@ -1256,6 +1657,12 @@ void ChatWidget::updateLenOfChatTextEdit()
 	ui->sendButton->setToolTip(text);
 	ui->chatTextEdit->setToolTip(text);
 }
+
+////////////////////////////////////////////////////////////////////////////////
+/// //Unseenp2p - need to separate some types of chat:
+///  1. normal (one2one ssl + groupchat) chat
+///  2. gxs chat (use gxs post) for both one2one and gxs groupchat + channel
+////////////////////////////////////////////////////////////////////////////////
 
 void ChatWidget::sendChat()
 {
@@ -1290,28 +1697,81 @@ void ChatWidget::sendChat()
 #ifdef CHAT_DEBUG
 	std::cout << "ChatWidget:sendChat " << std::endl;
 #endif
-    rsMsgs->sendChat(chatId, msg);
-
+    //TODO: use gxsChatId to send msg?
     std::string textToSignal = chatWidget->toPlainText().toStdString();
+
+    uint32_t token;
+    RsGxsChatMsg post;
+    ChatWidget::ChatType _chatType = this->chatType();
+    if (_chatType == CHATTYPE_PRIVATE || _chatType == CHATTYPE_LOBBY  )
+    {
+        rsMsgs->sendChat(chatId, msg);
+    }
+    else if (_chatType == CHATTYPE_GXSGROUPCHAT || _chatType == CHATTYPE_GXSONE2ONE || _chatType == CHATTYPE_GXSCHANNEL)
+    {       
+        if (rsGxsChats)
+        {
+            post.mMeta.mGroupId = getGxsChatId().toGxsGroupId();
+            post.mMeta.mParentId.clear() ;
+            post.mMeta.mThreadId.clear() ;
+            post.mMeta.mMsgId.clear() ;
+
+            //post.mMeta.mOrigMsgId = mOrigPostId;
+            post.mMeta.mMsgName = "";
+
+            //unseenp2p - add author gxsid
+            std::list<RsGxsId> gxsIdList;
+            rsIdentity->getOwnIds(gxsIdList);
+            if(!gxsIdList.empty())
+            {
+                post.mMeta.mAuthorId = gxsIdList.front() ;
+            }
+            //unseenp2p - add more timestamp
+            post.mMeta.mPublishTs = QDateTime::currentSecsSinceEpoch();
+
+            if (mAttachments.size() > 0)
+            {
+                QList<RsGxsFile>::iterator fit;
+                for(fit = mAttachments.begin(); fit != mAttachments.end(); ++fit)
+                {
+                    RsGxsFile fi;
+                    fi.mName = fit->mName;
+                    fi.mSize = fit->mSize;
+                    fi.mHash = fit->mHash;
+                    post.mFiles.push_back(fi);
+                }
+
+                post.mMsg = msg;
+                mAttachments.clear(); //if not clear, the next msg will still take this mAttachments to check
+            }
+            else
+                post.mMsg = textToSignal;
+
+            rsGxsChats->createPost(token, post);
+        }
+    }
+
+
 	chatWidget->clear();
 	// workaround for Qt bug - http://bugreports.qt.nokia.com/browse/QTBUG-2533
 	// QTextEdit::clear() does not reset the CharFormat if document contains hyperlinks that have been accessed.
 	chatWidget->setCurrentCharFormat(QTextCharFormat ());
 
     /* meiyousixin - update recent time when user send msg, need to sort the contact list by recent time */
-    if (this->chatType() == CHATTYPE_PRIVATE || this->chatType() == CHATTYPE_LOBBY )
+    if (_chatType == CHATTYPE_PRIVATE || _chatType == CHATTYPE_LOBBY )
     {
         //unsigned int current_time = QDateTime::currentDateTime().toTime_t();
         long long current_time = QDateTime::currentSecsSinceEpoch();
         std::string nickInGroupChat = "You";
-        emit NotifyQt::getInstance()->alreadySendChat(this->getChatId(), nickInGroupChat, current_time, textToSignal, true);
+        emit NotifyQt::getInstance()->alreadySendChat(this->getChatId(), nickInGroupChat, current_time, textToSignal, true);        
+    }
 
-        //we can check the scroll position here, if it now at the end, so update it to the end
-        QScrollBar *scrollbar = ui->textBrowser->verticalScrollBar();
-        bool is_scrollbar_at_end = scrollbar->value() == scrollbar->maximum();
-        if (!is_scrollbar_at_end ) {
-            scrollbar->setValue(scrollbar->maximum());
-        }
+    // This is common, for all cases of chat,
+    //we can check the scroll position here, if it is not at the end, so update it to the end
+    QScrollBar *scrollbar = ui->textBrowser->verticalScrollBar();
+    bool is_scrollbar_at_end = scrollbar->value() == scrollbar->maximum();
+    if (!is_scrollbar_at_end ) {
+        scrollbar->setValue(scrollbar->maximum());
     }
 }
 
@@ -1625,8 +2085,17 @@ void ChatWidget::messageHistory()
 void ChatWidget::addExtraFile()
 {
 	QStringList files;
-	if (misc::getOpenFileNames(this, RshareSettings::LASTDIR_EXTRAFILE, tr("Add Extra File"), "", files)) {
-		ui->hashBox->addAttachments(files,mDefaultExtraFileFlags /*, 0*/);
+    if (misc::getOpenFileNames(this, RshareSettings::LASTDIR_EXTRAFILE, tr("Add Extra File"), "", files))
+    {
+        if (chatType() == CHATTYPE_GXSGROUPCHAT || this->chatType() == CHATTYPE_GXSONE2ONE || this->chatType() == CHATTYPE_GXSCHANNEL)
+        {
+            ui->hashBox->addGxsFileAttachments(files,mDefaultExtraFileFlags );
+        }
+        else
+        {
+            ui->hashBox->addAttachments(files,mDefaultExtraFileFlags /*, 0*/);
+        }
+
 	}
 }
 
@@ -1679,7 +2148,7 @@ void ChatWidget::fileHashingFinished(QList<HashedFile> hashedFiles)
 			if(!preview)
 			{
 				QString image = FilesDefs::getImageFromFilename(hashedFile.filename, false);
-				if (!image.isEmpty()) {
+                if (!image.isEmpty()) {
 					message += QString("<img src=\"%1\">").arg(image);
 				}
 			}
@@ -1697,6 +2166,92 @@ void ChatWidget::fileHashingFinished(QList<HashedFile> hashedFiles)
 
     ui->chatTextEdit->insertHtml(message);
 
+}
+
+//unseenp2p - add more for gxs file
+//void ChatWidget::gxsfileHashingFinished(std::list<SubFileItem *> mFiles)
+//{
+//    std::cerr << "ChatWidget::gxsfileHashingFinished() started." << std::endl;
+//    mAttachments = mFiles;
+
+//    return;
+//}
+
+//void ChatWidget::gxsfileHashingFinishedForGUI(QList<HashedFile> hashedFiles, std::list<SubFileItem *> mFiles )
+void ChatWidget::gxsfileHashingFinishedForGUI(QList<HashedFile> hashedFiles )
+{
+    mAttachments.clear();
+
+    //convert from HashedFile to RsGxsFile list
+    QList<HashedFile>::iterator fit;
+    for(fit = hashedFiles.begin(); fit != hashedFiles.end(); ++fit)
+    {
+        RsGxsFile fi;
+        fi.mHash = (*fit).hash;
+        fi.mName = (*fit).filename.toStdString();
+        fi.mSize = (*fit).size;
+        mAttachments.push_back(fi);
+    }
+    std::cerr << "ChatWidget::gxsfileHashingFinished() started." << std::endl;
+
+    QString message;
+
+    QList<HashedFile>::iterator it;
+    for (it = hashedFiles.begin(); it != hashedFiles.end(); ++it)
+    {
+        HashedFile& hashedFile = *it;
+        QString ext = QFileInfo(hashedFile.filename).suffix().toUpper();
+
+        RetroShareLink link;
+
+        // We dont use extra links anymore, since files in the extra list can always be accessed using anonymous+encrypted FT.
+
+        link = RetroShareLink::createFile(hashedFile.filename, hashedFile.size, QString::fromStdString(hashedFile.hash.toStdString()));
+
+        bool preview = false;
+        if (hashedFile.flag & HashedFile::Picture) {
+            message += QString("<img src=\"file:///%1\" width=\"100\" height=\"100\">").arg(hashedFile.filepath);
+            message+="<br>";
+        } else {
+
+            if(hashedFiles.size()==1 && (ext == "JPG" || ext == "PNG" || ext == "JPEG" || ext == "GIF"))
+            {
+                QString encodedImage;
+                uint32_t maxMessageSize = this->maxMessageSize();
+                if (RsHtml::makeEmbeddedImage(hashedFile.filepath, encodedImage, 640*480, maxMessageSize - 200 - link.toHtmlSize().length()))
+                {	QTextDocumentFragment fragment = QTextDocumentFragment::fromHtml(encodedImage);
+                    ui->chatTextEdit->textCursor().insertFragment(fragment);
+                    preview=true;
+                }
+            }
+            if(!preview)
+            {
+                QString image = FilesDefs::getImageFromFilename(hashedFile.filename, false);
+                if (!image.isEmpty()) {
+                    message += QString("<img src=\"%1\">").arg(image);
+                }
+            }
+        }
+
+        //when only sending only one image, we need to break new line for easy look
+        if(preview && hashedFiles.size()==1) message += "<BR>";
+
+        message += link.toHtmlSize();
+        //message += "<BR>";
+        ////try to get the folder path and add to this
+        ////hashedFile.filepath = "/Users/ductai/Desktop/Screenshots/Screen Shot 2019-11-18 at 10.12.50 AM.png"
+        //message += QString("<a href=\"file:///Users/ductai/.unseen/HID06_7d41b8c093179a332d0ce529d7f608f8/Downloads\">Open Folder</a>");
+        if (it != hashedFiles.end()) {
+            message += "<BR>";
+        }
+    }
+
+
+#ifdef CHAT_DEBUG
+    std::cerr << "ChatWidget::fileHashingFinished message : " << message.toStdString() << std::endl;
+#endif
+
+    ui->chatTextEdit->insertHtml(message);
 }
 
 bool ChatWidget::fileSave()
@@ -1735,6 +2290,8 @@ void ChatWidget::setCurrentFileName(const QString &fileName)
 
 void ChatWidget::updateStatus(const QString &peer_id, int status)
 {
+    if ((chatType() == CHATTYPE_GXSGROUPCHAT || chatType() == CHATTYPE_LOBBY || this->chatType() == CHATTYPE_GXSCHANNEL)) return;
+
     if (! (chatType() == CHATTYPE_PRIVATE || chatType() == CHATTYPE_DISTANT))
     {
 		// updateTitle is used
@@ -1828,41 +2385,65 @@ void ChatWidget::updateStatus(const QString &peer_id, int status)
 
 void ChatWidget::updateTitle()
 {
-	if (chatType() != CHATTYPE_LOBBY) {
-		// updateStatus is used
-		return;
-	}
+    if (chatType() == CHATTYPE_GXSGROUPCHAT || this->chatType() == CHATTYPE_GXSCHANNEL || chatType() == CHATTYPE_LOBBY)
+        ui->titleLabel->setText(RsHtml::plainText(title));
+    else if (this->chatType() == CHATTYPE_GXSONE2ONE )
+    {
+        //need to filter the contact nick and owner nick from the groupname: goku|meiyousixin
+        QString ownerNick = title.left(title.indexOf("|"));
+        QString contactNick = title.right(title.indexOf("|"));
 
-	ui->titleLabel->setText(RsHtml::plainText(name) + "@" + RsHtml::plainText(title));
+        QString thisContactNick  = QString::fromStdString(rsPeers->getPeerName(rsPeers->getOwnId()));
+        if (thisContactNick == contactNick)
+            ui->titleLabel->setText(RsHtml::plainText(ownerNick));
+        else
+            ui->titleLabel->setText(RsHtml::plainText(contactNick));
+
+    }
+
 }
 
-void ChatWidget::updatePeersCustomStateString(const QString& /*peer_id*/, const QString& /*status_string*/)
+void ChatWidget::updatePeersCustomStateString(const QString& peer_id, const QString& status_string)
 {
 	QString status_text;
 
     // TODO: fix peer_id and types and eveyrhing
-    /*
-    if (RsPeerId(peer_id.toStdString()) == peerId) {
-		// the peers status string has changed
-		if (status_string.isEmpty()) {
-			ui->statusMessageLabel->hide();
-			ui->titleLabel->setAlignment ( Qt::AlignTop );
-			ui->statusLabel->setAlignment ( Qt::AlignTop );
 
-		} else {
-			ui->statusMessageLabel->show();
-			status_text = RsHtml().formatText(NULL, status_string, RSHTML_FORMATTEXT_EMBED_SMILEYS | RSHTML_FORMATTEXT_EMBED_LINKS);
-			ui->statusMessageLabel->setText(status_text);
-			ui->titleLabel->setAlignment ( Qt::AlignVCenter );
-			ui->statusLabel->setAlignment ( Qt::AlignVCenter );
-		}
-	}
-    */
+    if (RsPeerId(peer_id.toStdString()) == getChatId().toPeerId()) {
+        // the peers status string has changed
+        if (status_string.isEmpty()) {
+            ui->statusMessageLabel->hide();
+            ui->titleLabel->setAlignment ( Qt::AlignTop );
+            ui->statusLabel->setAlignment ( Qt::AlignTop );
+
+        } else {
+            ui->statusMessageLabel->show();
+            status_text = RsHtml().formatText(NULL, status_string, RSHTML_FORMATTEXT_EMBED_SMILEYS | RSHTML_FORMATTEXT_EMBED_LINKS);
+            ui->statusMessageLabel->setText(status_text);
+            ui->titleLabel->setAlignment ( Qt::AlignVCenter );
+            ui->statusLabel->setAlignment ( Qt::AlignVCenter );
+        }
+    }
+
+}
+
+void ChatWidget::updateCustomStateStringInGroup( const QString& status_string, bool permanent)
+{
+    QString status_text;
+
+    ui->statusMessageLabel->show();
+    status_text = RsHtml().formatText(NULL, status_string, RSHTML_FORMATTEXT_EMBED_SMILEYS | RSHTML_FORMATTEXT_EMBED_LINKS);
+    ui->statusMessageLabel->setText(status_text);
+    ui->titleLabel->setAlignment ( Qt::AlignVCenter );
+    ui->statusLabel->setAlignment ( Qt::AlignVCenter );
+
+    if(!permanent)
+        QTimer::singleShot(3000, this, SLOT(resetStatusStringInGroup())) ;
 }
 
 void ChatWidget::updateStatusString(const QString &statusMask, const QString &statusString, bool permanent)
 {
-	ui->typingLabel->setText(QString(statusMask).arg(trUtf8(statusString.toUtf8()))); // displays info for 5 secs.
+    ui->typingLabel->setText(QString(statusMask).arg(trUtf8(statusString.toUtf8()))); // displays info for 5 secs.
     ui->typingPixmapLabel->setPixmap(QPixmap(":/images/typing.png") );
 
 	if (statusString == "is typing...") {
@@ -1872,13 +2453,19 @@ void ChatWidget::updateStatusString(const QString &statusMask, const QString &st
 	}
 
     if(!permanent)
-        QTimer::singleShot(5000, this, SLOT(resetStatusBar())) ;
+        QTimer::singleShot(3000, this, SLOT(resetStatusBar())) ;
 }
 
 void ChatWidget::setName(const QString &name)
 {
 	this->name = name;
 	updateTitle();
+}
+
+void ChatWidget::setTitle(const QString &title)
+{
+    this->title = title;
+    updateTitle();
 }
 
 bool ChatWidget::setStyle()
@@ -1930,4 +2517,9 @@ void ChatWidget::saveImage()
 	QPoint point = ui->actionSave_image->data().toPoint();
 	QTextCursor cursor = ui->textBrowser->cursorForPosition(point);
 	ImageUtil::extractImage(window(), cursor);
+}
+
+void ChatWidget::disableTextInbox()
+{
+   // ui->chatTextEdi
 }

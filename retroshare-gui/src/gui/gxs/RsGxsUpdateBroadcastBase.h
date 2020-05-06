@@ -14,6 +14,7 @@ class RsGxsUpdateBroadcastBase : public QObject
 	friend class RsGxsUpdateBroadcastPage;
 	friend class RsGxsUpdateBroadcastWidget;
 	friend class GxsIdChooser;
+    friend class UnseenGxsChatLobbyDialog;  //so that UnseenGxsChatLobbyDialog can access to protected functions of RsGxsUpdateBroadcastBase
 
 	Q_OBJECT
 

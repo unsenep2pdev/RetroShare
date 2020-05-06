@@ -27,7 +27,7 @@
 #include "directory_updater.h"
 #include "file_sharing_defaults.h"
 
-//#define DEBUG_LOCAL_DIR_UPDATER 1
+#define DEBUG_LOCAL_DIR_UPDATER 1
 
 //=============================================================================================================//
 //                                           Local Directory Updater                                           //
@@ -65,21 +65,20 @@ void LocalDirectoryUpdater::setEnabled(bool b)
 void LocalDirectoryUpdater::data_tick()
 {
     rstime_t now = time(NULL) ;
+    static  bool some_files_not_ready = false ;
 
-    if (mIsEnabled || mForceUpdate)
+    if (mIsEnabled || mForceUpdate || some_files_not_ready)
     {
         if(now > mDelayBetweenDirectoryUpdates + mLastSweepTime)
         {
-            bool some_files_not_ready = false ;
-
+            some_files_not_ready = false ;
             if(sweepSharedDirectories(some_files_not_ready))
             {
                 if(some_files_not_ready)
                 {
 					mNeedsFullRecheck = true ;
-					mLastSweepTime = now - mDelayBetweenDirectoryUpdates + 60 ; // retry 20 secs from now
-
-					std::cerr << "(II) some files being modified. Will re-scan in 60 secs." << std::endl;
+                    mLastSweepTime = now - mDelayBetweenDirectoryUpdates + 21 ; // retry 21 secs from now
+                    std::cerr << "(II) some files being modified. Will re-scan in 60 secs." << std::endl;
                 }
 				else
                 {
@@ -161,6 +160,7 @@ bool LocalDirectoryUpdater::sweepSharedDirectories(bool& some_files_not_ready)
 
     std::set<std::string> existing_dirs ;
 
+    //unseenp2p: RS want to iterate all folder, for every folder call FileIterator to iterate all files in that folder
     for(DirectoryStorage::DirIterator stored_dir_it(mSharedDirectories,mSharedDirectories->root()) ; stored_dir_it;++stored_dir_it)
     {
 #ifdef DEBUG_LOCAL_DIR_UPDATER
@@ -225,7 +225,8 @@ void LocalDirectoryUpdater::recursUpdateSharedDir(const std::string& cumulated_p
                    else
                    {
                        some_files_not_ready = true ;
-
+                       subfiles[dirIt.file_name()].modtime = dirIt.file_modtime() ;
+                       subfiles[dirIt.file_name()].size = dirIt.file_size();
                        std::cerr << "(WW) file " << dirIt.file_fullpath() << " is probably being modified. Keeping it for later." << std::endl;
                    }
 

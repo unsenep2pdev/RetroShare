@@ -26,6 +26,7 @@
 #include <stdint.h>
 
 #include <retroshare/rsgxschannels.h> // WRONG ONE - BUT IT'LL DO FOR NOW.
+#include <retroshare/rsgxschats.h>
 
 class QScrollArea;
 

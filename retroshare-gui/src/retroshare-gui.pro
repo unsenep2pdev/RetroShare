@@ -2,7 +2,7 @@
 
 TEMPLATE = app
 QT     += network xml 
-CONFIG += qt gui uic qrc resources idle 
+CONFIG += qt gui uic qrc resources idle
 CONFIG += console
 TARGET = unseenp2p
 DEFINES += TARGET=\\\"$${TARGET}\\\"
@@ -18,11 +18,6 @@ libresapihttpserver {
 }
 
 !include("../../libretroshare/src/use_libretroshare.pri"):error("Including")
-
-FORMS   += TorControl/TorControlWindow.ui
-SOURCES += TorControl/TorControlWindow.cpp
-HEADERS += TorControl/TorControlWindow.h
-
 
 #QMAKE_CFLAGS += -fmudflap 
 #LIBS *= /usr/lib/gcc/x86_64-linux-gnu/4.4/libmudflap.a /usr/lib/gcc/x86_64-linux-gnu/4.4/libmudflapth.a
@@ -41,6 +36,7 @@ greaterThan(QT_MAJOR_VERSION, 4) {
 CONFIG += identities
 CONFIG += gxsforums
 CONFIG += gxschannels
+CONFIG += gxschats
 CONFIG += posted
 CONFIG += gxsgui
 CONFIG += gxscircles
@@ -292,9 +288,49 @@ wikipoos {
 	LIBS *= $$OUT_PWD/../../supportlibs/pegmarkdown/lib/libpegmarkdown.a
 }
 
-# Tor controller
+#Browser
+FORMS   += gui/BrowserPage.ui
+SOURCES += gui/BrowserPage.cpp
+HEADERS += gui/BrowserPage.h
+#GxsChats
+FORMS   +=      gui/common/UnseenFriendSelectionWidget.ui \
+                                gui/gxs/UnseenGxsGroupFrameDialog.ui \
+                                gui/gxschats/UnseenGxsChatLobbyDialog.ui \
+                                gui/gxs/UnseenGxsGroupDialog.ui
 
-HEADERS += 	TorControl/AddOnionCommand.h \
+
+SOURCES +=      gui/common/UnseenFriendSelectionWidget.cpp \
+                                gui/common/UnseenContactSmartListView.cpp \
+                                gui/common/UnseenContactSmartListModel.cpp \
+                                gui/UnseenContactItemDelegate.cpp \
+                                gui/gxs/UnseenGxsGroupFrameDialog.cpp \
+                                gui/gxschats/UnseenGxsSmartListModel.cpp \
+                                gui/gxschats/UnseenGxsSmartListView.cpp \
+                                gui/UnseenGxsConversationitemdelegate.cpp \
+                                gui/gxschats/UnseenGxsChatLobbyDialog.cpp \
+                                gui/gxschats/UnseenGxsChatGroupDialog.cpp \
+                                gui/gxs/UnseenGxsGroupDialog.cpp \
+                                gui/common/UnseenFriendSelectionDialog.cpp
+
+HEADERS +=      gui/common/UnseenFriendSelectionWidget.h \
+                                gui/common/UnseenContactSmartListView.h \
+                                gui/common/UnseenContactSmartListModel.h \
+                                gui/UnseenContactItemDelegate.h \
+                                gui/gxs/UnseenGxsGroupFrameDialog.h \
+                                gui/gxschats/UnseenGxsSmartListModel.h \
+                                gui/gxschats/UnseenGxsSmartListView.h \
+                                gui/UnseenGxsConversationitemdelegate.h \
+                                gui/gxschats/UnseenGxsChatLobbyDialog.h \
+                                gui/gxschats/UnseenGxsChatGroupDialog.h \
+                                gui/gxs/UnseenGxsGroupDialog.h \
+                                gui/common/UnseenFriendSelectionDialog.h
+
+
+# Tor controller
+FORMS   +=      TorControl/TorControlWindow.ui
+
+HEADERS += 	TorControl/TorControlWindow.h \
+                                TorControl/AddOnionCommand.h \
 				TorControl/AuthenticateCommand.h \
 				TorControl/GetConfCommand.h \
 				TorControl/HiddenService.h \
@@ -305,17 +341,18 @@ HEADERS += 	TorControl/AddOnionCommand.h \
 				TorControl/TorControlSocket.h \
 				TorControl/TorManager.h \
 				TorControl/TorProcess.h \
-				TorControl/TorProcess_p.h \
 				TorControl/TorSocket.h \
+                                TorControl/TorProcess_p.h   \
 				TorControl/Useful.h            \
 				TorControl/CryptoKey.h         \
 				TorControl/PendingOperation.h  \
 				TorControl/SecureRNG.h         \
 				TorControl/Settings.h          \
-				TorControl/StrUtil.h        \
-                                TorControl/TorProcess_p.h
+                                TorControl/StrUtil.h
 
-SOURCES += 	TorControl/AddOnionCommand.cpp \
+
+SOURCES += 	TorControl/TorControlWindow.cpp \
+                                TorControl/AddOnionCommand.cpp \
 				TorControl/AuthenticateCommand.cpp \
 				TorControl/GetConfCommand.cpp \
 				TorControl/HiddenService.cpp \
@@ -468,6 +505,7 @@ HEADERS +=  rshare.h \
             gui/settings/TransferPage.h \
             gui/settings/ChatPage.h \
             gui/settings/ChannelPage.h \
+            gui/settings/GxsChatPage.h \
             gui/settings/PostedPage.h \
             gui/settings/ServicePermissionsPage.h \
             gui/settings/AddFileAssociationDialog.h \
@@ -586,8 +624,6 @@ HEADERS +=  rshare.h \
             gui/models/behaviorcontroller.h \
             gui/models/conversation.h \
             gui/models/conversationmodel.h \
-#            gui/models/datatransfer.h \
-#            gui/models/datatransfermodel.h \
             gui/models/interaction.h \
             gui/models/profile.h
 
@@ -666,6 +702,7 @@ FORMS +=    gui/StartDialog.ui \
             gui/settings/SoundPage.ui \
             gui/settings/ChatPage.ui \
             gui/settings/ChannelPage.ui \
+            gui/settings/GxsChatPage.ui \
             gui/settings/PostedPage.ui \
             gui/settings/ServicePermissionsPage.ui \
             gui/settings/PluginItem.ui \
@@ -892,6 +929,7 @@ SOURCES +=  main.cpp \
             gui/settings/TransferPage.cpp \
             gui/settings/ChatPage.cpp \
             gui/settings/ChannelPage.cpp \
+            gui/settings/GxsChatPage.cpp \
             gui/settings/PostedPage.cpp \
             gui/settings/ServicePermissionsPage.cpp \
             gui/settings/AddFileAssociationDialog.cpp \
@@ -1202,7 +1240,7 @@ identities {
 }
 	
 gxscircles {
-#	DEFINES += RS_USE_CIRCLES
+	DEFINES += RS_USE_CIRCLES
 #	DEFINES += RS_USE_NEW_PEOPLE_DIALOG
 
 	HEADERS +=  \
@@ -1294,6 +1332,37 @@ gxschannels {
 		gui/feeds/GxsChannelGroupItem.cpp \
 		gui/feeds/GxsChannelPostItem.cpp \
 		gui/gxschannels/GxsChannelUserNotify.cpp
+}
+
+gxschats {
+
+        HEADERS += gui/gxschats/GxsChatDialog.h \
+                gui/gxschats/GxsChatGroupDialog.h \
+                gui/gxschats/CreateGxsChatMsg.h \
+                gui/gxschats/GxsChatPostsWidget.h \
+                gui/gxschats/GxsChatFilesWidget.h \
+                gui/gxschats/GxsChatFilesStatusWidget.h \
+                gui/feeds/GxsChatGroupItem.h \
+                gui/feeds/GxsChatPostItem.h \
+                gui/gxschats/GxsChatUserNotify.h
+
+        FORMS += \
+                gui/gxschats/GxsChatPostsWidget.ui \
+                gui/gxschats/GxsChatFilesWidget.ui \
+                gui/gxschats/GxsChatFilesStatusWidget.ui \
+                gui/gxschats/CreateGxsChatMsg.ui \
+                gui/feeds/GxsChatGroupItem.ui \
+                gui/feeds/GxsChatPostItem.ui
+
+        SOURCES += gui/gxschats/GxsChatDialog.cpp \
+                gui/gxschats/GxsChatPostsWidget.cpp \
+                gui/gxschats/GxsChatFilesWidget.cpp \
+                gui/gxschats/GxsChatFilesStatusWidget.cpp \
+                gui/gxschats/GxsChatGroupDialog.cpp \
+                gui/gxschats/CreateGxsChatMsg.cpp \
+                gui/feeds/GxsChatGroupItem.cpp \
+                gui/feeds/GxsChatPostItem.cpp \
+                gui/gxschats/GxsChatUserNotify.cpp
 }
 	
 	

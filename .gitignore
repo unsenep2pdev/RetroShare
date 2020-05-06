@@ -1,1 +1,6 @@
 RetroShare.pro.user
+*.o
+*.zip
+*.dmg
+*.app
+*.lib

@@ -144,7 +144,7 @@ public:
 	virtual	bool trustGPGCertificate(const RsPgpId &id, uint32_t trustlvl);
 
 	/* Group Stuff */
-	virtual bool addGroup(RsGroupInfo &groupInfo);
+    virtual bool addGroup(RsGroupInfo &groupInfo, bool hide);
     virtual bool editGroup(const RsNodeGroupId &groupId, RsGroupInfo &groupInfo);
     virtual bool removeGroup(const RsNodeGroupId &groupId);
     virtual bool getGroupInfo(const RsNodeGroupId &groupId, RsGroupInfo &groupInfo);
@@ -152,6 +152,8 @@ public:
     virtual bool getGroupInfoList(std::list<RsGroupInfo> &groupInfoList);
     virtual bool assignPeerToGroup(const RsNodeGroupId &groupId, const RsPgpId &peerId, bool assign);
     virtual bool assignPeersToGroup(const RsNodeGroupId &groupId, const std::list<RsPgpId>& peerIds, bool assign);
+    virtual bool checkExistingOne2OneChat(const RsPgpId& pgpId);
+    virtual bool addGroupWithId(RsGroupInfo &groupInfo, bool hide);
 
     virtual FileSearchFlags computePeerPermissionFlags(const RsPeerId& peer_id, FileStorageFlags share_flags, const std::list<RsNodeGroupId> &parent_groups);
 

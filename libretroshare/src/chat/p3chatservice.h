@@ -36,6 +36,9 @@
 #include "gxstrans/p3gxstrans.h"
 #include "util/rsdeprecate.h"
 
+//gxs observer (intercommuncation between two services (chat and gxschat)
+#include "gxs/rsnxsobserver.h"
+
 class p3ServiceControl;
 class p3LinkMgr;
 class p3HistoryMgr;
@@ -50,12 +53,11 @@ typedef RsPeerId ChatLobbyVirtualPeerId ;
   * @see NotifyBase
   */
 class   p3ChatService :
-        public p3Service, public DistantChatService, public DistributedChatService, public p3Config,
-        public pqiServiceMonitor, GxsTransClient
+        public p3Service, public DistantChatService, public DistributedChatService, virtual public p3Config,
+        public pqiServiceMonitor /*, GxsTransClient  */
 {
 public:
-	p3ChatService(p3ServiceControl *cs, p3IdService *pids, p3LinkMgr *cm,
-	               p3HistoryMgr *historyMgr, p3GxsTrans& gxsTransService );
+    p3ChatService(p3ServiceControl *cs, p3IdService *pids, p3LinkMgr *cm, p3HistoryMgr *historyMgr, RsNxsChatObserver *gxsChatObs);
 
 	virtual RsServiceInfo getServiceInfo();
 
@@ -68,6 +70,15 @@ public:
 		 * @see NotifyBase
 		 */
 	virtual int tick();
+    /*************** GXS Chat Service and Callback  ************/
+    static const uint32_t FRAGMENT_SIZE;
+
+    void handleRecvGxsChatMessage(GxsNxsChatMsgItem *item);
+    void handleRecvGxsChatGroup(GxsNxsChatGroupItem *item);
+    void handleRecvGxsChatPublishKey(GxsNxsGroupPublishKeyItem *item);
+
+    void sendGxsChat(GxsNxsChatMsgItem *si, std::list<RsPeerId>& ids);
+    void sendGxsPubChat(GxsNxsChatMsgItem *si);
 
 	/*************** pqiMonitor callback ***********************/
 	virtual void statusChange(const std::list<pqiServicePeer> &plist);
@@ -218,6 +229,61 @@ protected:
 	RS_DEPRECATED virtual void locked_storeIncomingMsg(RsChatMsgItem *) ;
 
 private:
+
+    typedef std::vector<RsNxsGrp*> GrpFragments;
+    typedef std::vector<RsNxsMsg*> MsgFragments;
+
+    /*!
+     * Fragment a message into individual fragments which are at most 150kb
+     * @param msg message to fragment
+     * @param msgFragments fragmented message
+     * @return false if fragmentation fails true otherwise
+     */
+    bool fragmentMsg(RsNxsMsg& msg, MsgFragments& msgFragments) const;
+
+    /*!
+     * Fragment a group into individual fragments which are at most 150kb
+     * @param grp group to fragment
+     * @param grpFragments fragmented group
+     * @return false if fragmentation fails true other wise
+     */
+    bool fragmentGrp(RsNxsGrp& grp, GrpFragments& grpFragments) const;
+
+    /*!
+     * Fragment a message into individual fragments which are at most 150kb
+     * @param msg message to fragment
+     * @param msgFragments fragmented message
+     * @return NULL if not possible to reconstruct message from fragment,
+     *              pointer to defragments nxs message is possible
+     */
+    RsNxsMsg* deFragmentMsg(MsgFragments& msgFragments) const;
+
+    /*!
+     * Fragment a group into individual fragments which are at most 150kb
+     * @param grp group to fragment
+     * @param grpFragments fragmented group
+     * @return NULL if not possible to reconstruct group from fragment,
+     *              pointer to defragments nxs group is possible
+     */
+    RsNxsGrp* deFragmentGrp(GrpFragments& grpFragments) const;
+
+
+    /*!
+     * Note that if all fragments for a message are not found then its fragments are dropped
+     * @param fragments message fragments which are not necessarily from the same message
+     * @param partFragments the partitioned fragments (into message ids)
+     */
+    void collateMsgFragments(MsgFragments &fragments, std::map<RsGxsMessageId, MsgFragments>& partFragments) const;
+
+    /*!
+     * Note that if all fragments for a group are not found then its fragments are dropped
+     * @param fragments group fragments which are not necessarily from the same group
+     * @param partFragments the partitioned fragments (into message ids)
+     */
+    void collateGrpFragments(GrpFragments fragments, std::map<RsGxsGroupId, GrpFragments>& partFragments) const;
+
+
+
 	RsMutex mChatMtx;
 
 	class AvatarInfo ;
@@ -286,7 +352,10 @@ private:
 	DIDEMap mDistantGxsMap;
 	RsMutex mDGMutex;
 
-	p3GxsTrans& mGxsTransport;
+    //p3GxsTrans& mGxsTransport;
+    RsNxsChatObserver *gxsChatSync;
+    uint16_t mServType;
+
 
     //unseenp2p - for MVC
     std::vector<conversationInfo> conversationItemList;

@@ -84,6 +84,10 @@ public:
     virtual uint32_t getDefaultSyncAge() =0;
     virtual uint32_t getDefaultKeepAge() =0;
 
+    virtual uint32_t setSynchronizationInterval(uint32_t interval)=0;
+    virtual uint32_t getSynchronizationInterval()=0;
+
+
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ///                                          DISTANT SEARCH FUNCTIONS                                           ///
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -171,6 +175,10 @@ public:
      * @param enabled set to false to disable pause, and true otherwise
      */
     virtual void pauseSynchronisation(bool enabled) = 0;
+
+    virtual void PublishChat(RsNxsMsg* msg, std::list<RsPeerId> &ids)=0;
+    virtual void PublishChatGroup(RsNxsGrp *grp, std::list<RsPeerId> &ids)=0;
+    virtual void PublishChatNotify(RsNxsNotifyChat *notifyMsg, std::list<RsPeerId> &ids)=0;
 
 
     /*!

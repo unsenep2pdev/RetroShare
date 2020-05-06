@@ -122,38 +122,38 @@ virtual bool getChannelDownloadDirectory(const RsGxsGroupId &groupId, std::strin
 	void receiveDistantSearchResults( TurtleRequestId id,
 	                                  const RsGxsGroupId& grpId );
 
-	/* Comment service - Provide RsGxsCommentService - redirect to p3GxsCommentService */
-	virtual bool getCommentData(uint32_t token, std::vector<RsGxsComment> &msgs)
-	{ return mCommentService->getGxsCommentData(token, msgs); }
+    /* Comment service - Provide RsGxsCommentService - redirect to p3GxsCommentService */
+    virtual bool getCommentData(uint32_t token, std::vector<RsGxsComment> &msgs)
+    { return mCommentService->getGxsCommentData(token, msgs); }
 
-	virtual bool getRelatedComments( uint32_t token,
-	                                 std::vector<RsGxsComment> &msgs )
-	{ return mCommentService->getGxsRelatedComments(token, msgs); }
+    virtual bool getRelatedComments( uint32_t token,
+                                     std::vector<RsGxsComment> &msgs )
+    { return mCommentService->getGxsRelatedComments(token, msgs); }
 
 virtual bool createComment(uint32_t &token, RsGxsComment &msg)
-	{
-		return mCommentService->createGxsComment(token, msg);
-	}
+    {
+        return mCommentService->createGxsComment(token, msg);
+    }
 
 virtual bool createVote(uint32_t &token, RsGxsVote &msg)
-	{
-		return mCommentService->createGxsVote(token, msg);
-	}
+    {
+        return mCommentService->createGxsVote(token, msg);
+    }
 
 virtual bool acknowledgeComment(uint32_t token, std::pair<RsGxsGroupId, RsGxsMessageId>& msgId)
-	{
-		return acknowledgeMsg(token, msgId);
-	}
+    {
+        return acknowledgeMsg(token, msgId);
+    }
 
 
 virtual bool acknowledgeVote(uint32_t token, std::pair<RsGxsGroupId, RsGxsMessageId>& msgId)
-	{
-		if (mCommentService->acknowledgeVote(token, msgId))
-		{
-			return true;
-		}
-		return acknowledgeMsg(token, msgId);
-	}
+    {
+        if (mCommentService->acknowledgeVote(token, msgId))
+        {
+            return true;
+        }
+        return acknowledgeMsg(token, msgId);
+    }
 
 
 	// Overloaded from RsGxsIface.
@@ -248,7 +248,7 @@ bool generateGroup(uint32_t &token, std::string groupName);
 	std::vector<ChannelDummyRef> mGenRefs;
 	RsGxsMessageId mGenThreadId;
 
-	p3GxsCommentService *mCommentService;
+    p3GxsCommentService *mCommentService;
     std::map<RsGxsGroupId,rstime_t> mKnownChannels;
 
 	/** Store search callbacks with timeout*/

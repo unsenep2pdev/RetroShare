@@ -55,7 +55,7 @@ class p3Wiki;
 class p3Posted;
 class p3PhotoService;
 class p3Wire;
-
+class P3GxsChats;
 
 class p3PeerMgrIMPL;
 class p3LinkMgrIMPL;

@@ -76,6 +76,7 @@ RsItem *RsNxsSerialiser::create_item(uint16_t service_id,uint8_t item_subtype) c
         case RS_PKT_SUBTYPE_NXS_GRP_PUBLISH_KEY_ITEM:return new RsNxsGroupPublishKeyItem(SERVICE_TYPE) ;
         case RS_PKT_SUBTYPE_NXS_ENCRYPTED_DATA_ITEM: return new RsNxsEncryptedDataItem(SERVICE_TYPE) ;
         case RS_PKT_SUBTYPE_NXS_SYNC_GRP_STATS_ITEM: return new RsNxsSyncGrpStatsItem(SERVICE_TYPE) ;
+        case RS_PKT_SUBTYPE_NXS_CHAT_MSG_ITEM:       return new RsNxsNotifyChat(SERVICE_TYPE) ;
 
         default:
                 return NULL;
@@ -89,6 +90,26 @@ void RsNxsSyncMsgItem::serial_process(RsGenericSerializer::SerializeJob j,RsGene
     RsTypeSerializer::serial_process          (j,ctx,grpId            ,"grpId") ;
     RsTypeSerializer::serial_process          (j,ctx,msgId            ,"msgId") ;
     RsTypeSerializer::serial_process          (j,ctx,authorId         ,"authorId") ;
+}
+
+void RsNxsNotifyChat::serial_process( RsGenericSerializer::SerializeJob j,
+                               RsGenericSerializer::SerializeContext& ctx )
+{
+    RS_SERIAL_PROCESS(transactionNumber);
+    RS_SERIAL_PROCESS(grpId);
+    RS_SERIAL_PROCESS(msgId);
+    RS_SERIAL_PROCESS(command);
+    RS_SERIAL_PROCESS(sendFrom);
+}
+
+void RsNxsNotifyChat::clear(){
+    grpId.clear();
+}
+
+std::ostream&RsNxsNotifyChat::print(std::ostream& out, uint16_t /*indent*/)
+{
+    out<<"groupId:"<<grpId<<std::endl;
+    return out;
 }
 
 void RsNxsMsg::serial_process( RsGenericSerializer::SerializeJob j,

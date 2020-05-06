@@ -42,7 +42,7 @@
 #define CREATEMSG_CHANNELINFO       0x002
 #define CREATEMSG_CHANNEL_POST_INFO 0x003
 
-// #define DEBUG_CREATE_GXS_MSG
+#define DEBUG_CREATE_GXS_MSG
 
 /** Constructor */
 CreateGxsChannelMsg::CreateGxsChannelMsg(const RsGxsGroupId &cId, RsGxsMessageId existing_post)
@@ -57,9 +57,9 @@ CreateGxsChannelMsg::CreateGxsChannelMsg(const RsGxsGroupId &cId, RsGxsMessageId
 	headerFrame->setHeaderImage(QPixmap(":/images/channels.png"));
 
     if(!existing_post.isNull())
-		headerFrame->setHeaderText(tr("Edit Channel Post"));
+        headerFrame->setHeaderText(tr("Edit Channel Post"));
 	else
-		headerFrame->setHeaderText(tr("New Channel Post"));
+        headerFrame->setHeaderText(tr("New Channel Post"));
 
 	setAttribute ( Qt::WA_DeleteOnClose, true );
 

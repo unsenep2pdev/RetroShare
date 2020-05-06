@@ -78,7 +78,7 @@ struct RsTokReqOptions
 {
 	RsTokReqOptions() : mOptions(0), mStatusFilter(0), mStatusMask(0),
 	    mMsgFlagMask(0), mMsgFlagFilter(0), mReqType(0), mSubscribeFilter(0),
-	    mSubscribeMask(0), mBefore(0), mAfter(0) {}
+        mSubscribeMask(0), mBefore(0), mAfter(0), page(0) {}
 
 	/**
 	 * Can be one or multiple RS_TOKREQOPT_*
@@ -105,6 +105,7 @@ struct RsTokReqOptions
 	// Time range... again applied after Options.
 	rstime_t   mBefore;
 	rstime_t   mAfter;
+    int page; //pagination (0,1,2...n) 0=all records, 1=24 records, 2=(25-49) records.
 };
 
 std::ostream &operator<<(std::ostream &out, const RsGroupMetaData &meta);

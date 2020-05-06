@@ -84,8 +84,6 @@ public:
 public slots:
     void insertTransfers();
 
-//    void handleDownloadRequest(const QString& url);
-
 private slots:
 
     /** Create the context popup menu and it's submenus */

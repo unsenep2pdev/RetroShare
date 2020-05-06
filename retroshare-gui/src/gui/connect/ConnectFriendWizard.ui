@@ -1104,7 +1104,7 @@
        <enum>QFrame::Box</enum>
       </property>
       <property name="text">
-       <string>Please note that UnseenP2P will require excessive amounts of bandwidth, memory and CPU if you add too many friends. You can add as many friends as you like, but more than 40 will probably require too much 
+       <string>Please note that UnseenP2P will require excessive amounts of bandwidth, memory and CPU if you add too many friends. You can add as many friends as you like, but more than 200 will probably require too much
 resources.</string>
       </property>
       <property name="wordWrap">

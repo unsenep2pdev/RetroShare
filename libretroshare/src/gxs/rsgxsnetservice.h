@@ -126,6 +126,9 @@ public:
 	virtual void setDefaultKeepAge(uint32_t t) { mDefaultMsgStorePeriod = t ; }
 	virtual void setDefaultSyncAge(uint32_t t) { mDefaultMsgSyncPeriod = t ; }
 
+    virtual uint32_t setSynchronizationInterval(uint32_t interval=60){ mSYNC_PERIOD = interval;}
+    virtual uint32_t getSynchronizationInterval() {return mSYNC_PERIOD;}
+
     /*!
      * \brief Search methods.
      * 			These four methods are used to request distant search and receive the results.
@@ -159,6 +162,10 @@ public:
      * @return request token to be redeemed
      */
     virtual int requestMsg(const RsGxsGrpMsgIdPair& /* msgId */){ return 0;}
+
+    virtual void handleRecvChatMessage(RsNxsMsg* msg);
+    virtual void handleRecvChatGroup(RsNxsGrp * grp);
+    virtual void handleRecvChatNotify(RsNxsNotifyChat *chatNotify);
 
     /*!
      * Request for this group is sent through to peers on your network
@@ -444,6 +451,11 @@ private:
     static RsGxsGroupId hashGrpId(const RsGxsGroupId& gid,const RsPeerId& pid) ;
     
 	RsGxsGrpConfig& locked_getGrpConfig(const RsGxsGroupId& grp_id);
+
+    virtual void PublishChat(RsNxsMsg* msg, std::list<RsPeerId> &ids);
+    virtual void PublishChatGroup(RsNxsGrp *grp, std::list<RsPeerId> &ids);
+    virtual void PublishChatNotify(RsNxsNotifyChat *notifyMsg, std::list<RsPeerId> &ids);
+
 private:
 
     typedef std::vector<RsNxsGrp*> GrpFragments;
@@ -563,7 +575,7 @@ private:
     uint32_t mLastKeyPublishTs;
     uint32_t mLastCleanRejectedMessages;
 
-    const uint32_t mSYNC_PERIOD;
+    uint32_t mSYNC_PERIOD;
     int mUpdateCounter ;
 
     RsGcxs* mCircles;
@@ -607,7 +619,8 @@ private:
     std::vector<RsNxsGrp*> mNewGroupsToNotify ;
     std::vector<RsNxsMsg*> mNewMessagesToNotify ;
     std::set<RsGxsGroupId> mNewStatsToNotify ;
-    std::set<RsGxsGroupId> mNewPublishKeysToNotify ;
+    std::map<RsGxsGroupId, RsPeerId> mNewPublishKeysToNotify ;
+    std::vector<RsNxsNotifyChat*> chatMessagesToNotify;
 
     // Distant search result map
     std::map<TurtleRequestId,std::map<RsGxsGroupId,RsGxsGroupSummary> > mDistantSearchResults ;

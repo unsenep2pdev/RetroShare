@@ -8,6 +8,7 @@
 #define CHANNEL_KEY_SHARE 0x00000001
 #define FORUM_KEY_SHARE	  0x00000002
 #define POSTED_KEY_SHARE  0x00000003
+#define CHAT_KEY_SHARE    0x00000004
 
 class GroupShareKey : public QDialog
 {

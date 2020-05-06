@@ -308,6 +308,13 @@ void NotifyPage::updateChatLobbyUserNotify()
 	mChatLobbyUserNotify->setCountSpecificText(ui.chatLobbies_CountFollowingText->isChecked()) ;
 	mChatLobbyUserNotify->setTextToNotify(ui.chatLobbies_TextToNotify->document()->toPlainText());
 	mChatLobbyUserNotify->setTextCaseSensitive(ui.chatLobbies_TextCaseSensitive->isChecked());
+
+    mGxsChatUserNotify->setCountUnRead(ui.chatLobbies_CountUnRead->isChecked()) ;
+    mGxsChatUserNotify->setCheckForNickName(ui.chatLobbies_CheckNickName->isChecked()) ;
+    mGxsChatUserNotify->setCountSpecificText(ui.chatLobbies_CountFollowingText->isChecked()) ;
+    mGxsChatUserNotify->setTextToNotify(ui.chatLobbies_TextToNotify->document()->toPlainText());
+    mGxsChatUserNotify->setTextCaseSensitive(ui.chatLobbies_TextCaseSensitive->isChecked());
+
 }
 
 /** Loads the settings for this page */
@@ -334,7 +341,6 @@ void NotifyPage::load()
 #if 0
 	whileBlocking(ui.notify_Blogs)->setChecked(newsflags & RS_FEED_TYPE_BLOG);
 #endif
-	whileBlocking(ui.notify_Chat)->setChecked(newsflags & RS_FEED_TYPE_CHAT);
 	whileBlocking(ui.notify_Messages)->setChecked(newsflags & RS_FEED_TYPE_MSG);
 	whileBlocking(ui.notify_Chat)->setChecked(newsflags & RS_FEED_TYPE_CHAT);
 	whileBlocking(ui.notify_Security)->setChecked(newsflags & RS_FEED_TYPE_SECURITY);

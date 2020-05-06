@@ -49,6 +49,7 @@ class SysTrayStatus;
 class TorStatus ;
 //class ForumsDialog;
 class GxsChannelDialog ;
+class GxsChatDialog ;
 class GxsForumsDialog ;
 class PostedDialog;
 class FriendsDialog;
@@ -63,6 +64,7 @@ class MessagesDialog;
 class MessengerWindow;
 class PluginsPage;
 class HomePage;
+class BrowserPage;
 //class ChannelFeed;
 class BandwidthGraph;
 class MainPage;
@@ -100,7 +102,8 @@ public:
         Search             = 8,  /** Search page. */
         Posted             = 11,  /** Posted links */
         People             = 12,   /** People page. */
-        Options            = 13   /** People page. */
+        Options            = 13,   /** People page. */
+        GxsChats              = 36,  /** Channels page. */
     };
 
 
@@ -158,9 +161,10 @@ public:
 	 MessagesDialog    *messagesDialog;
 	 SettingsPage      *settingsDialog;
 	 GxsChannelDialog  *gxschannelDialog ;
+     GxsChatDialog     *gxschatDialog ;
 	 GxsForumsDialog   *gxsforumDialog ;
 	 PostedDialog      *postedDialog;
-
+     BrowserPage        *browserPage;
 //    ForumsDialog      *forumsDialog;
 //    ChannelFeed       *channelFeed;
     Idle              *idle;
@@ -215,6 +219,9 @@ public slots:
     void showBandwidthGraph();
 
     void toggleStatusToolTip(bool toggle);
+
+    void expandToolBar();
+    void collapseToolBar();
 protected:
     /** Default Constructor */
     MainWindow(QWidget *parent = 0, Qt::WindowFlags flags = 0);

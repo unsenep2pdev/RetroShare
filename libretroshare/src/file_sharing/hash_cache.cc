@@ -29,7 +29,7 @@
 #include "file_sharing_defaults.h"
 #include "retroshare/rsinit.h"
 
-//#define HASHSTORAGE_DEBUG 1
+#define HASHSTORAGE_DEBUG 1
 
 static const uint32_t DEFAULT_INACTIVITY_SLEEP_TIME = 50*1000;
 static const uint32_t     MAX_INACTIVITY_SLEEP_TIME = 2*1000*1000;

@@ -65,7 +65,9 @@ const uint32_t RS_CHAT_BLINK         = 0x0010;
 const uint32_t RS_FEED_TYPE_PEER     = 0x0010;
 const uint32_t RS_FEED_TYPE_CHANNEL  = 0x0020;
 const uint32_t RS_FEED_TYPE_FORUM    = 0x0040;
-//const uint32_t RS_FEED_TYPE_BLOG     = 0x0080;
+const uint32_t RS_FEED_TYPE_GXSCHAT  = 0x0080;
+const uint32_t RS_FEED_TYPE_IDENTITY  = 0x00A0;
+
 const uint32_t RS_FEED_TYPE_CHAT     = 0x0100;
 const uint32_t RS_FEED_TYPE_MSG      = 0x0200;
 const uint32_t RS_FEED_TYPE_FILES    = 0x0400;
@@ -96,6 +98,17 @@ const uint32_t RS_FEED_ITEM_CHANNEL_NEW      = RS_FEED_TYPE_CHANNEL  | 0x0001;
 //const uint32_t RS_FEED_ITEM_CHANNEL_UPDATE   = RS_FEED_TYPE_CHANNEL  | 0x0002;
 const uint32_t RS_FEED_ITEM_CHANNEL_MSG      = RS_FEED_TYPE_CHANNEL  | 0x0003;
 const uint32_t RS_FEED_ITEM_CHANNEL_PUBLISHKEY = RS_FEED_TYPE_CHANNEL  | 0x0004;
+
+const uint32_t RS_FEED_ITEM_CHATS_NEW               = RS_FEED_TYPE_GXSCHAT  | 0x0010;
+const uint32_t RS_FEED_ITEM_CHATS_MSG               = RS_FEED_TYPE_GXSCHAT  | 0x0013;
+const uint32_t RS_FEED_ITEM_CHATS_PUBLISHKEY        = RS_FEED_TYPE_GXSCHAT  | 0x0014;
+const uint32_t RS_FEED_ITEM_CHATS_NOTIFY            = RS_FEED_TYPE_GXSCHAT  | 0x0015;
+
+const uint32_t RS_FEED_ITEM_IDENTITY_NEW                   = RS_FEED_TYPE_IDENTITY  | 0x0001;
+const uint32_t RS_FEED_ITEM_IDENTITY_MSG                   = RS_FEED_TYPE_IDENTITY  | 0x0002;
+const uint32_t RS_FEED_ITEM_IDENTITYCONTACT_ADD            = RS_FEED_TYPE_IDENTITY  | 0x0003;
+const uint32_t RS_FEED_ITEM_IDENTITYCONTACT_UPDATE         = RS_FEED_TYPE_IDENTITY  | 0x0004;
+
 
 const uint32_t RS_FEED_ITEM_FORUM_NEW        = RS_FEED_TYPE_FORUM | 0x0001;
 //const uint32_t RS_FEED_ITEM_FORUM_UPDATE     = RS_FEED_TYPE_FORUM | 0x0002;
@@ -232,17 +245,23 @@ public:
 	virtual void notifyPeerStatusChanged          (const std::string& /* peer_id   */, uint32_t                         /* status           */) {}
 	virtual void notifyGxsChange                  (const RsGxsChanges& /* changes  */) {}
 	virtual void notifyConnectionWithoutCert      () {}
+    virtual void notifyGxsContactStatusChanged    (const std::string&  /* peer_id   */, uint32_t  /* status           */) {}
 
 	/* one or more peers has changed the states */
 	virtual void notifyPeerStatusChangedSummary   () {}
 	virtual void notifyDiscInfoChanged            () {}
 
 	virtual bool askForDeferredSelfSignature      (const void *       /* data      */, const uint32_t     /* len   */, unsigned char * /* sign */, unsigned int * /* signlen */,int& signature_result , std::string /*reason = ""*/) { signature_result = false ;return true; }
-	virtual void notifyDownloadComplete           (const std::string& /* fileHash  */) {}
+    virtual void notifyDownloadComplete           (const std::string& /* fileHash  */) {}
 	virtual void notifyDownloadCompleteCount      (uint32_t           /* count     */) {}
 	virtual void notifyHistoryChanged             (uint32_t           /* msgId     */, int /* type */) {}
 
 	virtual bool askForPassword                   (const std::string& /* title     */, const std::string& /* key_details     */, bool               /* prev_is_bad */, std::string& /* password */,bool& /* cancelled */ ) { return false ;}
 	virtual bool askForPluginConfirmation         (const std::string& /* plugin_filename */, const std::string& /* plugin_file_hash */,bool /* first_time */) { return false ;}
+
+    //unseenp2p - gxs notify
+    virtual void receiveGxsChatTyping(const RsGxsGroupId, const std::string, const RsPeerId, const RsGxsId ){}
+    virtual void NotifyCreateNewGroup(const RsGxsGroupId ) {}
+
 };
 #endif
