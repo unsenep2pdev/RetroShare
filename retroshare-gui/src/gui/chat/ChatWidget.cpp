@@ -1415,18 +1415,16 @@ void ChatWidget::addChatMsg(bool incoming, const QString &name, const RsGxsChatM
         // this for gxs chat recent time, sort the gxschat conversation list
         if (this->chatType() == CHATTYPE_GXSGROUPCHAT || this->chatType() == CHATTYPE_GXSONE2ONE || this->chatType() == CHATTYPE_GXSCHANNEL )
         {
-            long long current_time = QDateTime::currentSecsSinceEpoch();
+            long long current_time = QDateTime::currentMSecsSinceEpoch();
             std::string nickInGroupChat = "You";
-            emit NotifyQt::getInstance()->newGxsChatMessageReceive(this->getGxsChatId(), gxsChatMsg, name.toStdString(), current_time, message.toStdString(), false);
+            if (incoming)
+                emit NotifyQt::getInstance()->newGxsChatMessageReceive(this->getGxsChatId(), gxsChatMsg, name.toStdString(), current_time, message.toStdString(), false);
+            else
+                emit NotifyQt::getInstance()->alreadySendChat(this->getGxsChatId(), gxsChatMsg, name.toStdString(), current_time, message.toStdString(), true);
         }
         /* meiyousixin - need to update the recent time and sort the chat list */
 
     }
-//    if(!incoming && chatType == MSGTYPE_NORMAL)
-//    {
-//        long long current_time = QDateTime::currentSecsSinceEpoch();
-//        emit NotifyQt::getInstance()->alreadySendChat(this->getGxsChatId(), gxsChatMsg, name.toStdString(), current_time, message.toStdString(), true);
-//    }
 
 }
 

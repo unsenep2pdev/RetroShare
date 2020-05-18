@@ -721,13 +721,15 @@ void UnseenGxsChatLobbyDialog::addChatMsg(const ChatMessage& msg)
 
 void UnseenGxsChatLobbyDialog::updateTitle(QString title)
 {
-    ui.chatWidget->setTitle(title);
+    if (ui.chatWidget)
+        ui.chatWidget->setTitle(title);
 }
 
 void UnseenGxsChatLobbyDialog::showChatTextInbox(bool iShow)
 {
     //publisher can send the msg
-    ui.chatWidget->showChatInbox(iShow);
+    if (ui.chatWidget)
+        ui.chatWidget->showChatInbox(iShow);
 
 }
 
@@ -1475,7 +1477,7 @@ void UnseenGxsChatLobbyDialog::insertGxsChatPosts(std::vector<RsGxsChatMsg> &pos
             new_versions.push_back(i) ;
 
         //unseenp2p - try to add msg into chat content
-        QDateTime sendTime = QDateTime::fromSecsSinceEpoch(posts[i].mMeta.mPublishTs);
+        QDateTime sendTime = QDateTime::fromMSecsSinceEpoch(posts[i].mMeta.mPublishTs);
         QDateTime recvTime = sendTime;
         RsGxsId gxs_id = posts[i].mMeta.mAuthorId;
         QString mmsg = QString::fromUtf8(posts[i].mMsg.c_str());
@@ -2032,7 +2034,7 @@ void UnseenGxsChatLobbyDialog::loadRequest(const TokenQueue *queue, const TokenR
 
             //sortGxsMsgChat(msgs);
             if (msgs.size()> 0)
-                mLatestHistoryMsgTimestamp = msgs[msgs.size() - 1].mMeta.mPublishTs;
+                mLatestHistoryMsgTimestamp = msgs[msgs.size() - 1].mMeta.mPublishTs + 1; //set it as +1 for the last msg
             std::cerr <<  "mLatestHistoryMsgTimestamp: " << mLatestHistoryMsgTimestamp << std::endl;
             insertGxsChatPosts(msgs, NULL, true);
 

@@ -118,7 +118,10 @@ public:
     void sortGxsConversationListByRecentTime();
 
     //unseenp2p - overload with the parent
-    virtual UserNotify *getUserNotify(QObject *parent);
+    //virtual UserNotify *getUserNotify(QObject *parent);
+
+    void setGxsChatUserNotify(GxsChatUserNotify* uNotify);
+
 
 protected:
 	virtual void showEvent(QShowEvent *event);
@@ -179,11 +182,6 @@ private slots:
     void updateNewGxsMsg(const gxsChatId&, const RsGxsChatMsg&, std::string, long long, std::string, bool);
 
     void unsubscribeGxsGroupChat(RsGxsGroupId id);
-
-    void updateGxsMessageChanged(RsGxsChatMsg gxsChatMsg, bool incoming, RsGxsGroupId id, QDateTime time, QString senderName, QString msg);
-    void updateGxsMsgNotify(RsGxsChatMsg gxsChatMsg, gxsChatId id, unsigned int count);
-
-    //void updateGxsMsgTyping(const RsGxsGroupId& groupId, const QString nickname, const RsPeerId& sslId, const RsGxsId& gxsId);
 
     void filterGxsItems(const QString &text);
     void filterColumnChanged(int);

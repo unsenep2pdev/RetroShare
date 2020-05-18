@@ -115,19 +115,11 @@ void GxsChatUserNotify::iconClicked()
 {
     MainWindow::showWindow(MainWindow::GxsChats);
 }
-//void GxsChatUserNotify::notifyGxsChatMessageReceive(const gxsChatId& groupChatId, const RsGxsChatMsg &gxsChatMsg, std::string nickInGroupChat, long long current_time, std::string msg, bool isSend)
+
 void GxsChatUserNotify::gxsChatNewMessage(RsGxsChatMsg gxsChatMsg, gxsChatId groupChatId, QDateTime time, QString senderName, QString msg)
 {
 
     bool bGetNickName = false;
-    if (_bCheckForNickName) {
-//        RsGxsId gxs_id;
-//        //rsMsgs->getIdentityForChatLobby(lobby_id,gxs_id);
-//        RsIdentityDetails details ;
-//        rsIdentity->getIdDetails(gxs_id,details) ;
-//        bGetNickName = checkWord(msg, QString::fromUtf8(details.mNickname.c_str()));
-    }
-
     bool bFoundTextToNotify = false;
 
     if(_bCountSpecificText)
@@ -146,6 +138,19 @@ void GxsChatUserNotify::gxsChatNewMessage(RsGxsChatMsg gxsChatMsg, gxsChatId gro
         updateIcon();
         SoundManager::play(SOUND_NEW_LOBBY_MESSAGE);
     }
+}
+
+void GxsChatUserNotify::updateAsRead( gxsChatId groupChatId)
+{
+    lobby_map::iterator itCL=_listMsg.find(groupChatId);
+    if (itCL!=_listMsg.end())
+    {
+        _listMsg.erase(itCL);
+        //_listMsg[groupChatId]=msgData;
+        emit countChanged(RsGxsChatMsg(), groupChatId, _listMsg[groupChatId].size());
+        updateIcon();
+    }
+
 }
 
 bool GxsChatUserNotify::checkWord(QString message, QString word)
@@ -185,32 +190,30 @@ void GxsChatUserNotify::gxsChatCleared(gxsChatId groupChatId, QString anchor, bo
         if (count==0) _listMsg.erase(itCL);
     }
     //TODO: how to
-   // if (changed) emit countChanged(groupChatId, count);
+    if (changed) emit countChanged(RsGxsChatMsg(), groupChatId, count);
     updateIcon();
 }
 
-//void GxsChatUserNotify::notifyGxsChatMessageReceive(const gxsChatId& gxsChatId, const RsGxsChatMsg &gxsChatMsg, std::string nickInGroupChat, long long current_time, std::string textmsg, bool isSend)
-//{
-//    if( ChatDialog::getExistingChat(gxsChatId)
-//                || (Settings->getChatFlags() & RS_CHAT_OPEN))
-//    {
-//        //ChatDialog::chatMessageReceived(msg);
-//    }
-//    else
-//    {
-//        // this implicitly counts broadcast messages, because broadcast messages are not handled by chat dialog
-////        bool found = false;
-////        for(std::map<gxsChatId, int>::iterator mit = waitingChats.begin(); mit != waitingChats.end(); ++mit)
-////        {
-////            if(msg.gxs_ChatId.isSameEndpoint(mit->first))
-////            {
-////                mit->second++;
-////                found = true;
-////            }
-////        }
-////        if(!found)
-////            waitingChats[msg.gxs_ChatId] = 1;
-//        updateIcon();
-//    }
-//}
+unsigned int GxsChatUserNotify::getNewCount()
+{
+    unsigned int iNum=0;
+    for (lobby_map::iterator itCL=_listMsg.begin(); itCL!=_listMsg.end();)
+    {
+        iNum+=itCL->second.size();
+
+        if (itCL->second.size()==0)
+        {
+            lobby_map::iterator ittmp = itCL ;
+            ++ittmp ;
+
+            _listMsg.erase(itCL);
+            itCL = ittmp ;
+        }
+        else
+            ++itCL ;
+    }
+
+    return iNum;
+}
+
 

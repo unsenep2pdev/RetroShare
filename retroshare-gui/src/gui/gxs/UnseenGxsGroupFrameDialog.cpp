@@ -293,8 +293,13 @@ void UnseenGxsGroupFrameDialog::updateDisplay(bool complete)
 
         for (auto msgIt = msgIds.begin(); msgIt != msgIds.end(); ++msgIt)
         {
-            if(_unseenGxsGroup_infos.find(msgIt->first) != _unseenGxsGroup_infos.end())
-                _unseenGxsGroup_infos[msgIt->first].dialog->updateDisplay(false);
+            std::map<RsGxsGroupId,UnseenGxsChatLobbyInfoStruct>::iterator it = _unseenGxsGroup_infos.find(msgIt->first) ;
+
+            if(it != _unseenGxsGroup_infos.end())
+            {
+                if (_unseenGxsGroup_infos[msgIt->first].dialog)
+                    _unseenGxsGroup_infos[msgIt->first].dialog->updateDisplay(false);
+            }
             else
             {
                 //here is when we receive the new msg but still not have chat window for this
@@ -1084,17 +1089,10 @@ void UnseenGxsGroupFrameDialog::addChatPage(UnseenGxsChatLobbyDialog *d)
     if(_unseenGxsGroup_infos.find(d->groupId()) == _unseenGxsGroup_infos.end())
     {
         RsGxsGroupId groupId = d->groupId();
-        ChatLobbyId id = d->id();
-        ChatLobbyInfo linfo;
         ui->stackedWidget->addWidget(d) ;
 
         //logic of gxs group chat go here: connect GxsChat signals and slots
         connect(d,SIGNAL(gxsGroupLeave(RsGxsGroupId)),this,SLOT(unsubscribeGxsGroupChat(RsGxsGroupId))) ;
-//        connect(d,SIGNAL(typingEventReceived(ChatLobbyId)),this,SLOT(updateTypingStatus(ChatLobbyId))) ;
-        connect(d,SIGNAL(gxsMessageReceived(RsGxsChatMsg,bool,gxsChatId,QDateTime,QString,QString)),this,SLOT(updateGxsMessageChanged(RsGxsChatMsg,bool,gxsChatId,QDateTime,QString,QString))) ;
-//        connect(d,SIGNAL(peerJoined(ChatLobbyId)),this,SLOT(updatePeerEntering(ChatLobbyId))) ;
-//        connect(d,SIGNAL(peerLeft(ChatLobbyId)),this,SLOT(updatePeerLeaving(ChatLobbyId))) ;
-
 
         _unseenGxsGroup_infos[groupId].dialog = d ;
         _unseenGxsGroup_infos[groupId].last_typing_event = time(NULL) ;
@@ -1255,16 +1253,23 @@ void UnseenGxsGroupFrameDialog::insertGroupsData2(const std::map<RsGxsGroupId,Rs
     for (auto it = allGxsChatGroupList.begin(); it != allGxsChatGroupList.end(); ++it)
     {
        //need to check the changes ?!!!
-       if(_unseenGxsGroup_infos.find((*it).mMeta.mGroupId) != _unseenGxsGroup_infos.end())
+        RsGxsGroupId groupId = (*it).mMeta.mGroupId;
+        std::map<RsGxsGroupId,UnseenGxsChatLobbyInfoStruct>::iterator it2 = _unseenGxsGroup_infos.find(groupId) ;
+
+       if(it2 != _unseenGxsGroup_infos.end())
         {
-           std::cerr << " There is change in the group: " << (*it).mMeta.mGroupName << std::endl;
-           _unseenGxsGroup_infos[(*it).mMeta.mGroupId].dialog->updateTitle(QString::fromStdString((*it).mMeta.mGroupName));
-           _unseenGxsGroup_infos[(*it).mMeta.mGroupId].dialog->updateParticipantsList();
-           bool isPublisher  = IS_GROUP_PUBLISHER((*it).mMeta.mSubscribeFlags);
-           if( isPublisher && (*it).type == RsGxsChatGroup::CHANNEL)
+           if(_unseenGxsGroup_infos[groupId].dialog)
            {
-                _unseenGxsGroup_infos[(*it).mMeta.mGroupId].dialog->showChatTextInbox(true);
+               std::cerr << " There is change in the group: " << (*it).mMeta.mGroupName << std::endl;
+               _unseenGxsGroup_infos[groupId].dialog->updateTitle(QString::fromStdString((*it).mMeta.mGroupName));
+               _unseenGxsGroup_infos[groupId].dialog->updateParticipantsList();
+               bool isPublisher  = IS_GROUP_PUBLISHER((*it).mMeta.mSubscribeFlags);
+               if( isPublisher && (*it).type == RsGxsChatGroup::CHANNEL)
+               {
+                    _unseenGxsGroup_infos[groupId].dialog->showChatTextInbox(true);
+               }
            }
+
        }
 
     }
@@ -1616,21 +1621,11 @@ void UnseenGxsGroupFrameDialog::selectConversation(const QModelIndex& index)
 
     //How to get the ConversationModel and get the index of it
     if (!index.isValid()) return;
-
-    //uint32_t conversationMode = getConversationListMode();
-    //std::vector<UnseenGroupItemInfo> list = smartListModel_->getGxsGroupList();
     std::vector<RsGxsChatGroup> gxslist = smartListModel_->getGxsChatGroupList();
 
-    //if (list.size() == 0 || index.row() >= static_cast<int>(list.size())) return;
     if (gxslist.size() == 0 || index.row() >= static_cast<int>(gxslist.size())) return;
 
-    //UnseenGroupItemInfo gxsGroupItem = list.at(index.row());
-
     RsGxsChatGroup gxsChatGroupItem = gxslist.at(index.row());
-
-    //std::cerr << " gxsGroupItem info, name : " << gxsGroupItem.name.toStdString() << std::endl;
-
-    //mGroupId = RsGxsGroupId(gxsGroupItem.id.toStdString());
 
     mGroupId = gxsChatGroupItem.mMeta.mGroupId; // RsGxsGroupId(gxsGroupItem.id.toStdString());
 
@@ -1649,7 +1644,6 @@ void UnseenGxsGroupFrameDialog::selectConversation(const QModelIndex& index)
     }
 
     //Need to check the unread msg, if this item has unread number, so call these functions
-    //if (gxsGroupItem.UnreadMessagesCount > 0)
     if (gxsChatGroupItem.localMsgInfo.unreadMsgIds.size() > 0)
     {
         //reset the unread number as 0 when user click on the conversation item on the left side
@@ -1664,6 +1658,7 @@ void UnseenGxsGroupFrameDialog::selectConversation(const QModelIndex& index)
         RsGxsGrpMsgIdPair msgPair = std::make_pair(gxsChatGroupItem.mMeta.mGroupId, *lastId);
 
         rsGxsChats->setMessageReadStatus(token, msgPair, gxsChatGroupItem.localMsgInfo.msg , true);
+        myGxsChatUserNotify->updateAsRead(gxschatId);
 
     }
 
@@ -1938,50 +1933,9 @@ void UnseenGxsGroupFrameDialog::unsubscribeGxsGroupChat(RsGxsGroupId id)
 
 }
 
-//update recent time for every chat item and sort by recent time WHEN RECEIVING MSG!
-void UnseenGxsGroupFrameDialog::updateGxsMessageChanged(RsGxsChatMsg gxsChatMsg, bool incoming, RsGxsGroupId id, QDateTime time, QString senderName, QString msg)
+void UnseenGxsGroupFrameDialog::setGxsChatUserNotify(GxsChatUserNotify *uNotify)
 {
-
-    if (myGxsChatUserNotify)
-    {
-        if (incoming)
-        {
-            myGxsChatUserNotify->gxsChatNewMessage(gxsChatMsg, gxsChatId(id), time, senderName, msg);
-        }
-        //myGxsChatUserNotify->chatLobbyNewMessage(id, time, senderName, msg);
-    }
-}
-
-UserNotify *UnseenGxsGroupFrameDialog::getUserNotify(QObject *parent)
-{
-    if (!myGxsChatUserNotify)
-    {
-        myGxsChatUserNotify = new GxsChatUserNotify(rsGxsChats, parent);
-        connect(myGxsChatUserNotify, SIGNAL(countChanged(RsGxsChatMsg, gxsChatId, unsigned int)), this, SLOT(updateGxsMsgNotify(RsGxsChatMsg, gxsChatId, unsigned int)));
-    }
-    return myGxsChatUserNotify;
-}
-
-
-void UnseenGxsGroupFrameDialog::updateGxsMsgNotify(RsGxsChatMsg gxsChatMsg, gxsChatId id, unsigned int count)
-{
-    UnseenGxsChatLobbyDialog *dialog=NULL;
-    dialog=_unseenGxsGroup_infos[id.toGxsGroupId()].dialog;
-    if(!dialog) return;
-
-    QToolButton* notifyButton=dialog->getChatWidget()->getNotifyButton();
-    if (!notifyButton) return;
-    dialog->getChatWidget()->setGxsNotify(myGxsChatUserNotify);
-    if (count>0){
-        notifyButton->setVisible(true);
-        //notifyButton->setIcon(_lobby_infos[id].default_icon);
-        notifyButton->setToolTip(QString("(%1)").arg(count));
-    } else {
-        notifyButton->setVisible(false);
-        RsGxsGrpMsgIdPair msgPair = std::make_pair(id.toGxsGroupId(), gxsChatMsg.mMeta.mMsgId);
-        uint32_t token;
-        rsGxsChats->setMessageReadStatus(token, msgPair, gxsChatMsg.mMsg, true);
-    }
+    myGxsChatUserNotify = uNotify;
 }
 
 
@@ -2064,9 +2018,19 @@ void UnseenGxsGroupFrameDialog::updateRecentTimeAndUnreadNumber(const RsGxsGroup
             }
             else
             {
+
                 if( isOtherMsg)     //when receive new msg, need to insert into the unreadMsgIds
                 {
                     allGxsChatGroupList[i].localMsgInfo.unreadMsgIds.insert(gxsChatMsg.mMeta.mMsgId);
+                    //here we can emit the signal to the gxsChat tab unread number!
+                    if(!myGxsChatUserNotify)
+                    {
+                        myGxsChatUserNotify = new GxsChatUserNotify(rsGxsChats, NULL);
+                    }
+                    else
+                    {
+                        myGxsChatUserNotify->gxsChatNewMessage(gxsChatMsg, gxsChatId(groupId), QDateTime::fromMSecsSinceEpoch(lastMsgDatetime), QString::fromStdString(nickInGroupChat), QString::fromStdString(textmsg));
+                    }
                 }
 
                 allGxsChatGroupList[i].localMsgInfo.update_ts = lastMsgDatetime;

@@ -58,6 +58,8 @@ public:
     void gxsChatNewMessage(RsGxsChatMsg gxsChatMsg, gxsChatId groupChatId, QDateTime time, QString senderName, QString msg);
     void gxsChatCleared(gxsChatId groupChatId, QString anchor, bool onlyUnread=false);
 
+    void updateAsRead( gxsChatId groupChatId);
+
     void setCheckForNickName(bool value);
     bool isCheckForNickName() { return _bCheckForNickName;}
     void setCountUnRead(bool value);
@@ -76,9 +78,7 @@ public:
 signals:
     void countChanged(RsGxsChatMsg gxsChatMsg, gxsChatId id, unsigned int count);
 private:
-//	virtual QIcon getIcon();
-//	virtual QIcon getMainIcon(bool hasNew);
-//	virtual unsigned int getNewCount();
+    virtual unsigned int getNewCount();
 //	virtual QString getTrayMessage(bool plural);
 //	virtual QString getNotifyMessage(bool plural);
 //	virtual void iconClicked();
@@ -92,8 +92,7 @@ private:
     typedef	std::map<gxsChatId, msg_map> lobby_map;
     lobby_map _listMsg;
 
-//    typedef	std::map<ChatId, msg_map> p2pchat_map;
-//    p2pchat_map _listP2PMsg;
+    //std::map<gxsChatId, int> _countMsg;
 
     bool _bCountUnRead;
     bool _bCheckForNickName;

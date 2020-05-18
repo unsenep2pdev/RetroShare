@@ -81,7 +81,12 @@ QString GxsChatDialog::getHelpString() const
 
 UserNotify *GxsChatDialog::getUserNotify(QObject *parent)
 {
-    return new GxsChatUserNotify(rsGxsChats, parent);
+    //return UnseenGxsGroupFrameDialog::getUserNotify(parent);
+   GxsChatUserNotify* gxsUserNotify = new GxsChatUserNotify(rsGxsChats, parent);
+   UnseenGxsGroupFrameDialog::setGxsChatUserNotify(gxsUserNotify);
+   return gxsUserNotify;
+
+    //return new GxsChatUserNotify(rsGxsChats, parent);
 }
 
 void GxsChatDialog::shareOnChannel(const RsGxsGroupId& channel_id,const QList<RetroShareLink>& file_links)

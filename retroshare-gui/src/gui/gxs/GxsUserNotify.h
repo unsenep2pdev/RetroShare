@@ -43,8 +43,8 @@ public:
 protected:
 	virtual void startUpdate();
 
-private:
-	virtual unsigned int getNewCount() { return mCountChildMsgs ? (mNewThreadMessageCount + mNewChildMessageCount) : mNewThreadMessageCount; }
+//private:
+//	virtual unsigned int getNewCount() { return mCountChildMsgs ? (mNewThreadMessageCount + mNewChildMessageCount) : mNewThreadMessageCount; }
 
 protected:
 	bool mCountChildMsgs; // Count new child messages?
