@@ -431,7 +431,7 @@ void NotifyQt::notifyGxsContactStatusChanged(const std::string&  gxs_id,   uint3
     }
 
 #ifdef NOTIFY_DEBUG
-    std::cerr << "Notifyqt:: notified that peer " << peer_id << " has changed the state to " << state << std::endl;
+    std::cerr << "Notifyqt:: notified that peer " << gxs_id << " has changed the state to " << state << std::endl;
 #endif
 
 

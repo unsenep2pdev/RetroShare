@@ -135,7 +135,7 @@ class NotifyQt: public QObject, public NotifyClient
 		void diskFull(int,int) const ;
 		void peerStatusChanged(const QString& /* peer_id */, int /* status */);
 		void peerStatusChangedSummary() const;
-        void gxsContactStatusChanged(const QString&  gxs_id,   uint32_t  status);
+        void gxsContactStatusChanged(const QString& /*gxs_id */, int /* status */ );
 
         void gxsChange(const RsGxsChanges& /* changes  */);
 #ifdef REMOVE
