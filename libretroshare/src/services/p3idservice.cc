@@ -4800,7 +4800,7 @@ void p3IdService::handleIncomingItem(RsItem *item){
         newContact.mPgpId = pgpId;
         newContact.peerId = sslId;
         newContact.mContactInfo["cert_url"]=cert;
-        newContact.status = RsGxsMyContact::ACCEPT; //wait of owner to accept
+        newContact.status = RsGxsMyContact::TRUSTED; //wait of owner to accept
 
         if(setMyContact(newContact)){
             RsChatMsgItem *item = new RsChatMsgItem(RS_PKT_SUBTYPE_GXSCHAT_ACTKN);
@@ -4817,7 +4817,7 @@ void p3IdService::handleIncomingItem(RsItem *item){
         std::cerr <<"Received: ACTKN from="<<cinfo.to_id<< " to=" << cinfo.own_id<<" and tunnelID="<<distPeerId << std::endl;
         if(ci->chatFlags==RS_CHAT_FLAG_REQUEST_ACK){
             //changing contact status = request_pending (meaning your friend has received your certificate)
-            newContact.status = RsGxsMyContact::PENDING_ACCEPT; //wait of owner to accept
+            newContact.status = RsGxsMyContact::PENDING_REQ; //wait of owner to accept
             if(setMyContact(newContact)){
             //prepare to close the tunnel after 5min or so.
             }
