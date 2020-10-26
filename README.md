@@ -12,15 +12,15 @@ Build Status
 
 Compilation on Windows
 ----------------------------
-Follow this file : [WindowsMSys2_InstallGuide.md](https://github.com/RetroShare/RetroShare/blob/master/WindowsMSys2_InstallGuide.md)
+Follow this file : [WindowsMSys2_InstallGuide.md](https://github.com/unsenep2pdev/RetroShare/blob/master/WindowsMSys2_InstallGuide.md)
 
 Compilation on MacOSX
 ----------------------------
-Follow this file : [MacOS_X_InstallGuide](https://github.com/RetroShare/RetroShare/blob/master/MacOS_X_InstallGuide.md)
+Follow this file : [MacOS_X_InstallGuide](https://github.com/unsenep2pdev/RetroShare/blob/master/MacOS_X_InstallGuide.md)
 
 Compilation for Android
 ---------------------------
-Follow this file : [README-Android](https://github.com/RetroShare/RetroShare/blob/master/README-Android.asciidoc)
+Follow this file : [README-Android](https://github.com/unsenep2pdev/RetroShare/blob/master/README-Android.asciidoc)
 
 Compilation on Linux
 ----------------------------
